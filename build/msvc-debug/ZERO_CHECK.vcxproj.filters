@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\tom7s\Desktopp\Claude Folder 2\Client Server Encrypted Backup Framework\build\msvc-debug\CMakeFiles\9c245efb9d821f2d9309c91eccf3469a\generate.stamp.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{8554408F-42D4-3A42-B324-E173C55E3A26}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

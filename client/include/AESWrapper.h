@@ -1,0 +1,25 @@
+#pragma once
+
+#include <string>
+#include <vector>
+
+class AESWrapper
+{
+public:
+    static const unsigned int DEFAULT_KEYLENGTH = 16;
+private:
+    std::vector<unsigned char> keyData;
+    std::vector<unsigned char> iv;
+    AESWrapper(const AESWrapper& aes);
+public:
+    static void generateKey(unsigned char* buffer, size_t length);
+
+    AESWrapper() = default;
+    AESWrapper(const unsigned char* key, size_t keyLength);
+    ~AESWrapper();
+
+    const unsigned char* getKey() const;
+
+    std::string encrypt(const char* plain, size_t length);
+    std::string decrypt(const char* cipher, size_t length);
+};

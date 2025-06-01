@@ -1,0 +1,101 @@
+#include "AESWrapper.h"
+#include <cryptopp/aes.h>
+#include <cryptopp/modes.h>
+#include <cryptopp/osrng.h>
+#include <cryptopp/filters.h>
+#include <cryptopp/hex.h>
+#include <stdexcept>
+#include <cstring>
+
+using namespace CryptoPP;
+
+AESWrapper::AESWrapper(const unsigned char* key, size_t keyLength) {
+    if (!key || keyLength != AESWrapper::DEFAULT_KEYLENGTH) {
+        throw std::invalid_argument("Invalid key or key length");
+    }
+    
+    keyData.assign(key, key + keyLength);
+    
+    // Generate random IV
+    AutoSeededRandomPool rng;
+    iv.resize(AES::BLOCKSIZE);
+    rng.GenerateBlock(iv.data(), iv.size());
+}
+
+AESWrapper::~AESWrapper() {
+    // Clear sensitive data
+    std::fill(keyData.begin(), keyData.end(), 0);
+    std::fill(iv.begin(), iv.end(), 0);
+}
+
+const unsigned char* AESWrapper::getKey() const {
+    return keyData.empty() ? nullptr : keyData.data();
+}
+
+std::string AESWrapper::encrypt(const char* plain, size_t length) {
+    if (!plain || length == 0) {
+        throw std::invalid_argument("Invalid input data");
+    }
+    
+    try {
+        std::string ciphertext;
+        
+        CBC_Mode<AES>::Encryption encryption;
+        encryption.SetKeyWithIV(keyData.data(), keyData.size(), iv.data());
+        
+        StringSource ss(reinterpret_cast<const unsigned char*>(plain), length, true,
+            new StreamTransformationFilter(encryption,
+                new StringSink(ciphertext)
+            )
+        );
+        
+        // Prepend IV to ciphertext
+        std::string result;
+        result.reserve(iv.size() + ciphertext.size());
+        result.append(reinterpret_cast<const char*>(iv.data()), iv.size());
+        result.append(ciphertext);
+        
+        return result;
+    } catch (const Exception& e) {
+        throw std::runtime_error("AES encryption failed: " + std::string(e.what()));
+    }
+}
+
+std::string AESWrapper::decrypt(const char* cipher, size_t length) {
+    if (!cipher || length < AES::BLOCKSIZE) {
+        throw std::invalid_argument("Invalid cipher data or length too short");
+    }
+    
+    try {
+        // Extract IV from the beginning of cipher
+        std::vector<unsigned char> extractedIv(cipher, cipher + AES::BLOCKSIZE);
+        
+        // Extract actual ciphertext
+        const char* actualCipher = cipher + AES::BLOCKSIZE;
+        size_t actualLength = length - AES::BLOCKSIZE;
+        
+        std::string plaintext;
+        
+        CBC_Mode<AES>::Decryption decryption;
+        decryption.SetKeyWithIV(keyData.data(), keyData.size(), extractedIv.data());
+        
+        StringSource ss(reinterpret_cast<const unsigned char*>(actualCipher), actualLength, true,
+            new StreamTransformationFilter(decryption,
+                new StringSink(plaintext)
+            )
+        );
+        
+        return plaintext;
+    } catch (const Exception& e) {
+        throw std::runtime_error("AES decryption failed: " + std::string(e.what()));
+    }
+}
+
+void AESWrapper::generateKey(unsigned char* buffer, size_t length) {
+    if (!buffer || length != AESWrapper::DEFAULT_KEYLENGTH) {
+        throw std::invalid_argument("Invalid buffer or length");
+    }
+    
+    AutoSeededRandomPool rng;
+    rng.GenerateBlock(buffer, length);
+}

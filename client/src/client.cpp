@@ -17,22 +17,16 @@
 #include <atomic>
 #include <ctime>
 
-// Windows specific includes
+// Boost.Asio for cross-platform networking
+#include <boost/asio.hpp>
+#include <boost/system/error_code.hpp>
+#include <boost/bind/bind.hpp>
+
+// Windows console control
 #ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#pragma comment(lib, "ws2_32.lib")
-typedef int socklen_t;
-#else
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <unistd.h>
-#define INVALID_SOCKET -1
-#define SOCKET_ERROR -1
-#define closesocket close
-typedef int SOCKET;
+#include <windows.h>
+#include <io.h>
+#include <fcntl.h>
 #endif
 
 // Required wrapper includes (provided by project)
@@ -158,8 +152,9 @@ enum class ErrorType {
 
 class Client {
 private:
-    // Connection info
-    SOCKET sock;
+    // Boost.Asio networking
+    boost::asio::io_context ioContext;
+    std::unique_ptr<boost::asio::ip::tcp::socket> socket;
     std::string serverIP;
     uint16_t serverPort;
     bool connected;
@@ -210,9 +205,7 @@ private:
     bool saveMeInfo();
     bool loadPrivateKey();
     bool savePrivateKey();
-    
-    // Network operations
-    bool initializeWinsock();
+      // Network operations
     bool connectToServer();
     void closeConnection();
     bool sendRequest(uint16_t code, const std::vector<uint8_t>& payload = {});
@@ -257,7 +250,7 @@ private:
 };
 
 // Constructor
-Client::Client() : sock(INVALID_SOCKET), connected(false), rsaPrivate(nullptr), 
+Client::Client() : socket(nullptr), connected(false), rsaPrivate(nullptr), 
                    fileRetries(0), crcRetries(0), reconnectAttempts(0),
                    keepAliveEnabled(false), lastError(ErrorType::NONE) {
     std::fill(clientID.begin(), clientID.end(), 0);
@@ -277,7 +270,6 @@ Client::~Client() {
         delete rsaPrivate;
     }
 #ifdef _WIN32
-    WSACleanup();
     SetConsoleTextAttribute(hConsole, savedAttributes);
 #endif
 }
@@ -290,10 +282,6 @@ bool Client::initialize() {
     displayPhase("Initialization");
     
     displayStatus("System initialization", true, "Starting client v1.0");
-    
-    if (!initializeWinsock()) {
-        return false;
-    }
     
     if (!readTransferInfo()) {
         return false;
@@ -461,14 +449,10 @@ bool Client::readTransferInfo() {
 bool Client::validateConfiguration() {
     displayStatus("Validating configuration", true, "Checking parameters");
     
-    // Validate server IP
-    if (serverIP != "localhost" && serverIP != "127.0.0.1") {
-        struct sockaddr_in sa;
-        int result = inet_pton(AF_INET, serverIP.c_str(), &(sa.sin_addr));
-        if (result != 1) {
-            displayError("Invalid IP address format: " + serverIP, ErrorType::CONFIG);
-            return false;
-        }
+    // Validate server IP (Boost.Asio will handle IP validation during connect)
+    if (serverIP.empty()) {
+        displayError("Invalid IP address: empty", ErrorType::CONFIG);
+        return false;
     }
     
     // Validate port
@@ -584,8 +568,7 @@ bool Client::loadPrivateKey() {
     if (!std::getline(infoFile, line) || line.empty()) {
         return false;
     }
-    
-    try {
+      try {
         std::string decoded = Base64Wrapper::decode(line);
         rsaPrivate = new RSAPrivateWrapper(decoded);
         
@@ -622,84 +605,32 @@ bool Client::savePrivateKey() {
     return true;
 }
 
-// Initialize Winsock
-bool Client::initializeWinsock() {
-#ifdef _WIN32
-    WSADATA wsaData;
-    int result = WSAStartup(MAKEWORD(2, 2), &wsaData);
-    if (result != 0) {
-        displayError("Failed to initialize Winsock (error " + std::to_string(result) + ")", ErrorType::NETWORK);
-        return false;
-    }
-    
-    displayStatus("Winsock initialized", true, "Version " + 
-                  std::to_string(LOBYTE(wsaData.wVersion)) + "." + 
-                  std::to_string(HIBYTE(wsaData.wVersion)));
-#endif
-    return true;
-}
-
 // Connect to server
 bool Client::connectToServer() {
-    sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (sock == INVALID_SOCKET) {
-        displayError("Failed to create socket", ErrorType::NETWORK);
-        return false;
-    }
-    
-    // Set timeout
-#ifdef _WIN32
-    DWORD timeout = SOCKET_TIMEOUT_MS;
-    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout));
-    setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, (const char*)&timeout, sizeof(timeout));
-#else
-    struct timeval tv;
-    tv.tv_sec = SOCKET_TIMEOUT_MS / 1000;
-    tv.tv_usec = (SOCKET_TIMEOUT_MS % 1000) * 1000;
-    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
-    setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
-#endif
-    
-    sockaddr_in serverAddr{};
-    serverAddr.sin_family = AF_INET;
-    serverAddr.sin_port = htons(serverPort);
-    
-    if (inet_pton(AF_INET, serverIP.c_str(), &serverAddr.sin_addr) <= 0) {
-        displayError("Invalid server address", ErrorType::NETWORK);
-        closesocket(sock);
-        sock = INVALID_SOCKET;
-        return false;
-    }
-    
-    displayStatus("Connecting", true, "Establishing TCP connection...");
-    
-    if (connect(sock, (sockaddr*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR) {
-        int error = WSAGetLastError();
-        std::string errorMsg = "Connection failed (";
+    try {
+        socket = std::make_unique<boost::asio::ip::tcp::socket>(ioContext);
         
-        switch (error) {
-            case WSAECONNREFUSED:
-                errorMsg += "Connection refused - server may be down)";
-                break;
-            case WSAETIMEDOUT:
-                errorMsg += "Connection timed out)";
-                break;
-            case WSAEHOSTUNREACH:
-                errorMsg += "Host unreachable)";
-                break;
-            default:
-                errorMsg += "Error " + std::to_string(error) + ")";
-        }
+        boost::asio::ip::tcp::resolver resolver(ioContext);
+        boost::asio::ip::tcp::resolver::results_type endpoints = 
+            resolver.resolve(serverIP, std::to_string(serverPort));
         
-        displayError(errorMsg, ErrorType::NETWORK);
-        closesocket(sock);
-        sock = INVALID_SOCKET;
+        displayStatus("Connecting", true, "Establishing TCP connection...");
+        
+        boost::asio::connect(*socket, endpoints);
+        
+        // Set socket options for timeouts and keep-alive
+        socket->set_option(boost::asio::ip::tcp::no_delay(true));
+        
+        connected = true;
+        displayStatus("Connected", true, "TCP connection established");
+        return true;
+        
+    } catch (const std::exception& e) {
+        displayError("Connection failed: " + std::string(e.what()), ErrorType::NETWORK);
+        socket.reset();
+        connected = false;
         return false;
     }
-    
-    connected = true;
-    displayStatus("Connected", true, "TCP connection established");
-    return true;
 }
 
 // Test connection quality
@@ -720,117 +651,96 @@ bool Client::testConnection() {
 
 // Enable keep-alive
 void Client::enableKeepAlive() {
-#ifdef _WIN32
-    BOOL keepAlive = TRUE;
-    setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, (const char*)&keepAlive, sizeof(keepAlive));
-    
-    // Set keep-alive parameters on Windows
-    tcp_keepalive params;
-    params.onoff = 1;
-    params.keepalivetime = KEEPALIVE_INTERVAL * 1000;
-    params.keepaliveinterval = 10000; // 10 seconds
-    
-    DWORD bytesReturned;
-    WSAIoctl(sock, SIO_KEEPALIVE_VALS, &params, sizeof(params), NULL, 0, &bytesReturned, NULL, NULL);
-#else
-    int keepAlive = 1;
-    setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, &keepAlive, sizeof(keepAlive));
-#endif
-    
-    keepAliveEnabled = true;
-    displayStatus("Keep-alive", true, "Enabled for stable connection");
+    if (socket && socket->is_open()) {
+        try {
+            socket->set_option(boost::asio::socket_base::keep_alive(true));
+            keepAliveEnabled = true;
+            displayStatus("Keep-alive", true, "Enabled for stable connection");
+        } catch (const std::exception& e) {
+            displayStatus("Keep-alive", false, "Could not enable: " + std::string(e.what()));
+        }
+    }
 }
 
 // Close connection
 void Client::closeConnection() {
-    if (sock != INVALID_SOCKET) {
-        closesocket(sock);
-        sock = INVALID_SOCKET;
+    if (socket && socket->is_open()) {
+        try {
+            socket->close();
+        } catch (const std::exception&) {
+            // Ignore errors during close
+        }
     }
+    socket.reset();
     connected = false;
 }
 
 // Send request to server
 bool Client::sendRequest(uint16_t code, const std::vector<uint8_t>& payload) {
-    if (!connected) {
+    if (!connected || !socket || !socket->is_open()) {
         displayError("Not connected to server", ErrorType::NETWORK);
         return false;
     }
     
-    RequestHeader header{};
-    std::copy(clientID.begin(), clientID.end(), header.client_id);
-    header.version = CLIENT_VERSION;
-    header.code = code;
-    header.payload_size = static_cast<uint32_t>(payload.size());
-    
-    // Send header
-    if (send(sock, reinterpret_cast<const char*>(&header), sizeof(header), 0) != sizeof(header)) {
-        displayError("Failed to send request header", ErrorType::NETWORK);
+    try {
+        RequestHeader header{};
+        std::copy(clientID.begin(), clientID.end(), header.client_id);
+        header.version = CLIENT_VERSION;
+        header.code = code;
+        header.payload_size = static_cast<uint32_t>(payload.size());
+        
+        // Send header
+        boost::asio::write(*socket, boost::asio::buffer(&header, sizeof(header)));
+        
+        // Send payload if any
+        if (!payload.empty()) {
+            boost::asio::write(*socket, boost::asio::buffer(payload));
+        }
+        
+        return true;
+        
+    } catch (const std::exception& e) {
+        displayError("Failed to send request: " + std::string(e.what()), ErrorType::NETWORK);
         return false;
     }
-    
-    // Send payload if any
-    if (!payload.empty()) {
-        const char* data = reinterpret_cast<const char*>(payload.data());
-        size_t totalSent = 0;
-        
-        while (totalSent < payload.size()) {
-            int sent = send(sock, data + totalSent, static_cast<int>(payload.size() - totalSent), 0);
-            if (sent <= 0) {
-                displayError("Failed to send request payload", ErrorType::NETWORK);
-                return false;
-            }
-            totalSent += sent;
-        }
-    }
-    
-    return true;
 }
 
 // Receive response from server
 bool Client::receiveResponse(ResponseHeader& header, std::vector<uint8_t>& payload) {
-    if (!connected) {
+    if (!connected || !socket || !socket->is_open()) {
         displayError("Not connected to server", ErrorType::NETWORK);
         return false;
     }
     
-    // Receive header
-    if (recv(sock, reinterpret_cast<char*>(&header), sizeof(header), 0) != sizeof(header)) {
-        displayError("Failed to receive response header", ErrorType::NETWORK);
-        return false;
-    }
-    
-    // Check version
-    if (header.version != SERVER_VERSION) {
-        displayError("Invalid server version: " + std::to_string(header.version), ErrorType::PROTOCOL);
-        return false;
-    }
-    
-    // Check for error response
-    if (header.code == RESP_ERROR) {
-        displayError("Server returned general error", ErrorType::SERVER_ERROR);
-        return false;
-    }
-    
-    // Receive payload if any
-    payload.clear();
-    if (header.payload_size > 0) {
-        payload.resize(header.payload_size);
-        char* data = reinterpret_cast<char*>(payload.data());
-        size_t totalReceived = 0;
+    try {
+        // Receive header
+        boost::asio::read(*socket, boost::asio::buffer(&header, sizeof(header)));
         
-        while (totalReceived < header.payload_size) {
-            int received = recv(sock, data + totalReceived, 
-                              static_cast<int>(header.payload_size - totalReceived), 0);
-            if (received <= 0) {
-                displayError("Failed to receive response payload", ErrorType::NETWORK);
-                return false;
-            }
-            totalReceived += received;
+        // Check version
+        if (header.version != SERVER_VERSION) {
+            displayError("Invalid server version: " + std::to_string(header.version), ErrorType::PROTOCOL);
+            return false;
         }
+        
+        // Check for error response
+        if (header.code == RESP_ERROR) {
+            displayError("Server returned general error", ErrorType::SERVER_ERROR);
+            return false;
+        }
+        
+        // Receive payload if any
+        payload.clear();
+        if (header.payload_size > 0) {
+            payload.resize(header.payload_size);
+            boost::asio::read(*socket, boost::asio::buffer(payload));
+        }
+        
+        return true;
+        
+    } catch (const std::exception& e) {
+        displayError("Failed to receive response: " + std::string(e.what()), ErrorType::NETWORK);
+        return false;
     }
-    
-    return true;
 }
 
 // Perform registration

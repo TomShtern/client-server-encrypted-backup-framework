@@ -1,0 +1,3 @@
+C:/Users/tom7s/Desktopp/Claude Folder 2/Client Server Encrypted Backup Framework/build/CMakeFiles/client.dir
+C:/Users/tom7s/Desktopp/Claude Folder 2/Client Server Encrypted Backup Framework/build/CMakeFiles/ALL_BUILD.dir
+C:/Users/tom7s/Desktopp/Claude Folder 2/Client Server Encrypted Backup Framework/build/CMakeFiles/ZERO_CHECK.dir

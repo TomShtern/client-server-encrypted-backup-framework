@@ -8,6 +8,7 @@ import logging
 import re
 import signal
 import sys
+import sqlite3
 from datetime import datetime, timezone, timedelta
 from typing import Dict, Optional, Any, Tuple
 
@@ -174,9 +175,7 @@ class Client:
         with self.lock:
             if filename in self.partial_files:
                 del self.partial_files[filename]
-                logger.debug(f"Client '{self.name}': Cleared partial file reassembly data for '{filename}'.")
-
-    def cleanup_stale_partial_files(self) -> int:
+                logger.debug(f"Client '{self.name}': Cleared partial file reassembly data for '{filename}'.")    def cleanup_stale_partial_files(self) -> int:
         """
         Removes partial file data for transfers that haven't seen activity recently.
 
@@ -184,16 +183,17 @@ class Client:
             The number of stale partial file transfers cleaned up for this client.
         """
         with self.lock:
-            stale_files_to_remove = []
             current_monotonic_time = time.monotonic()
-            for filename, data in self.partial_files.items():
-                # Check if 'timestamp' key exists, default to 0 if not (should always exist)
-                if current_monotonic_time - data.get("timestamp", 0) > PARTIAL_FILE_TIMEOUT:
-                    stale_files_to_remove.append(filename)
+            stale_files_to_remove = [
+                filename for filename, data in self.partial_files.items()
+                if current_monotonic_time - data.get("timestamp", 0) > PARTIAL_FILE_TIMEOUT
+            ]
             
+            # Remove stale entries
             for filename in stale_files_to_remove:
                 logger.warning(f"Client '{self.name}': Stale partial file transfer timed out for '{filename}'. Removing associated data.")
-                del self.partial_files[filename] # Remove stale entry
+                del self.partial_files[filename]
+            
             return len(stale_files_to_remove)
 
 
@@ -370,8 +370,6 @@ class BackupServer:
             )
         ''', commit=True)
         logger.info("Database schema initialization complete.")
-
-
     def _load_clients_from_db(self):
         """Loads existing client data from the database into memory at server startup."""
         logger.info("Loading existing clients from database into memory...")
@@ -380,7 +378,7 @@ class BackupServer:
         except ServerError as e: # Raised by _db_execute on critical read failure
             logger.critical(f"CRITICAL FAILURE: Could not load client data from database: {e}. Server cannot continue.")
             # This is a fatal error for server operation.
-            raise SystemExit(f"Startup aborted: Failed to load critical client data from database. Details: {e}")
+            raise SystemExit(f"Startup aborted: Failed to load critical client data from database. Details: {e}") from e
 
         with self.clients_lock: # Ensure thread-safe access to shared client dictionaries
             self.clients.clear()
@@ -475,14 +473,13 @@ class BackupServer:
                             self.clients_by_name.pop(client_obj.name, None) # Also remove from dict by name
                             inactive_clients_removed_count += 1
                             logger.info(f"Client '{client_obj.name}' (ID: {cid.hex()}) session timed out due to inactivity. Removed from active memory pool.")
-                
-                # --- Stale partial file transfer data cleanup (for currently active clients) ---
-                stale_partial_files_cleaned_count = 0
+                  # --- Stale partial file transfer data cleanup (for currently active clients) ---
                 with self.clients_lock: # Get a list of current clients to iterate over (snapshot)
                     active_clients_list = list(self.clients.values()) 
                 
-                for client_obj in active_clients_list: # client_obj here is a Client instance
-                    stale_partial_files_cleaned_count += client_obj.cleanup_stale_partial_files()
+                stale_partial_files_cleaned_count = sum(
+                    client_obj.cleanup_stale_partial_files() for client_obj in active_clients_list
+                )
 
                 # --- Console Status Update (Basic UI Element) ---
                 with self.clients_lock: # Get current count of active clients in memory
@@ -652,8 +649,7 @@ class BackupServer:
             ConnectionError: If the socket is closed or a socket error occurs.
         """
         if num_bytes < 0: raise ValueError("Cannot read a negative number of bytes.")
-        if num_bytes == 0: return b'' # Reading zero bytes returns empty bytes
-        if num_bytes > MAX_PAYLOAD_READ_LIMIT: # Protect server from extreme memory allocation requests
+        if num_bytes == 0: return b'' # Reading zero bytes returns empty bytes        if num_bytes > MAX_PAYLOAD_READ_LIMIT: # Protect server from extreme memory allocation requests
             raise ProtocolError(f"Requested read of {num_bytes} bytes exceeds server's MAX_PAYLOAD_READ_LIMIT ({MAX_PAYLOAD_READ_LIMIT}).")
         
         data_chunks = [] # List to store received chunks of data
@@ -663,10 +659,10 @@ class BackupServer:
                 # Calculate how many bytes are still needed, read up to 4096 at a time
                 bytes_to_read_this_chunk = min(num_bytes - bytes_received_total, 4096)
                 chunk = sock.recv(bytes_to_read_this_chunk)
-            except socket.timeout: # This timeout is from client_conn.settimeout() set earlier
-                raise TimeoutError(f"Socket timeout occurred while attempting to read {num_bytes} bytes (already received {bytes_received_total} bytes).")
+            except socket.timeout as e: # This timeout is from client_conn.settimeout() set earlier
+                raise TimeoutError(f"Socket timeout occurred while attempting to read {num_bytes} bytes (already received {bytes_received_total} bytes).") from e
             except socket.error as e: # Other socket-level errors (e.g., connection reset)
-                raise ConnectionError(f"Socket error encountered during read operation: {e}")
+                raise ConnectionError(f"Socket error encountered during read operation: {e}") from e
 
             if not chunk: # An empty chunk indicates the socket was closed by the peer
                 raise ConnectionError(f"Socket connection was broken by peer while attempting to read {num_bytes} bytes (already received {bytes_received_total} bytes).")
@@ -904,11 +900,9 @@ class BackupServer:
             # Validate the length of the actual decoded string content
             if not (1 <= len(parsed_str) <= max_actual_len):
                  raise ValueError(f"Actual content length of '{field_name}' ({len(parsed_str)}) is invalid. Must be between 1 and {max_actual_len} characters.")
-            
-            # Specific character validation for client names
-            if field_name == "Client Name": 
-                if not all(32 <= ord(c) <= 126 for c in parsed_str): # Check for printable ASCII
-                     raise ValueError(f"'{field_name}' contains non-printable ASCII characters, which are not allowed.")
+              # Specific character validation for client names
+            if field_name == "Client Name" and not all(32 <= ord(c) <= 126 for c in parsed_str): # Check for printable ASCII
+                 raise ValueError(f"'{field_name}' contains non-printable ASCII characters, which are not allowed.")
             # For filenames, a separate, more specific validation method (_is_valid_filename_for_storage) is used later.
             
             return parsed_str
@@ -984,12 +978,14 @@ class BackupServer:
             # Generate a new AES session key for this client
             new_aes_key = get_random_bytes(AES_KEY_SIZE_BYTES) # 256-bit AES key
             client.set_aes_key(new_aes_key) # Store the new AES key in the client object
-            
-            # Encrypt the new AES key using the client's RSA public key (PKCS1_OAEP padding)
+              # Encrypt the new AES key using the client's RSA public key (PKCS1_OAEP padding)
             if not client.public_key_obj: # Should have been caught by client.set_public_key if import failed
                  raise ServerError("Internal Server Error: Client's public key object is not available for RSA encryption after an import attempt. This should not happen.")
             cipher_rsa = PKCS1_OAEP.new(client.public_key_obj)
-            encrypted_aes_key = cipher_rsa.encrypt(client.get_aes_key()) # client.get_aes_key() gets the new_aes_key
+            aes_key = client.get_aes_key()
+            if aes_key is None:
+                raise ServerError("Internal Server Error: Client's AES key is not available for encryption.")
+            encrypted_aes_key = cipher_rsa.encrypt(aes_key)
             
             # Update client's record in the database (PublicKey, LastSeen, and new session AESKey)
             self._save_client_to_db(client) 
@@ -1037,10 +1033,12 @@ class BackupServer:
             # Generate a new AES session key for this reconnected session
             new_aes_key = get_random_bytes(AES_KEY_SIZE_BYTES)
             client.set_aes_key(new_aes_key) # Store new AES key in client object
-            
-            # Encrypt the new AES key with the client's stored public RSA key
+              # Encrypt the new AES key with the client's stored public RSA key
             cipher_rsa = PKCS1_OAEP.new(client.public_key_obj)
-            encrypted_aes_key = cipher_rsa.encrypt(client.get_aes_key())
+            aes_key = client.get_aes_key()
+            if aes_key is None:
+                raise ServerError("Internal Server Error: Client's AES key is not available for encryption.")
+            encrypted_aes_key = cipher_rsa.encrypt(aes_key)
             
             # Update client's record in the database (updates LastSeen and current session AESKey)
             self._save_client_to_db(client)
@@ -1119,31 +1117,28 @@ class BackupServer:
         # Size of the metadata part of the payload (fields before the actual file content)
         metadata_header_size = 4 + 4 + 2 + 2 + MAX_FILENAME_FIELD_SIZE 
         if len(payload) < metadata_header_size: # Payload must be at least this large
-            raise ProtocolError(f"SendFile Request (1028): Payload is too short for file metadata part ({len(payload)} bytes). Minimum expected: {metadata_header_size}.")
-
-        # Unpack metadata fields from the payload (all are little-endian)
-        encrypted_packet_content_size = struct.unpack("<I", payload[0:4])[0]
+            raise ProtocolError(f"SendFile Request (1028): Payload is too short for file metadata part ({len(payload)} bytes). Minimum expected: {metadata_header_size}.")        # Unpack metadata fields from the payload (all are little-endian)
+        encrypted_packet_content_size = struct.unpack("<I", payload[:4])[0]
         original_file_size = struct.unpack("<I", payload[4:8])[0]
         packet_number = struct.unpack("<H", payload[8:10])[0]
         total_packets = struct.unpack("<H", payload[10:12])[0]
         filename_bytes_padded = payload[12 : 12 + MAX_FILENAME_FIELD_SIZE] # Extract the 255-byte filename field
-        
-        # --- Input Validations for File Transfer Metadata ---
+          # --- Input Validations for File Transfer Metadata ---
         if not (encrypted_packet_content_size > 0 and encrypted_packet_content_size <= MAX_PAYLOAD_READ_LIMIT - metadata_header_size): # Ensure content size is reasonable
             raise ProtocolError(f"SendFile: Invalid encrypted_packet_content_size ({encrypted_packet_content_size}). Must be > 0 and within payload limits.")
-        if not (original_file_size >= 0 and original_file_size <= MAX_ORIGINAL_FILE_SIZE): # original_file_size can be 0 for empty file
+        if original_file_size < 0 or original_file_size > MAX_ORIGINAL_FILE_SIZE: # original_file_size can be 0 for empty file
              raise ProtocolError(f"SendFile: Invalid original_file_size ({original_file_size}). Must be >= 0 and <= {MAX_ORIGINAL_FILE_SIZE}.")
-        if not (total_packets > 0): # Must be at least one packet
+        if total_packets <= 0: # Must be at least one packet
             raise ProtocolError(f"SendFile: Invalid total_packets ({total_packets}). Must be > 0.")
-        if not (1 <= packet_number <= total_packets): # Packet number must be within valid range
+        if packet_number < 1 or packet_number > total_packets: # Packet number must be within valid range
             raise ProtocolError(f"SendFile: Invalid packet_number ({packet_number}). Must be between 1 and total_packets ({total_packets}).")
         
         # Parse and validate the filename string from its padded field
         try:
             # Filename is null-terminated within the MAX_FILENAME_FIELD_SIZE byte field
             filename_str = filename_bytes_padded.split(b'\0', 1)[0].decode('utf-8')
-        except UnicodeDecodeError:
-            raise ProtocolError("SendFile: Filename field in payload is not valid UTF-8.")
+        except UnicodeDecodeError as e:
+            raise ProtocolError("SendFile: Filename field in payload is not valid UTF-8.") from e
 
         if not self._is_valid_filename_for_storage(filename_str): # Uses MAX_ACTUAL_FILENAME_LENGTH internally
             # If filename is invalid, we cannot proceed with this file transfer.

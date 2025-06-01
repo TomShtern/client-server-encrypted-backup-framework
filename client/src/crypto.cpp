@@ -1,1 +1,4 @@
-empty file for now
+// Crypto implementation placeholder
+#include "crypto.h"
+
+// Placeholder implementation

@@ -1,1 +1,42 @@
-empty file for now
+<!-- Visual Studio project file for MSVC and Clang tools integration -->
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="src\client.cpp" />
+    <ClCompile Include="src\crypto.cpp" />
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\protocol.cpp" />
+    <ClInclude Include="include\client.h" />
+    <ClInclude Include="include\crypto.h" />
+    <ClInclude Include="include\protocol.h" />
+  </ItemGroup>
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+    <UseOfMfc>false</UseOfMfc>
+    <UseOfAtl>false</UseOfAtl>
+  </PropertyGroup>
+  <PropertyGroup>
+    <OutDir>$(SolutionDir)bin\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)bin\$(Configuration)\obj\</IntDir>
+    <TargetName>client</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+  <!-- Enable Clang tools integration -->
+  <PropertyGroup>
+    <EnableClangTidy>true</EnableClangTidy>
+    <ClangTidyChecks>*</ClangTidyChecks>
+    <EnableClangFormat>true</EnableClangFormat>
+  </PropertyGroup>
+</Project>
