@@ -1,3 +1,0 @@
-MSBuild version 17.14.10+8b8e13593 for .NET Framework
-
-  client.vcxproj -> C:\Users\tom7s\Desktopp\Claude Folder 2\Client Server Encrypted Backup Framework\build\bin\Debug\client.exe
