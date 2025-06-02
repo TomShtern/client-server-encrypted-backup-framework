@@ -136,3 +136,12 @@ Verified Files (DB):                     0
 Cleaned Inactive Sessions (This Cycle):  0         
 Cleaned Stale Partial Files (This Cycle): 0         
 --------------------------------------------------------------------------------
+2025-06-02 08:51:08,014 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-02 08:51:08]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
