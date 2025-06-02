@@ -175,7 +175,9 @@ class Client:
         with self.lock:
             if filename in self.partial_files:
                 del self.partial_files[filename]
-                logger.debug(f"Client '{self.name}': Cleared partial file reassembly data for '{filename}'.")    def cleanup_stale_partial_files(self) -> int:
+                logger.debug(f"Client '{self.name}': Cleared partial file reassembly data for '{filename}'.")
+
+    def cleanup_stale_partial_files(self) -> int:
         """
         Removes partial file data for transfers that haven't seen activity recently.
 
@@ -648,8 +650,11 @@ class BackupServer:
             TimeoutError: If a socket timeout occurs during read.
             ConnectionError: If the socket is closed or a socket error occurs.
         """
-        if num_bytes < 0: raise ValueError("Cannot read a negative number of bytes.")
-        if num_bytes == 0: return b'' # Reading zero bytes returns empty bytes        if num_bytes > MAX_PAYLOAD_READ_LIMIT: # Protect server from extreme memory allocation requests
+        if num_bytes < 0:
+            raise ValueError("Cannot read a negative number of bytes.")
+        if num_bytes == 0:
+            return b'' # Reading zero bytes returns empty bytes
+        if num_bytes > MAX_PAYLOAD_READ_LIMIT: # Protect server from extreme memory allocation requests
             raise ProtocolError(f"Requested read of {num_bytes} bytes exceeds server's MAX_PAYLOAD_READ_LIMIT ({MAX_PAYLOAD_READ_LIMIT}).")
         
         data_chunks = [] # List to store received chunks of data

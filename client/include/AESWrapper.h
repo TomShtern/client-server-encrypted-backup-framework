@@ -15,7 +15,8 @@ public:
     static void generateKey(unsigned char* buffer, size_t length);
 
     AESWrapper() = default;
-    AESWrapper(const unsigned char* key, size_t keyLength);
+    // New: allow static IV of all zeros for protocol compliance
+    AESWrapper(const unsigned char* key, size_t keyLength, bool useStaticZeroIV = false);
     ~AESWrapper();
 
     const unsigned char* getKey() const;

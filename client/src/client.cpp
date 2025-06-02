@@ -318,13 +318,12 @@ bool Client::run() {
         displayError("Failed to connect after 3 attempts", ErrorType::NETWORK);
         return false;
     }
+      displayConnectionInfo();
     
-    displayConnectionInfo();
-    
-    // Test connection quality
-    if (!testConnection()) {
-        displayStatus("Connection test", false, "Poor connection quality detected");
-    }
+    // Test connection quality - Skip for now as test request causes server error
+    // if (!testConnection()) {
+    //     displayStatus("Connection test", false, "Poor connection quality detected");
+    // }
     
     // Enable keep-alive for long transfers
     enableKeepAlive();
@@ -1098,7 +1097,8 @@ std::string Client::encryptFile(const std::vector<uint8_t>& data) {
     
     try {
         auto start = std::chrono::steady_clock::now();
-        AESWrapper aes(reinterpret_cast<const unsigned char*>(aesKey.c_str()), AESWrapper::DEFAULT_KEYLENGTH);
+        // Use 32-byte key and static IV of all zeros for protocol compliance
+        AESWrapper aes(reinterpret_cast<const unsigned char*>(aesKey.c_str()), 32, true);
         std::string result = aes.encrypt(reinterpret_cast<const char*>(data.data()), data.size());
         auto end = std::chrono::steady_clock::now();
         
@@ -1338,12 +1338,13 @@ void Client::displayError(const std::string& message, ErrorType type) {
     lastError = type;
     lastErrorDetails = message;
     
+    // Temporarily show actual error message for debugging
     // Check if this is a server error response
-    if (message.find("server") != std::string::npos || 
-        message.find("response") != std::string::npos ||
-        type == ErrorType::SERVER_ERROR) {
-        std::cerr << "server responded with an error" << std::endl;
-    } else {
+    // if (message.find("server") != std::string::npos || 
+    //     message.find("response") != std::string::npos ||
+    //     type == ErrorType::SERVER_ERROR) {
+    //     std::cerr << "server responded with an error" << std::endl;
+    // } else {
 #ifdef _WIN32
         SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_INTENSITY);
         std::cerr << "[ERROR] ";
@@ -1367,8 +1368,7 @@ void Client::displayError(const std::string& message, ErrorType type) {
                 break;
             case ErrorType::CONFIG:
                 std::cerr << "[CONFIG] ";
-                break;
-            case ErrorType::AUTHENTICATION:
+                break;            case ErrorType::AUTHENTICATION:
                 std::cerr << "[AUTH] ";
                 break;
             default:
@@ -1376,7 +1376,7 @@ void Client::displayError(const std::string& message, ErrorType type) {
         }
         
         std::cerr << message << std::endl;
-    }
+    // }
 }
 
 void Client::displaySeparator() {

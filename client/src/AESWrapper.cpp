@@ -9,17 +9,21 @@
 
 using namespace CryptoPP;
 
-AESWrapper::AESWrapper(const unsigned char* key, size_t keyLength) {
+AESWrapper::AESWrapper(const unsigned char* key, size_t keyLength, bool useStaticZeroIV) {
     if (!key || keyLength != AESWrapper::DEFAULT_KEYLENGTH) {
         throw std::invalid_argument("Invalid key or key length");
     }
     
     keyData.assign(key, key + keyLength);
     
-    // Generate random IV
-    AutoSeededRandomPool rng;
     iv.resize(AES::BLOCKSIZE);
-    rng.GenerateBlock(iv.data(), iv.size());
+    if (useStaticZeroIV) {
+        std::fill(iv.begin(), iv.end(), 0);
+    } else {
+        // Generate random IV
+        AutoSeededRandomPool rng;
+        rng.GenerateBlock(iv.data(), iv.size());
+    }
 }
 
 AESWrapper::~AESWrapper() {

@@ -1,0 +1,97 @@
+2025-06-02 04:44:26,560 - MainThread - INFO - PyCryptodome library check passed: Basic crypto operations are available.
+2025-06-02 04:44:26,562 - MainThread - WARNING - Port configuration file 'port.info' not found. Using default port 1256.
+2025-06-02 04:44:26,562 - MainThread - INFO - Performing server startup checks...
+2025-06-02 04:44:26,562 - MainThread - CRITICAL - Fatal: No write permission for file storage directory: 'C:\Users\tom7s\Desktopp\Claude Folder 2\Client Server Encrypted Backup Framework\received_files'.
+2025-06-02 04:45:47,263 - MainThread - INFO - PyCryptodome library check passed: Basic crypto operations are available.
+2025-06-02 04:45:47,264 - MainThread - WARNING - Port configuration file 'port.info' not found. Using default port 1256.
+2025-06-02 04:45:47,266 - MainThread - INFO - Performing server startup checks...
+2025-06-02 04:45:47,266 - MainThread - CRITICAL - Fatal: No write permission for file storage directory: 'C:\Users\tom7s\Desktopp\Claude Folder 2\Client Server Encrypted Backup Framework\received_files'.
+2025-06-02 04:51:36,255 - MainThread - INFO - PyCryptodome library check passed: Basic crypto operations are available.
+2025-06-02 04:51:36,256 - MainThread - WARNING - Port configuration file 'port.info' not found. Using default port 1256.
+2025-06-02 04:51:36,257 - MainThread - INFO - Performing server startup checks...
+2025-06-02 04:51:36,257 - MainThread - INFO - Startup permission checks passed.
+2025-06-02 04:51:36,258 - MainThread - INFO - File storage directory is set to: 'C:\Users\tom7s\Desktopp\Claude Folder 2\Client Server Encrypted Backup Framework\received_files'
+2025-06-02 04:51:36,258 - MainThread - INFO - Initializing database schema in 'defensive.db' if needed...
+2025-06-02 04:51:36,281 - MainThread - INFO - Database schema initialization complete.
+2025-06-02 04:51:36,282 - MainThread - INFO - Loading existing clients from database into memory...
+2025-06-02 04:51:36,285 - MainThread - INFO - Successfully loaded 0 client(s) from database.
+2025-06-02 04:51:36,288 - MaintenanceThread - INFO - Server maintenance thread started.
+2025-06-02 04:51:36,288 - MainThread - INFO - Encrypted Backup Server Version 3 started successfully on port 1256.
+2025-06-02 04:51:36,289 - MainThread - INFO - Maximum concurrent client handlers: 50.
+2025-06-02 04:51:36,289 - MainThread - INFO - Server is now listening for incoming client connections...
+2025-06-02 04:51:36,292 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-02 04:51:36]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-02 04:52:36,302 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-02 04:52:36]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-02 04:53:36,309 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-02 04:53:36]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-02 04:54:36,316 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-02 04:54:36]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-02 04:58:16,485 - MainThread - INFO - PyCryptodome library check passed: Basic crypto operations are available.
+2025-06-02 04:58:16,485 - MainThread - WARNING - Port configuration file 'port.info' not found. Using default port 1256.
+2025-06-02 04:58:16,486 - MainThread - INFO - Performing server startup checks...
+2025-06-02 04:58:16,486 - MainThread - INFO - Startup permission checks passed.
+2025-06-02 04:58:16,486 - MainThread - INFO - File storage directory is set to: 'C:\Users\tom7s\Desktopp\Claude Folder 2\Client Server Encrypted Backup Framework\received_files'
+2025-06-02 04:58:16,486 - MainThread - INFO - Initializing database schema in 'defensive.db' if needed...
+2025-06-02 04:58:16,487 - MainThread - INFO - Database schema initialization complete.
+2025-06-02 04:58:16,488 - MainThread - INFO - Loading existing clients from database into memory...
+2025-06-02 04:58:16,489 - MainThread - INFO - Successfully loaded 0 client(s) from database.
+2025-06-02 04:58:16,492 - MaintenanceThread - INFO - Server maintenance thread started.
+2025-06-02 04:58:16,492 - MainThread - INFO - Encrypted Backup Server Version 3 started successfully on port 1256.
+2025-06-02 04:58:16,492 - MainThread - INFO - Maximum concurrent client handlers: 50.
+2025-06-02 04:58:16,493 - MainThread - INFO - Server is now listening for incoming client connections...
+2025-06-02 04:58:16,493 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-02 04:58:16]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-02 04:59:16,508 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-02 04:59:16]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-02 05:00:16,520 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-02 05:00:16]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
