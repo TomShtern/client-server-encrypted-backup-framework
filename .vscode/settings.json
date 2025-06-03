@@ -8,5 +8,7 @@
     "C_Cpp.default.includePath": [
         "${workspaceFolder}/client/include",
         "${workspaceFolder}/client/src"
-    ]
+    ],
+    "cmake.ignoreCMakeListsMissing": true,
+    "github.copilot.nextEditSuggestions.enabled": true
 }

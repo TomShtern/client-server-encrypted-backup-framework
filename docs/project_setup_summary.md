@@ -76,3 +76,123 @@
 ---
 
 **You are now ready for a clean, portable build setup!**
+
+
+
+
+
+
+#* the other project_setup_summary.md file: *#
+
+
+# Encrypted File Backup System - Task Summary
+
+This document provides an overview of all tasks created for the Encrypted File Backup System project.
+
+## Project Overview
+
+The Encrypted File Backup System is a client-server application that enables secure file backup with encryption. The system comprises:
+- A C++ client application
+- A Python server application
+- Secure communication with RSA/AES encryption
+- CRC checksums for data integrity
+- Reconnection capability for interrupted transfers
+
+## Task Structure
+
+Each task has the following attributes:
+- ID: A unique identifier
+- Title: A short description
+- Description: Detailed requirements
+- Status: Current progress state (pending, in-progress, done, etc.)
+- Priority: Importance level (high, medium, low)
+- Dependencies: Other tasks that must be completed first
+
+## High-Priority Tasks
+
+### Client Implementation
+
+1. **Implement client registration functionality** (TASK-mbgdqo0y-37zz8)
+   - Create the client-side logic to register with the server and generate unique identifiers (UUID)
+
+2. **Implement RSA key exchange (client)** (TASK-mbgdrbij-f1s34)
+   - Implement RSA key generation and exchange mechanism on the client side
+
+3. **Implement file transmission (client)** (TASK-mbgdsn5z-tclgb)
+   - Create the functionality to send encrypted files to the server
+
+### Server Implementation
+
+1. **Implement server registration handler** (TASK-mbgdr2ng-4iimz)
+   - Develop the server-side functionality to accept client registration requests
+
+2. **Implement key management (server)** (TASK-mbgdri42-slb23)
+   - Handle client public keys and generate AES keys for symmetric encryption
+
+3. **Implement file reception (server)** (TASK-mbgdsu15-whcze)
+   - Receive encrypted files from clients and store them securely
+
+## Medium-Priority Tasks
+
+### Core Functionality
+
+1. **Implement file encryption (client)** (TASK-mbgdruf2-9l8qq)
+   - Encrypt files using AES before transmission
+
+2. **Implement CRC verification** (TASK-mbgds3b6-cihyd)
+   - Generate and validate CRC checksums for file integrity
+
+3. **Implement reconnection mechanism (client)** (TASK-mbgdt0ce-v9sgc)
+   - Resume operations after a disconnection
+
+4. **Implement reconnection handling (server)** (TASK-mbgdt4yd-47x85)
+   - Support client reconnections on the server side
+
+### Error Handling and Testing
+
+1. **Implement error handling (client)** (TASK-mbgdtb0z-jr0rl)
+   - Add robust error handling throughout the client application
+
+2. **Implement error handling (server)** (TASK-mbgdtfta-764pv)
+   - Add robust error handling throughout the server application
+
+3. **Create unit tests (client)** (TASK-mbgdtm02-31fu6)
+   - Develop tests for all major client components
+
+4. **Create unit tests (server)** (TASK-mbgdtqk1-md2yo)
+   - Develop tests for all major server components
+
+## Low-Priority Tasks
+
+1. **Create integration tests** (TASK-mbgdtwqh-r319r)
+   - Verify end-to-end functionality of the system
+
+2. **Create system documentation** (TASK-mbgdu4w9-z753p)
+   - Document the system architecture, APIs, and usage instructions
+
+## Development Workflow
+
+1. Start with the registration functionality (both client and server)
+2. Proceed to implement RSA/AES key exchange
+3. Implement file encryption and transmission
+4. Add error handling and reconnection mechanisms
+5. Create tests and documentation
+
+## File Structure
+
+- **Client**: C++ application in the `/client` directory
+- **Server**: Python application in the `/server` directory
+- **Documentation**: Specification in the `/docs` directory
+- **Tasks**: Task information in the `/_ZENTASKS` directory
+
+## Getting Started
+
+To start working on this project, please:
+1. Review the `/docs/specification.md` file
+2. Examine the task dependencies to determine which tasks to start with
+3. Check the implementation details in each task file
+4. Update task status as you progress
+
+## Note
+
+All tasks are currently in the "pending" status. To update a task's status, edit the corresponding file in the `/_ZENTASKS` directory.

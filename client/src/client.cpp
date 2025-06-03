@@ -545,10 +545,12 @@ bool Client::loadPrivateKey() {
         keyFile.close();
         
         try {
-            rsaPrivate = new RSAPrivateWrapper(keyData);
+            // priv.key contains binary DER data, use the char* constructor
+            rsaPrivate = new RSAPrivateWrapper(keyData.c_str(), keyData.length());
             displayStatus("Private key loaded", true, "From priv.key");
             return true;
-        } catch (...) {
+        } catch (const std::exception& e) {
+            displayStatus("Loading private key", false, std::string("Failed to parse priv.key: ") + e.what());
             delete rsaPrivate;
             rsaPrivate = nullptr;
         }
@@ -688,6 +690,14 @@ bool Client::sendRequest(uint16_t code, const std::vector<uint8_t>& payload) {
         header.code = code;
         header.payload_size = static_cast<uint32_t>(payload.size());
         
+        // Debug: show header values for important requests
+        if (code == REQ_REGISTER || code == REQ_RECONNECT || code == REQ_SEND_PUBLIC_KEY) {
+            displayStatus("Debug: Request header", true, 
+                         "Version=" + std::to_string(header.version) + 
+                         ", Code=" + std::to_string(header.code) + 
+                         ", PayloadSize=" + std::to_string(header.payload_size));
+        }
+        
         // Send header
         boost::asio::write(*socket, boost::asio::buffer(&header, sizeof(header)));
         
@@ -754,8 +764,12 @@ bool Client::performRegistration() {
     // Prepare registration payload
     std::vector<uint8_t> payload(MAX_NAME_SIZE, 0);
     std::copy(username.begin(), username.end(), payload.begin());
+      displayStatus("Sending registration", true, "Username: " + username);
     
-    displayStatus("Sending registration", true, "Username: " + username);
+    // Debug: show what we're sending
+    displayStatus("Debug: Registration packet", true, 
+                 "Payload size=" + std::to_string(payload.size()) + 
+                 " bytes, Username='" + username + "'");
     
     // Send registration request
     if (!sendRequest(REQ_REGISTER, payload)) {
@@ -1094,9 +1108,16 @@ std::string Client::encryptFile(const std::vector<uint8_t>& data) {
         displayError("No AES key available", ErrorType::CRYPTO);
         return "";
     }
-    
-    try {
+      try {
         auto start = std::chrono::steady_clock::now();
+        // Debug: Check actual AES key size
+        displayStatus("AES key debug", true, "Key size: " + std::to_string(aesKey.size()) + " bytes");
+        
+        if (aesKey.size() != 32) {
+            displayError("Invalid AES key size: " + std::to_string(aesKey.size()) + " bytes (expected 32)", ErrorType::CRYPTO);
+            return "";
+        }
+        
         // Use 32-byte key and static IV of all zeros for protocol compliance
         AESWrapper aes(reinterpret_cast<const unsigned char*>(aesKey.c_str()), 32, true);
         std::string result = aes.encrypt(reinterpret_cast<const char*>(data.data()), data.size());
