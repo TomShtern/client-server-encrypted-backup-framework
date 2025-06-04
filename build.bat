@@ -11,9 +11,21 @@ REM Set environment variables for the compiler
 set "LIB=%LIB_PATH%;%WIN_SDK_LIB%;%WIN_SDK_UCRT%;%LIB%"
 set "INCLUDE=%INCLUDE_PATH%;%WIN_SDK_INCLUDE%\um;%WIN_SDK_INCLUDE%\shared;%WIN_SDK_INCLUDE%\ucrt;%INCLUDE%"
 
-REM 2) Compile all client sources and required Crypto++ sources into EncryptedBackupClient.exe
-"%CL_PATH%" /EHsc /D_WIN32_WINNT=0x0601 /std:c++17 /DCRYPTOPP_DISABLE_ASM=1 /I"client\include" /I"client\config" /I"crypto++" /I"C:\Users\tom7s\Downloads\boost_1_88_0\boost_1_88_0" /Fe:"client\EncryptedBackupClient.exe" ^
-client\src\*.cpp ^
+REM Create build directories if they don't exist
+if not exist "build" mkdir "build"
+if not exist "build\client" mkdir "build\client"
+if not exist "build\crypto++" mkdir "build\crypto++"
+
+REM 1) Compile client sources to build\client\
+echo Compiling client sources...
+"%CL_PATH%" /EHsc /D_WIN32_WINNT=0x0601 /std:c++17 /c /I"client\include" /I"client\config" /I"crypto++" /I"C:\Users\tom7s\Downloads\boost_1_88_0\boost_1_88_0" /Fo:"build\client\\" ^
+client\src\*.cpp
+
+REM 2) Compile required Crypto++ sources to build\crypto++\
+echo Compiling Crypto++ sources...
+REM 2) Compile required Crypto++ sources to build\crypto++\
+echo Compiling Crypto++ sources...
+"%CL_PATH%" /EHsc /D_WIN32_WINNT=0x0601 /std:c++17 /DCRYPTOPP_DISABLE_ASM=1 /c /I"crypto++" /Fo:"build\crypto++\\" ^
 crypto++\rijndael.cpp ^
 crypto++\base64.cpp ^
 crypto++\filters.cpp ^
@@ -61,7 +73,13 @@ crypto++\darn.cpp ^
 crypto++\simple.cpp ^
 crypto++\rijndael_simd.cpp ^
 crypto++\algebra_instantiations.cpp ^
-crypto++\abstract_implementations.cpp ^
-ws2_32.lib advapi32.lib user32.lib
+crypto++\abstract_implementations.cpp
+
+REM 3) Link all object files to create the executable
+echo Linking executable...
+"%CL_PATH%" /EHsc /D_WIN32_WINNT=0x0601 /std:c++17 /Fe:"client\EncryptedBackupClient.exe" ^
+build\client\*.obj ^
+build\crypto++\*.obj ^
+ws2_32.lib advapi32.lib user32.lib gdi32.lib shell32.lib
 
 echo Build complete. Executable at client\EncryptedBackupClient.exe

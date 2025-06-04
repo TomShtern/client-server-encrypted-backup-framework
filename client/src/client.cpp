@@ -35,6 +35,11 @@
 #include "Base64Wrapper.h"
 #include "RSAWrapper.h"
 
+// Optional GUI support
+#ifdef _WIN32
+#include "clientGUIV2.h"
+#endif
+
 // Protocol constants
 constexpr uint8_t CLIENT_VERSION = 3;
 constexpr uint8_t SERVER_VERSION = 3;
@@ -259,6 +264,13 @@ Client::Client() : socket(nullptr), connected(false), rsaPrivate(nullptr),
     hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     GetConsoleScreenBufferInfo(hConsole, &consoleInfo);
     savedAttributes = consoleInfo.wAttributes;
+    
+    // Initialize GUI (optional - graceful failure)
+    try {
+        ClientGUIHelpers::initializeGUI();
+    } catch (...) {
+        // GUI initialization failed - continue without GUI
+    }
 #endif
 }
 
@@ -271,6 +283,13 @@ Client::~Client() {
     }
 #ifdef _WIN32
     SetConsoleTextAttribute(hConsole, savedAttributes);
+    
+    // Shutdown GUI (optional - graceful failure)
+    try {
+        ClientGUIHelpers::shutdownGUI();
+    } catch (...) {
+        // GUI shutdown failed - continue cleanup
+    }
 #endif
 }
 
@@ -621,15 +640,29 @@ bool Client::connectToServer() {
         
         // Set socket options for timeouts and keep-alive
         socket->set_option(boost::asio::ip::tcp::no_delay(true));
-        
-        connected = true;
+          connected = true;
         displayStatus("Connected", true, "TCP connection established");
+        
+        // Update GUI connection status (optional)
+        try {
+            ClientGUIHelpers::updateConnectionStatus(true);
+        } catch (...) {
+            // GUI update failed - continue without GUI
+        }
+        
         return true;
         
-    } catch (const std::exception& e) {
-        displayError("Connection failed: " + std::string(e.what()), ErrorType::NETWORK);
+    } catch (const std::exception& e) {        displayError("Connection failed: " + std::string(e.what()), ErrorType::NETWORK);
         socket.reset();
         connected = false;
+        
+        // Update GUI connection status (optional)
+        try {
+            ClientGUIHelpers::updateConnectionStatus(false);
+        } catch (...) {
+            // GUI update failed - continue without GUI
+        }
+        
         return false;
     }
 }
@@ -670,10 +703,16 @@ void Client::closeConnection() {
             socket->close();
         } catch (const std::exception&) {
             // Ignore errors during close
-        }
-    }
+        }    }
     socket.reset();
     connected = false;
+    
+    // Update GUI connection status (optional)
+    try {
+        ClientGUIHelpers::updateConnectionStatus(false);
+    } catch (...) {
+        // GUI update failed - continue without GUI
+    }
 }
 
 // Send request to server
@@ -1253,6 +1292,13 @@ void Client::displayStatus(const std::string& operation, bool success, const std
         SetConsoleTextAttribute(hConsole, savedAttributes);
     }
     std::cout << std::endl;
+    
+    // Update GUI operation status (optional)
+    try {
+        ClientGUIHelpers::updateOperation(operation, success, details);
+    } catch (...) {
+        // GUI update failed - continue without GUI
+    }
 #else
     std::cout << "[" << getCurrentTimestamp() << "] ";
     std::cout << (success ? "[OK] " : "[FAIL] ") << operation;
@@ -1288,6 +1334,21 @@ void Client::displayProgress(const std::string& operation, size_t current, size_
     
     if (current >= total) {
         std::cout << std::endl;
+    }
+    
+    // Update GUI progress (optional)
+    try {
+        std::string speed = "";
+        std::string eta = "";
+        if (stats.currentSpeed > 0) {
+            speed = formatBytes(static_cast<size_t>(stats.currentSpeed)) + "/s";
+        }
+        if (stats.estimatedTimeRemaining > 0) {
+            eta = formatDuration(stats.estimatedTimeRemaining);
+        }
+        ClientGUIHelpers::updateProgress(static_cast<int>(current), static_cast<int>(total), speed, eta);
+    } catch (...) {
+        // GUI update failed - continue without GUI
     }
 #else
     std::cout << "\r" << operation << " " << percentage << "% (" 
@@ -1398,8 +1459,15 @@ void Client::displayError(const std::string& message, ErrorType type) {
             default:
                 break;
         }
-        
-        std::cerr << message << std::endl;
+          std::cerr << message << std::endl;
+    
+    // Update GUI error status and show notification (optional)
+    try {
+        ClientGUIHelpers::updateError(message);
+        ClientGUIHelpers::showNotification("Backup Error", message);
+    } catch (...) {
+        // GUI update failed - continue without GUI
+    }
     // }
 }
 
@@ -1420,6 +1488,13 @@ void Client::displayPhase(const std::string& phase) {
     std::cout << "▶ " << phase << std::endl;
     SetConsoleTextAttribute(hConsole, savedAttributes);
     displaySeparator();
+    
+    // Update GUI phase (optional)
+    try {
+        ClientGUIHelpers::updatePhase(phase);
+    } catch (...) {
+        // GUI update failed - continue without GUI
+    }
 #else
     std::cout << "\n> " << phase << std::endl;
     displaySeparator();
@@ -1443,14 +1518,26 @@ void Client::displaySummary() {
     std::cout << "  File: " << filepath << "\n";
     std::cout << "  Size: " << formatBytes(stats.totalBytes) << "\n";
     std::cout << "  Duration: " << formatDuration(static_cast<int>(totalDuration)) << "\n";
-    std::cout << "  Average Speed: " << formatBytes(static_cast<size_t>(stats.averageSpeed)) << "/s\n";
-    std::cout << "  Server: " << serverIP << ":" << serverPort << "\n";
+    std::cout << "  Average Speed: " << formatBytes(static_cast<size_t>(stats.averageSpeed)) << "/s\n";    std::cout << "  Server: " << serverIP << ":" << serverPort << "\n";
     std::cout << "  Timestamp: " << getCurrentTimestamp() << "\n";
     displaySeparator();
+    
+    // Show GUI completion notification (optional)
+    try {
+        std::string successMessage = "File backup completed successfully!\n\nFile: " + filepath + 
+                                   "\nSize: " + formatBytes(stats.totalBytes) + 
+                                   "\nDuration: " + formatDuration(static_cast<int>(totalDuration));
+        ClientGUIHelpers::showNotification("Backup Complete", successMessage);
+    } catch (...) {
+        // GUI notification failed - continue without GUI
+    }
 }
 
 // Main function
 int main() {
+#ifdef _WIN32
+    MessageBoxA(NULL, "Client main() started", "Debug", MB_OK | MB_ICONINFORMATION);
+#endif
     Client client;
     
     if (!client.initialize()) {

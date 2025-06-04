@@ -18,6 +18,15 @@ from Crypto.Cipher import PKCS1_OAEP
 from Crypto.Util.Padding import pad, unpad
 from Crypto.Random import get_random_bytes
 
+# GUI Integration
+try:
+    from ServerGUI import ServerGUI
+    GUI_AVAILABLE = True
+except ImportError as e:
+    print(f"GUI components not available: {e}")
+    GUI_AVAILABLE = False
+    ServerGUI = None
+
 # --- Server Configuration Constants ---
 SERVER_VERSION = 3
 DEFAULT_PORT = 1256
@@ -251,6 +260,24 @@ class BackupServer:
         self.shutdown_event: threading.Event = threading.Event() # For coordinating graceful shutdown
         self.maintenance_thread: Optional[threading.Thread] = None
         self.client_connection_semaphore: threading.Semaphore = threading.Semaphore(MAX_CONCURRENT_CLIENTS)
+        
+        # Initialize GUI
+        self.gui = None
+        self.gui_enabled = False
+        if GUI_AVAILABLE and ServerGUI is not None:
+            try:
+                self.gui = ServerGUI()
+                self.gui_enabled = self.gui.initialize()
+                if self.gui_enabled:
+                    logger.info("Server GUI initialized successfully")
+                else:
+                    logger.warning("Server GUI initialization failed, continuing without GUI")
+            except Exception as e:
+                logger.warning(f"Failed to initialize server GUI: {e}, continuing without GUI")
+                self.gui = None
+                self.gui_enabled = False
+        else:
+            logger.info("GUI components not available, running in console mode")
         
         self._perform_startup_checks() # Perform pre-flight checks before extensive setup
         self._ensure_storage_dir() # Ensure 'received_files' directory exists
@@ -510,9 +537,21 @@ class BackupServer:
                     f"{'Cleaned Inactive Sessions (This Cycle):':<40} {inactive_clients_removed_count:<10}",
                     f"{'Cleaned Stale Partial Files (This Cycle):':<40} {stale_partial_files_cleaned_count:<10}",
                     f"{'-' * 80}"
-                ]
-                # Log to file normally, print to console in a block
+                ]                # Log to file normally, print to console in a block
                 logger.info("\n" + "\n".join(status_lines))
+                
+                # Update GUI with current stats
+                if isinstance(db_total_clients_count, int):
+                    self._update_gui_client_count(connected=active_clients_in_memory, total=db_total_clients_count)
+                else:
+                    self._update_gui_client_count(connected=active_clients_in_memory)
+                
+                # Update GUI with maintenance stats
+                self._update_gui_maintenance_stats(
+                    files_cleaned=0,  # Could track file cleanup if implemented
+                    partial_files_cleaned=stale_partial_files_cleaned_count,
+                    clients_cleaned=inactive_clients_removed_count
+                )
 
 
             except Exception as e: # Catch-all for any unexpected errors within the maintenance loop
@@ -562,6 +601,10 @@ class BackupServer:
         logger.info(f"Encrypted Backup Server Version {SERVER_VERSION} started successfully on port {self.port}.")
         logger.info(f"Maximum concurrent client handlers: {MAX_CONCURRENT_CLIENTS}.")
         logger.info("Server is now listening for incoming client connections...")
+        
+        # Update GUI with server status
+        self._update_gui_status(True, "0.0.0.0", self.port)
+        self._update_gui_client_count()
         
         # Main server loop: accepts new client connections
         try:
@@ -631,6 +674,9 @@ class BackupServer:
         # significantly increases complexity (e.g., if a client connection is stalled).
 
         logger.info("Server has been stopped.")
+        
+        # Update GUI to show server stopped
+        self._update_gui_status(False)
 
 
     def _read_exact(self, sock: socket.socket, num_bytes: int) -> bytes:
@@ -947,6 +993,10 @@ class BackupServer:
                 self._save_client_to_db(new_client) # Persist the new client's basic info to the database
             
             logger.info(f"Client '{client_name}' successfully registered with New Client ID: {new_client_id_bytes.hex()}.")
+            
+            # Update GUI with new client registration
+            self._update_gui_client_count()
+            self._update_gui_success(f"New client '{client_name}' registered successfully")
             # Send Registration Success (1600) response with the new client ID as payload
             self._send_response(sock, RESP_REG_OK, new_client_id_bytes)
         
@@ -1235,6 +1285,10 @@ class BackupServer:
                             f_temp.write(decrypted_data)
                         os.rename(temp_save_path, final_save_path) # Atomically rename (on POSIX if same filesystem)
                         logger.info(f"Client '{client.name}': File '{filename_str}' (Original Size: {original_file_size} bytes) successfully decrypted and saved to storage path: '{final_save_path}'.")
+                        
+                        # Update GUI with transfer statistics
+                        self._update_gui_transfer_stats(bytes_transferred=original_file_size)
+                        self._update_gui_success(f"File '{filename_str}' received from client '{client.name}'")
                     except OSError as e_os_save: # Catch errors during file write or rename
                         raise FileError(f"Failed to save decrypted file '{filename_str}' to server storage: {e_os_save}") from e_os_save
                     
@@ -1392,9 +1446,90 @@ class BackupServer:
             # Process each byte of the length value
             crc = (self._CRC32_TABLE[(crc >> 24) ^ (length & 0xFF)] ^ (crc << 8)) & 0xFFFFFFFF
             length >>= 8 # Shift length to get next byte
-            
-        # The final CRC value is the one's complement of the accumulated CRC
+              # The final CRC value is the one's complement of the accumulated CRC
         return (~crc) & 0xFFFFFFFF 
+
+    # --- GUI Helper Methods ---
+    def _update_gui_status(self, running: bool, address: str = "", port: int = 0):
+        """Update GUI server status if available."""
+        if self.gui_enabled and self.gui:
+            try:
+                self.gui.update_server_status(running, address, port)
+            except Exception as e:
+                logger.debug(f"GUI status update failed: {e}")
+
+    def _update_gui_client_count(self, connected=None, total=None, active_transfers=None):
+        """Update GUI with current client count."""
+        if self.gui_enabled and self.gui:
+            try:
+                # Build arguments dict to only pass non-None values
+                kwargs = {}
+                if connected is not None:
+                    kwargs['connected'] = connected
+                elif hasattr(self, 'clients') and hasattr(self, 'clients_lock'):
+                    # If connected not provided, get current count
+                    with self.clients_lock:
+                        kwargs['connected'] = len(self.clients)
+                
+                if total is not None:
+                    kwargs['total'] = total
+                if active_transfers is not None:
+                    kwargs['active_transfers'] = active_transfers
+                
+                if kwargs:  # Only call if we have something to update
+                    self.gui.update_client_stats(**kwargs)
+            except Exception as e:
+                logger.debug(f"GUI client count update failed: {e}")
+
+    def _update_gui_transfer_stats(self, bytes_transferred=None, last_activity=None):
+        """Update GUI with transfer statistics."""
+        if self.gui_enabled and self.gui:
+            try:
+                # Build arguments dict to only pass non-None values
+                kwargs = {}
+                if bytes_transferred is not None:
+                    kwargs['bytes_transferred'] = bytes_transferred
+                if last_activity is not None:
+                    kwargs['last_activity'] = last_activity
+                else:
+                    kwargs['last_activity'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                
+                self.gui.update_transfer_stats(**kwargs)
+            except Exception as e:
+                logger.debug(f"GUI transfer stats update failed: {e}")
+
+    def _update_gui_maintenance_stats(self, files_cleaned=0, partial_files_cleaned=0, 
+                                    clients_cleaned=0, last_cleanup=None):
+        """Update GUI with maintenance statistics."""
+        if self.gui_enabled and self.gui:
+            try:
+                if last_cleanup is None:
+                    last_cleanup = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                stats = {
+                    'files_cleaned': files_cleaned,
+                    'partial_files_cleaned': partial_files_cleaned,
+                    'clients_cleaned': clients_cleaned,
+                    'last_cleanup': last_cleanup
+                }
+                self.gui.update_maintenance_stats(stats)
+            except Exception as e:
+                logger.debug(f"GUI maintenance stats update failed: {e}")
+
+    def _update_gui_error(self, error_message: str):
+        """Update GUI with error information."""
+        if self.gui_enabled and self.gui:
+            try:
+                self.gui.show_error(error_message)
+            except Exception as e:
+                logger.debug(f"GUI error update failed: {e}")
+    
+    def _update_gui_success(self, success_message: str):
+        """Update GUI with success information."""
+        if self.gui_enabled and self.gui:
+            try:
+                self.gui.show_success(success_message)
+            except Exception as e:
+                logger.debug(f"GUI success update failed: {e}")
 
 
 # --- Main Execution Guard ---

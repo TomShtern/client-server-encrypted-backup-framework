@@ -10,5 +10,8 @@
         "${workspaceFolder}/client/src"
     ],
     "cmake.ignoreCMakeListsMissing": true,
-    "github.copilot.nextEditSuggestions.enabled": true
+    "github.copilot.nextEditSuggestions.enabled": true,
+    "files.associations": {
+        "memory": "cpp"
+    }
 }
