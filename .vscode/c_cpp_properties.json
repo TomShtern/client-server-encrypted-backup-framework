@@ -1,0 +1,31 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/client/include",
+                "${workspaceFolder}/crypto++",
+                "C:/Users/tom7s/Downloads/boost_1_88_0/boost_1_88_0",
+                "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/VC/Tools/MSVC/14.44.35207/include",
+                "C:/Program Files (x86)/Windows Kits/10/Include/10.0.22621.0/um",
+                "C:/Program Files (x86)/Windows Kits/10/Include/10.0.22621.0/shared",
+                "C:/Program Files (x86)/Windows Kits/10/Include/10.0.22621.0/ucrt"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE",
+                "_WIN32_WINNT=0x0601",
+                "CRYPTOPP_DISABLE_ASM=1",
+                "CRYPTOPP_MANUALLY_INSTANTIATE_TEMPLATES=1"
+            ],
+            "windowsSdkVersion": "10.0.22621.0",
+            "compilerPath": "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/cl.exe",
+            "cStandard": "c17",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "windows-msvc-x64"
+        }
+    ],
+    "version": 4
+}

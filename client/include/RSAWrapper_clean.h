@@ -1,7 +1,7 @@
 #pragma once
 
-#include <cryptopp/osrng.h>
-#include <cryptopp/rsa.h>
+#include "../../crypto++/osrng.h"
+#include "../../crypto++/rsa.h"
 #include <string>
 
 class RSAPublicWrapper

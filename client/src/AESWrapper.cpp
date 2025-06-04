@@ -1,9 +1,9 @@
 #include "AESWrapper.h"
-#include <cryptopp/aes.h>
-#include <cryptopp/modes.h>
-#include <cryptopp/osrng.h>
-#include <cryptopp/filters.h>
-#include <cryptopp/hex.h>
+#include "../../crypto++/aes.h"
+#include "../../crypto++/modes.h"
+#include "../../crypto++/osrng.h"
+#include "../../crypto++/filters.h"
+#include "../../crypto++/hex.h"
 #include <stdexcept>
 #include <cstring>
 

@@ -1,0 +1,58 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build with MSVC",
+            "type": "shell",
+            "command": "cmd",
+            "args": [
+                "/c",
+                "\"C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\VC\\Auxiliary\\Build\\vcvarsall.bat\" x64 && build.bat"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "Clean Build",
+            "type": "shell",
+            "command": "cmd",
+            "args": [
+                "/c",
+                "del /q client\\EncryptedBackupClient.exe 2>nul & echo Cleaned build artifacts"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            }
+        },
+        {
+            "label": "Run Client",
+            "type": "shell",
+            "command": "cmd",
+            "args": [
+                "/c",
+                "cd client && .\\EncryptedBackupClient.exe"
+            ],
+            "group": "test",
+            "dependsOn": "Build with MSVC",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            }
+        }
+    ]
+}

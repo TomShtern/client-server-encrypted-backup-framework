@@ -1,13 +1,13 @@
 #include "RSAWrapper.h"
-#include <cryptopp/rsa.h>
-#include <cryptopp/osrng.h>
-#include <cryptopp/pssr.h>
-#include <cryptopp/oaep.h>
-#include <cryptopp/filters.h>
-#include <cryptopp/hex.h>
-#include <cryptopp/queue.h>
-#include <cryptopp/integer.h>
-#include <cryptopp/base64.h>
+#include "../crypto++/rsa.h"
+#include "../crypto++/osrng.h"
+#include "../crypto++/pssr.h"
+#include "../crypto++/oaep.h"
+#include "../crypto++/filters.h"
+#include "../crypto++/hex.h"
+#include "../crypto++/queue.h"
+#include "../crypto++/integer.h"
+#include "../crypto++/base64.h"
 #include <fstream>
 #include <stdexcept>
 

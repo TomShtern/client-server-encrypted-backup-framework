@@ -2,8 +2,8 @@
 
 #include <string>
 #include <vector>
-#include <cryptopp/rsa.h>
-#include <cryptopp/osrng.h>
+#include "../../crypto++/rsa.h"
+#include "../../crypto++/osrng.h"
 
 class RSAPublicWrapper {
 public:
