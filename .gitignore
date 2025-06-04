@@ -1,4 +1,43 @@
 # Root .gitignore for Encrypted Backup Framework
 
-# Ignore object files
+# Build artifacts and IDE files
+build/
+msvc-debug/
+x64/
+lib/Debug/
+client.dir/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+ALL_BUILD.vcxproj*
+ZERO_CHECK.vcxproj*
+EncryptedBackupClient.sln*
+*.vcxproj*
+
+# Object and binary files
 *.obj
+*.exe
+*.ilk
+*.pdb
+*.tlog
+
+# Backup and temp files
+*.bak
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+_ZENTASKS
+
+# Ignore SQLite database files
+**/defensive.db
+
+# Ignore server log files
+**/server.log
+
+# Additional build artifacts
+*.log
+*.out
+client/EncryptedBackupClient.exe
