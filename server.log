@@ -95,3 +95,2248 @@ Verified Files (DB):                     0
 Cleaned Inactive Sessions (This Cycle):  0         
 Cleaned Stale Partial Files (This Cycle): 0         
 --------------------------------------------------------------------------------
+2025-06-03 21:28:59,376 - MainThread - INFO - PyCryptodome library check passed: Basic crypto operations are available.
+2025-06-03 21:28:59,377 - MainThread - WARNING - Port configuration file 'port.info' not found. Using default port 1256.
+2025-06-03 21:28:59,377 - MainThread - INFO - Performing server startup checks...
+2025-06-03 21:28:59,378 - MainThread - INFO - Startup permission checks passed.
+2025-06-03 21:28:59,378 - MainThread - INFO - File storage directory is set to: 'C:\Users\tom7s\Desktopp\Claude Folder 2\Client Server Encrypted Backup Framework\received_files'
+2025-06-03 21:28:59,379 - MainThread - INFO - Initializing database schema in 'defensive.db' if needed...
+2025-06-03 21:28:59,399 - MainThread - INFO - Database schema initialization complete.
+2025-06-03 21:28:59,399 - MainThread - INFO - Loading existing clients from database into memory...
+2025-06-03 21:28:59,401 - MainThread - INFO - Successfully loaded 0 client(s) from database.
+2025-06-03 21:28:59,405 - MaintenanceThread - INFO - Server maintenance thread started.
+2025-06-03 21:28:59,406 - MainThread - INFO - Encrypted Backup Server Version 3 started successfully on port 1256.
+2025-06-03 21:28:59,406 - MainThread - INFO - Maximum concurrent client handlers: 50.
+2025-06-03 21:28:59,406 - MainThread - INFO - Server is now listening for incoming client connections...
+2025-06-03 21:28:59,409 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 21:28:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 21:29:59,421 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 21:29:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 21:30:59,432 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 21:30:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 21:31:59,437 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 21:31:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 21:32:59,443 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 21:32:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 21:33:59,449 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 21:33:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 21:34:59,452 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 21:34:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 21:35:59,456 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 21:35:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 21:36:59,459 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 21:36:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 21:37:59,475 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 21:37:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 21:38:59,488 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 21:38:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 21:39:59,493 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 21:39:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 21:40:59,499 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 21:40:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 21:41:59,516 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 21:41:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 21:42:59,519 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 21:42:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 21:43:59,524 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 21:43:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 21:44:59,529 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 21:44:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 21:45:59,531 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 21:45:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 21:46:59,536 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 21:46:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 21:47:59,548 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 21:47:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 21:48:59,561 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 21:48:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 21:49:59,570 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 21:49:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 21:50:59,588 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 21:50:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 21:51:59,598 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 21:51:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 21:52:59,611 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 21:52:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 21:53:59,623 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 21:53:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 21:54:59,627 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 21:54:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 21:55:59,643 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 21:55:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 21:56:59,659 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 21:56:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 21:57:59,676 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 21:57:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 21:58:59,684 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 21:58:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 21:59:59,691 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 21:59:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:00:59,699 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:00:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:01:59,713 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:01:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:02:59,722 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:02:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:03:59,740 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:03:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:04:59,753 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:04:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:05:59,766 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:05:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:06:59,772 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:06:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:07:59,786 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:07:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:08:59,797 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:08:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:09:59,804 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:09:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:10:59,815 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:10:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:11:59,825 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:11:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:12:59,834 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:12:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:13:59,839 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:13:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:14:59,857 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:14:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:15:59,877 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:15:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:16:59,913 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:16:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:17:59,924 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:17:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:18:59,945 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:18:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:19:59,951 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:19:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:20:59,958 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:20:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:21:59,972 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:21:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:22:59,993 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:22:59]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:24:00,007 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:24:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:25:00,017 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:25:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:26:00,026 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:26:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:27:00,038 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:27:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:28:00,044 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:28:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:29:00,061 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:29:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:30:00,074 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:30:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:31:00,085 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:31:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:32:00,102 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:32:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:33:00,110 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:33:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:34:00,114 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:34:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:35:00,133 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:35:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:36:00,150 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:36:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:37:00,159 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:37:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:38:00,174 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:38:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:39:00,182 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:39:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:40:00,194 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:40:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:41:00,209 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:41:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:42:00,215 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:42:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:43:00,224 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:43:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:44:00,238 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:44:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:45:00,254 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:45:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:46:00,258 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:46:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:47:00,273 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:47:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:48:00,283 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:48:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:49:00,303 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:49:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:50:00,309 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:50:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:51:00,325 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:51:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:52:00,336 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:52:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:53:00,345 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:53:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:54:00,353 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:54:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:55:00,372 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:55:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:56:00,382 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:56:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:57:00,393 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:57:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:58:00,398 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:58:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 22:59:00,411 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 22:59:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:00:00,423 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:00:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:01:00,431 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:01:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:02:00,437 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:02:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:03:00,446 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:03:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:04:00,461 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:04:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:05:00,467 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:05:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:06:00,471 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:06:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:07:00,482 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:07:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:08:00,486 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:08:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:09:00,489 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:09:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:10:00,503 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:10:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:11:00,518 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:11:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:12:00,530 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:12:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:13:00,534 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:13:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:14:00,546 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:14:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:15:00,555 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:15:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:16:00,568 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:16:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:17:00,586 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:17:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:18:00,619 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:18:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:19:00,628 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:19:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:20:00,645 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:20:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:21:00,700 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:21:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:22:00,704 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:22:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:23:00,710 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:23:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:24:00,717 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:24:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:25:00,728 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:25:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:26:00,734 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:26:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:27:00,742 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:27:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:28:00,753 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:28:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:29:00,766 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:29:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:30:00,776 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:30:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:31:00,791 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:31:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:32:00,802 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:32:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:33:00,806 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:33:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:34:00,814 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:34:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:35:00,831 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:35:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:36:00,848 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:36:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:37:00,850 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:37:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:38:00,867 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:38:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:39:00,884 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:39:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:40:00,893 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:40:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:41:00,904 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:41:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:42:00,908 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:42:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:43:00,915 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:43:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:44:00,919 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:44:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:45:00,933 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:45:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:46:00,941 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:46:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:47:00,956 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:47:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:48:00,969 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:48:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:49:00,981 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:49:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:50:00,991 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:50:00]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:51:01,006 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:51:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:52:01,019 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:52:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:53:01,032 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:53:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:54:01,038 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:54:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:55:01,044 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:55:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:56:01,050 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:56:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:57:01,067 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:57:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:58:01,080 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:58:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-03 23:59:01,087 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-03 23:59:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:00:01,091 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:00:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:01:01,102 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:01:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:02:01,114 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:02:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:03:01,130 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:03:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:04:01,149 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:04:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:05:01,167 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:05:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:06:01,179 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:06:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:07:01,199 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:07:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:08:01,203 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:08:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:09:01,208 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:09:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:10:01,226 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:10:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:11:01,236 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:11:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:12:01,242 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:12:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:13:01,246 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:13:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:14:01,263 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:14:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:15:01,278 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:15:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:16:01,281 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:16:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:17:01,286 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:17:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:18:01,302 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:18:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:19:01,304 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:19:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:20:01,320 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:20:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:21:01,327 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:21:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:22:01,336 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:22:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:23:01,348 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:23:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:24:01,355 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:24:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:25:01,371 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:25:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:26:01,386 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:26:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:27:01,402 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:27:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:28:01,418 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:28:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:29:01,431 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:29:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:30:01,438 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:30:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:31:01,448 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:31:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:32:01,454 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:32:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:33:01,459 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:33:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:34:01,476 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:34:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:35:01,489 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:35:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:36:01,504 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:36:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:37:01,520 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:37:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:38:01,523 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:38:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:39:01,529 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:39:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:40:01,531 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:40:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:41:01,539 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:41:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:42:01,545 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:42:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:43:01,549 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:43:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:44:01,552 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:44:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:45:01,564 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:45:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:46:01,568 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:46:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:47:01,573 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:47:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:48:01,581 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:48:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:49:01,587 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:49:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:50:01,600 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:50:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:51:01,614 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:51:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:52:01,626 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:52:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:53:01,636 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:53:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:54:01,649 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:54:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:55:01,665 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:55:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:56:01,682 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:56:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:57:01,693 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:57:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:58:01,706 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:58:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 00:59:01,719 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 00:59:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 01:00:01,726 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 01:00:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 01:01:01,736 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 01:01:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 01:02:01,752 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 01:02:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 01:03:01,767 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 01:03:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 01:04:01,771 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 01:04:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 01:05:01,780 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 01:05:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 01:06:01,785 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 01:06:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 01:07:01,797 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 01:07:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 01:08:01,809 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 01:08:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 01:09:01,818 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 01:09:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 01:10:01,834 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 01:10:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 01:11:01,849 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 01:11:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 01:12:01,859 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 01:12:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 01:13:01,868 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 01:13:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 01:14:01,882 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 01:14:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 01:15:01,891 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 01:15:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 01:16:01,908 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 01:16:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 01:17:01,924 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 01:17:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 01:18:01,939 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 01:18:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 01:19:01,948 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 01:19:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 01:20:01,950 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 01:20:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 01:21:01,963 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 01:21:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 01:22:01,982 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 01:22:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 01:23:02,000 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 01:23:01]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 01:24:02,011 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 01:24:02]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 01:25:02,028 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 01:25:02]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 01:26:02,033 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 01:26:02]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 01:27:02,044 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 01:27:02]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 01:28:02,069 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 01:28:02]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 01:29:02,080 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 01:29:02]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 01:30:02,092 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 01:30:02]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 01:31:02,134 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 01:31:02]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 01:32:02,147 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 01:32:02]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 01:33:02,149 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 01:33:02]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 01:34:02,156 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 01:34:02]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 01:35:02,167 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 01:35:02]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------
+2025-06-04 01:36:02,181 - MaintenanceThread - INFO - 
+[Server Status @ 2025-06-04 01:36:02]                                           
+Active Client Sessions (In-Memory):      0         
+Total Registered Clients (DB):           0         
+Total Files Stored (DB):                 0         
+Verified Files (DB):                     0         
+Cleaned Inactive Sessions (This Cycle):  0         
+Cleaned Stale Partial Files (This Cycle): 0         
+--------------------------------------------------------------------------------

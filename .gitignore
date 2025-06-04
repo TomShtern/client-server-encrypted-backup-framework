@@ -1,30 +1,4 @@
-# Build artifacts and IDE files
-build/
-msvc-debug/
-x64/
-lib/Debug/
-client.dir/
-CMakeFiles/
-CMakeCache.txt
-cmake_install.cmake
-ALL_BUILD.vcxproj*
-ZERO_CHECK.vcxproj*
-EncryptedBackupClient.sln*
-*.vcxproj*
+# Root .gitignore for Encrypted Backup Framework
 
-# Object and binary files
+# Ignore object files
 *.obj
-*.exe
-*.ilk
-*.pdb
-*.tlog
-
-# Backup and temp files
-*.bak
-*~
-
-# OS files
-.DS_Store
-Thumbs.db
-
-_ZENTASKS

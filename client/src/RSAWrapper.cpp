@@ -153,6 +153,10 @@ RSAPrivateWrapper::RSAPrivateWrapper() {
         privateKey.GenerateRandomWithKeySize(rng, RSAPrivateWrapper::BITS);
     } catch (const Exception& e) {
         throw std::runtime_error("Failed to generate RSA key pair: " + std::string(e.what()));
+    } catch (const std::exception& e) {
+        throw std::runtime_error("Failed to generate RSA key pair (std::exception): " + std::string(e.what()));
+    } catch (...) {
+        throw std::runtime_error("Failed to generate RSA key pair: Unknown exception");
     }
 }
 

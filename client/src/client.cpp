@@ -1068,12 +1068,15 @@ bool Client::generateRSAKeys() {
         auto start = std::chrono::steady_clock::now();
         rsaPrivate = new RSAPrivateWrapper();
         auto end = std::chrono::steady_clock::now();
-        
+
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
         displayStatus("RSA key generation", true, "1024-bit keys generated in " + std::to_string(duration) + "ms");
         return true;
+    } catch (const std::exception& e) {
+        displayError("Failed to generate RSA keys: " + std::string(e.what()), ErrorType::CRYPTO);
+        return false;
     } catch (...) {
-        displayError("Failed to generate RSA keys", ErrorType::CRYPTO);
+        displayError("Failed to generate RSA keys: Unknown exception", ErrorType::CRYPTO);
         return false;
     }
 }
