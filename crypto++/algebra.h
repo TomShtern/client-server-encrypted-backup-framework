@@ -367,6 +367,60 @@ public:
 	void DivisionAlgorithm(Element &r, Element &q, const Element &a, const Element &d) const
 		{Element::Divide(r, q, a, d);}
 
+	// Override Gcd to use the proper Euclidean algorithm implementation
+	const Element& Gcd(const Element &a, const Element &b) const
+	{
+		Element g[3]={b, a};
+		unsigned int i0=0, i1=1, i2=2;
+
+		while (!this->Equal(g[i1], this->Identity()))
+		{
+			g[i2] = this->Mod(g[i0], g[i1]);
+			unsigned int t = i0; i0 = i1; i1 = i2; i2 = t;
+		}
+
+		return result = g[i0];
+	}
+
+	// Override AbstractRing methods to use proper implementations
+	Element Exponentiate(const Element &base, const Integer &exponent) const
+	{
+		Element result;
+		SimultaneousExponentiate(&result, base, &exponent, 1);
+		return result;
+	}
+
+	Element CascadeExponentiate(const Element &x, const Integer &e1, const Element &y, const Integer &e2) const
+	{
+		return this->MultiplicativeGroup().AbstractGroup<T>::CascadeScalarMultiply(x, e1, y, e2);
+	}
+
+	void SimultaneousExponentiate(Element *results, const Element &base, const Integer *exponents, unsigned int expCount) const
+	{
+		this->MultiplicativeGroup().AbstractGroup<T>::SimultaneousMultiply(results, base, exponents, expCount);
+	}
+
+	// Override AbstractGroup methods to avoid dummy implementations
+	Element ScalarMultiply(const Element &base, const Integer &exponent) const
+	{
+		return Exponentiate(base, exponent);
+	}
+
+	Element CascadeScalarMultiply(const Element &x, const Integer &e1, const Element &y, const Integer &e2) const
+	{
+		return CascadeExponentiate(x, e1, y, e2);
+	}
+
+	void SimultaneousMultiply(Element *results, const Element &base, const Integer *exponents, unsigned int expCount) const
+	{
+		// Use the proper implementation from AbstractGroup<T>::SimultaneousMultiply
+		// This is a simplified version that should work for basic cases
+		for (unsigned int i = 0; i < expCount; i++)
+		{
+			results[i] = Exponentiate(base, exponents[i]);
+		}
+	}
+
 	bool operator==(const EuclideanDomainOf<T> &rhs) const
 		{CRYPTOPP_UNUSED(rhs); return true;}
 

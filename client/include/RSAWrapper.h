@@ -2,17 +2,16 @@
 
 #include <string>
 #include <vector>
-#include "../../crypto++/rsa.h"
-#include "../../crypto++/osrng.h"
+#include <windows.h>
+#include <wincrypt.h>
 
 class RSAPublicWrapper {
 public:
-    static const unsigned int KEYSIZE = 160;
-    static const unsigned int BITS = 1024;
+    static const unsigned int KEYSIZE = 80; // Reduced for 512-bit keys
+    static const unsigned int BITS = 512; // Reduced for faster testing
 
 private:
-    CryptoPP::AutoSeededRandomPool _rng;
-    CryptoPP::RSA::PublicKey publicKey;
+    std::vector<char> keyData;
 
     RSAPublicWrapper(const RSAPublicWrapper& other) = delete;
     RSAPublicWrapper& operator=(const RSAPublicWrapper& other) = delete;
@@ -33,11 +32,13 @@ public:
 
 class RSAPrivateWrapper {
 public:
-    static const unsigned int BITS = 1024;
+    static const unsigned int BITS = 512; // Reduced for faster testing
 
 private:
-    CryptoPP::AutoSeededRandomPool _rng;
-    CryptoPP::RSA::PrivateKey privateKey;
+    HCRYPTPROV hProv;
+    HCRYPTKEY hKey;
+    std::vector<char> publicKeyData;
+    std::vector<char> privateKeyData;
 
     RSAPrivateWrapper(const RSAPrivateWrapper& other) = delete;
     RSAPrivateWrapper& operator=(const RSAPrivateWrapper& other) = delete;

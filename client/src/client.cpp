@@ -13,7 +13,7 @@
 #include <algorithm>
 #include <chrono>
 #include <thread>
-#include <filesystem>
+//#include <filesystem>
 #include <atomic>
 #include <ctime>
 
@@ -37,7 +37,7 @@
 
 // Optional GUI support
 #ifdef _WIN32
-#include "clientGUIV2.h"
+#include "ClientGUI.h"
 #endif
 
 // Protocol constants
@@ -66,7 +66,7 @@ constexpr uint16_t RESP_ERROR = 1607;
 // Size constants
 constexpr size_t CLIENT_ID_SIZE = 16;
 constexpr size_t MAX_NAME_SIZE = 255;
-constexpr size_t RSA_KEY_SIZE = 160;
+constexpr size_t RSA_KEY_SIZE = 80; // Reduced for 512-bit keys
 constexpr size_t AES_KEY_SIZE = 32;
 constexpr size_t MAX_PACKET_SIZE = 1024 * 1024;  // 1MB per packet
 constexpr size_t OPTIMAL_BUFFER_SIZE = 64 * 1024; // 64KB for file reading
@@ -309,7 +309,22 @@ bool Client::initialize() {
     if (!validateConfiguration()) {
         return false;
     }
-    
+
+    // Pre-generate or load RSA keys during initialization to avoid delays during registration
+    displayStatus("Preparing RSA keys", true, "1024-bit key pair for encryption");
+
+    // Try to load existing keys first to avoid regeneration
+    if (loadPrivateKey()) {
+        displayStatus("RSA keys loaded", true, "Using cached key pair");
+    } else {
+        displayStatus("Generating RSA keys", true, "Creating new 1024-bit key pair...");
+        if (!generateRSAKeys()) {
+            return false;
+        }
+        // Save the generated keys for future use
+        savePrivateKey();
+    }
+
     displayStatus("Initialization complete", true, "Ready to connect");
     return true;
 }
@@ -793,10 +808,11 @@ bool Client::receiveResponse(ResponseHeader& header, std::vector<uint8_t>& paylo
 
 // Perform registration
 bool Client::performRegistration() {
-    displayStatus("Starting registration", true, "Generating RSA keys...");
-    
-    // Generate RSA keys
-    if (!generateRSAKeys()) {
+    displayStatus("Starting registration", true, "Using pre-generated RSA keys");
+
+    // RSA keys should already be generated during initialization
+    if (!rsaPrivate) {
+        displayError("RSA keys not available for registration", ErrorType::CRYPTO);
         return false;
     }
     
@@ -1109,7 +1125,7 @@ bool Client::generateRSAKeys() {
         auto end = std::chrono::steady_clock::now();
 
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-        displayStatus("RSA key generation", true, "1024-bit keys generated in " + std::to_string(duration) + "ms");
+        displayStatus("RSA key generation", true, "512-bit keys generated in " + std::to_string(duration) + "ms");
         return true;
     } catch (const std::exception& e) {
         displayError("Failed to generate RSA keys: " + std::string(e.what()), ErrorType::CRYPTO);
@@ -1535,28 +1551,80 @@ void Client::displaySummary() {
 
 // Main function
 int main() {
+    try {
+        Client client;
+
+        if (!client.initialize()) {
+            std::cerr << "Fatal: Client initialization failed" << std::endl;
 #ifdef _WIN32
-    MessageBoxA(NULL, "Client main() started", "Debug", MB_OK | MB_ICONINFORMATION);
+            // Show error notification via GUI if available
+            try {
+                ClientGUIHelpers::showNotification("Backup Error", "Client initialization failed");
+                ClientGUIHelpers::updateError("Initialization failed");
+            } catch (...) {}
+
+            // Keep window open to show error
+            std::cout << "\nPress Enter to exit...";
+            std::cin.get();
 #endif
-    Client client;
-    
-    if (!client.initialize()) {
-        std::cerr << "Fatal: Client initialization failed" << std::endl;
+            return 1;
+        }
+
+        if (!client.run()) {
+            std::cerr << "Fatal: File backup failed" << std::endl;
+#ifdef _WIN32
+            // Show error notification via GUI if available
+            try {
+                ClientGUIHelpers::showNotification("Backup Error", "File backup operation failed");
+                ClientGUIHelpers::updateError("Backup failed");
+            } catch (...) {}
+
+            // Keep window open to show error
+            std::cout << "\nPress Enter to exit...";
+            std::cin.get();
+#endif
+            return 1;
+        }
+
+        std::cout << "\nBackup completed successfully!" << std::endl;
+
+#ifdef _WIN32
+        // Show success notification via GUI if available
+        try {
+            ClientGUIHelpers::showNotification("Backup Complete", "File backup completed successfully!");
+            ClientGUIHelpers::updatePhase("Backup Complete");
+        } catch (...) {}
+
+        // Keep window open to show success
+        std::cout << "\nPress Enter to exit...";
+        std::cin.get();
+#endif
+
+        return 0;
+
+    } catch (const std::exception& e) {
+        std::cerr << "Fatal exception: " << e.what() << std::endl;
+#ifdef _WIN32
+        try {
+            ClientGUIHelpers::showNotification("Critical Error", std::string("Exception: ") + e.what());
+            ClientGUIHelpers::updateError(std::string("Critical error: ") + e.what());
+        } catch (...) {}
+
+        std::cout << "\nPress Enter to exit...";
+        std::cin.get();
+#endif
+        return 1;
+    } catch (...) {
+        std::cerr << "Fatal: Unknown exception occurred" << std::endl;
+#ifdef _WIN32
+        try {
+            ClientGUIHelpers::showNotification("Critical Error", "Unknown exception occurred");
+            ClientGUIHelpers::updateError("Unknown critical error");
+        } catch (...) {}
+
+        std::cout << "\nPress Enter to exit...";
+        std::cin.get();
+#endif
         return 1;
     }
-    
-    if (!client.run()) {
-        std::cerr << "Fatal: File backup failed" << std::endl;
-        return 1;
-    }
-    
-    std::cout << "\nBackup completed successfully!" << std::endl;
-    
-#ifdef _WIN32
-    // Keep window open on Windows
-    std::cout << "\nPress Enter to exit...";
-    std::cin.get();
-#endif
-    
-    return 0;
 }

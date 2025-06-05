@@ -1,5 +1,5 @@
 // ClientGUI.cpp
-#include "clientGUIV2.h" // Use the new header for declarations
+#include "ClientGUI.h" // Use the correct header for declarations
 
 // For std::wstring conversions used in ClientGUI class, and potentially by complex helpers
 #include <sstream> 
@@ -224,16 +224,10 @@ bool ClientGUI::initializeTrayIcon() {
         trayIcon.hIcon = LoadIcon(nullptr, IDI_APPLICATION); 
     }
     
-    wchar_t szTip[128];
-    wcscpy_s(szTip, ARRAYSIZE(szTip), L"Encrypted Backup Client"); 
-    wcscpy_s(trayIcon.szTip, ARRAYSIZE(trayIcon.szTip), szTip);
+    wcsncpy_s(trayIcon.szTip, ARRAYSIZE(trayIcon.szTip), L"Encrypted Backup Client", _TRUNCATE);
 
-    wchar_t szInfo[256];
-    wcsncpy_s(szInfo, ARRAYSIZE(szInfo), L"Client is initializing...", _TRUNCATE);
-    wcscpy_s(trayIcon.szInfo, ARRAYSIZE(trayIcon.szInfo), szInfo);
-    wchar_t szInfoTitle[64]; 
-    wcsncpy_s(szInfoTitle, ARRAYSIZE(szInfoTitle), L"Backup Client", _TRUNCATE);
-    wcscpy_s(trayIcon.szInfoTitle, ARRAYSIZE(trayIcon.szInfoTitle), szInfoTitle);
+    wcsncpy_s(trayIcon.szInfo, ARRAYSIZE(trayIcon.szInfo), L"Client is initializing...", _TRUNCATE);
+    wcsncpy_s(trayIcon.szInfoTitle, ARRAYSIZE(trayIcon.szInfoTitle), L"Backup Client", _TRUNCATE);
     trayIcon.dwInfoFlags = NIIF_INFO; 
     
     return Shell_NotifyIconW(NIM_ADD, &trayIcon) == TRUE;
@@ -468,7 +462,7 @@ void ClientGUI::updatePhase(const std::string& phase) {
         PostMessage(statusWindow, WM_STATUS_UPDATE, 0, 0);
     }
     
-    if (guiInitialized.load() && hTrayWnd_) { 
+    if (guiInitialized.load() && hTrayWnd_) {
         std::wstring tooltip = L"Backup Client - " + std::wstring(phase.begin(), phase.end());
         wcsncpy_s(trayIcon.szTip, ARRAYSIZE(trayIcon.szTip), tooltip.c_str(), _TRUNCATE);
         Shell_NotifyIconW(NIM_MODIFY, &trayIcon);
