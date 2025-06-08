@@ -1,0 +1,9 @@
+This is a test file for the encrypted backup system.
+It contains some sample text to verify that the file transfer,
+encryption, and CRC verification work correctly.
+
+File created on: June 3, 2025
+Purpose: Testing the Client Server Encrypted Backup Framework
+
+The file should be encrypted with AES-256-CBC, transmitted in packets,
+and verified with CRC checksums.

@@ -1,0 +1,144 @@
+{
+  "Availability": {
+    "Server_Reachable": {
+      "value": 20.216941833496094,
+      "unit": "ms",
+      "details": "Success",
+      "timestamp": "2025-06-08T04:30:01.509499"
+    }
+  },
+  "Connection": {
+    "Average_Connect_Time": {
+      "value": 12.62667179107666,
+      "unit": "ms",
+      "details": "\u00b111.16ms",
+      "timestamp": "2025-06-08T04:30:02.642434"
+    },
+    "Min_Connect_Time": {
+      "value": 0.4553794860839844,
+      "unit": "ms",
+      "details": "Best case",
+      "timestamp": "2025-06-08T04:30:02.642462"
+    },
+    "Max_Connect_Time": {
+      "value": 25.025129318237305,
+      "unit": "ms",
+      "details": "Worst case",
+      "timestamp": "2025-06-08T04:30:02.642466"
+    },
+    "Success_Rate": {
+      "value": 100.0,
+      "unit": "%",
+      "details": "10/10",
+      "timestamp": "2025-06-08T04:30:02.642471"
+    }
+  },
+  "Protocol": {
+    "Registration_Header_1000x": {
+      "value": 0.08082389831542969,
+      "unit": "ms",
+      "details": "Code 1025",
+      "timestamp": "2025-06-08T04:30:02.642563"
+    },
+    "PublicKey_Header_1000x": {
+      "value": 0.06604194641113281,
+      "unit": "ms",
+      "details": "Code 1026",
+      "timestamp": "2025-06-08T04:30:02.642633"
+    },
+    "FileTransfer_Header_1000x": {
+      "value": 0.10204315185546875,
+      "unit": "ms",
+      "details": "Code 1028",
+      "timestamp": "2025-06-08T04:30:02.642741"
+    },
+    "Header_Parsing_10000x": {
+      "value": 0.7250308990478516,
+      "unit": "ms",
+      "details": "23-byte headers",
+      "timestamp": "2025-06-08T04:30:02.643491"
+    }
+  },
+  "Transfer": {
+    "Send_Small": {
+      "value": 0.03933906555175781,
+      "unit": "ms",
+      "details": "1024 bytes",
+      "timestamp": "2025-06-08T04:30:02.644165"
+    },
+    "Throughput_Small": {
+      "value": 208.2408385939394,
+      "unit": "Mbps",
+      "details": "1024 bytes",
+      "timestamp": "2025-06-08T04:30:02.644198"
+    },
+    "Send_Medium": {
+      "value": 0.133514404296875,
+      "unit": "ms",
+      "details": "10240 bytes",
+      "timestamp": "2025-06-08T04:30:03.168225"
+    },
+    "Throughput_Medium": {
+      "value": 613.5667565714285,
+      "unit": "Mbps",
+      "details": "10240 bytes",
+      "timestamp": "2025-06-08T04:30:03.168267"
+    },
+    "Send_Large": {
+      "value": 0.12254714965820312,
+      "unit": "ms",
+      "details": "102400 bytes",
+      "timestamp": "2025-06-08T04:30:03.669643"
+    },
+    "Throughput_Large": {
+      "value": 6684.77400155642,
+      "unit": "Mbps",
+      "details": "102400 bytes",
+      "timestamp": "2025-06-08T04:30:03.669688"
+    }
+  },
+  "Concurrent": {
+    "Connections_5": {
+      "value": 2039.731502532959,
+      "unit": "ms",
+      "details": "Total time for 5",
+      "timestamp": "2025-06-08T04:30:06.209732"
+    },
+    "Success_Rate_5": {
+      "value": 40.0,
+      "unit": "%",
+      "details": "2/5",
+      "timestamp": "2025-06-08T04:30:06.209766"
+    },
+    "Avg_Connect_5": {
+      "value": 0.7207393646240234,
+      "unit": "ms",
+      "details": "Average per connection",
+      "timestamp": "2025-06-08T04:30:06.209837"
+    },
+    "Connections_10": {
+      "value": 2045.5586910247803,
+      "unit": "ms",
+      "details": "Total time for 10",
+      "timestamp": "2025-06-08T04:30:08.255452"
+    },
+    "Success_Rate_10": {
+      "value": 0.0,
+      "unit": "%",
+      "details": "0/10",
+      "timestamp": "2025-06-08T04:30:08.255493"
+    },
+    "Connections_20": {
+      "value": 2048.1226444244385,
+      "unit": "ms",
+      "details": "Total time for 20",
+      "timestamp": "2025-06-08T04:30:10.303657"
+    },
+    "Success_Rate_20": {
+      "value": 0.0,
+      "unit": "%",
+      "details": "0/20",
+      "timestamp": "2025-06-08T04:30:10.303704"
+    }
+  }
+}

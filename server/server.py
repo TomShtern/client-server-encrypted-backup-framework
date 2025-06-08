@@ -46,7 +46,7 @@ MAX_CONCURRENT_CLIENTS = 50 # Max number of concurrent client connections
 MAX_CLIENT_NAME_LENGTH = 100 # As per spec (implicit from me.info and general limits)
 MAX_FILENAME_FIELD_SIZE = 255 # Size of the filename field in protocol
 MAX_ACTUAL_FILENAME_LENGTH = 250 # Practical limit for actual filename within the field
-RSA_PUBLIC_KEY_SIZE = 160 # Bytes, X.509 format (for 1024-bit RSA)
+RSA_PUBLIC_KEY_SIZE = 162 # Bytes, DER format (for 1024-bit RSA - updated for Step 7)
 AES_KEY_SIZE_BYTES = 32 # 256-bit AES
 
 # Logging Configuration
@@ -381,7 +381,7 @@ class BackupServer:
             CREATE TABLE IF NOT EXISTS clients (
                 ID BLOB(16) PRIMARY KEY,
                 Name VARCHAR(255) UNIQUE NOT NULL,
-                PublicKey BLOB(160),
+                PublicKey BLOB(162),
                 LastSeen TEXT NOT NULL, 
                 AESKey BLOB(32) 
             )

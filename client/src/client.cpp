@@ -66,7 +66,7 @@ constexpr uint16_t RESP_ERROR = 1607;
 // Size constants
 constexpr size_t CLIENT_ID_SIZE = 16;
 constexpr size_t MAX_NAME_SIZE = 255;
-constexpr size_t RSA_KEY_SIZE = 80; // Reduced for 512-bit keys
+constexpr size_t RSA_KEY_SIZE = 162; // Updated for 1024-bit keys in DER format
 constexpr size_t AES_KEY_SIZE = 32;
 constexpr size_t MAX_PACKET_SIZE = 1024 * 1024;  // 1MB per packet
 constexpr size_t OPTIMAL_BUFFER_SIZE = 64 * 1024; // 64KB for file reading
@@ -652,10 +652,28 @@ bool Client::connectToServer() {
         displayStatus("Connecting", true, "Establishing TCP connection...");
         
         boost::asio::connect(*socket, endpoints);
-        
+
+        // Verify the connection is actually established
+        if (!socket->is_open()) {
+            displayError("Socket failed to open", ErrorType::NETWORK);
+            return false;
+        }
+
+        // Get the actual connected endpoint for verification
+        auto localEndpoint = socket->local_endpoint();
+        auto remoteEndpoint = socket->remote_endpoint();
+
+        displayStatus("Connection verified", true,
+                     "Local: " + localEndpoint.address().to_string() + ":" + std::to_string(localEndpoint.port()) +
+                     " -> Remote: " + remoteEndpoint.address().to_string() + ":" + std::to_string(remoteEndpoint.port()));
+
         // Set socket options for timeouts and keep-alive
         socket->set_option(boost::asio::ip::tcp::no_delay(true));
-          connected = true;
+
+        // Small delay to ensure connection is fully established
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+        connected = true;
         displayStatus("Connected", true, "TCP connection established");
         
         // Update GUI connection status (optional)
@@ -738,28 +756,69 @@ bool Client::sendRequest(uint16_t code, const std::vector<uint8_t>& payload) {
     }
     
     try {
-        RequestHeader header{};
-        std::copy(clientID.begin(), clientID.end(), header.client_id);
-        header.version = CLIENT_VERSION;
-        header.code = code;
-        header.payload_size = static_cast<uint32_t>(payload.size());
+        // CRITICAL FIX: Manually construct header bytes in little-endian format
+        // The Python server expects little-endian format explicitly
+        std::vector<uint8_t> headerBytes(23);  // RequestHeader is 23 bytes total
+
+        // Client ID (16 bytes) - copy as-is
+        std::copy(clientID.begin(), clientID.end(), headerBytes.begin());
+
+        // Version (1 byte) - byte 16
+        headerBytes[16] = CLIENT_VERSION;
+
+        // Code (2 bytes, little-endian) - bytes 17-18
+        headerBytes[17] = code & 0xFF;        // Low byte
+        headerBytes[18] = (code >> 8) & 0xFF; // High byte
+
+        // Payload size (4 bytes, little-endian) - bytes 19-22
+        uint32_t payload_size_val = static_cast<uint32_t>(payload.size());
+        headerBytes[19] = payload_size_val & 0xFF;         // Byte 0
+        headerBytes[20] = (payload_size_val >> 8) & 0xFF;  // Byte 1
+        headerBytes[21] = (payload_size_val >> 16) & 0xFF; // Byte 2
+        headerBytes[22] = (payload_size_val >> 24) & 0xFF; // Byte 3
         
         // Debug: show header values for important requests
         if (code == REQ_REGISTER || code == REQ_RECONNECT || code == REQ_SEND_PUBLIC_KEY) {
-            displayStatus("Debug: Request header", true, 
-                         "Version=" + std::to_string(header.version) + 
-                         ", Code=" + std::to_string(header.code) + 
-                         ", PayloadSize=" + std::to_string(header.payload_size));
+            displayStatus("Debug: Request header", true,
+                         "Version=" + std::to_string(CLIENT_VERSION) +
+                         ", Code=" + std::to_string(code) +
+                         ", PayloadSize=" + std::to_string(payload_size_val));
+
+            // Add hex dump of header bytes for debugging
+            std::stringstream hexDump;
+            hexDump << "Header hex: ";
+            for (size_t i = 0; i < headerBytes.size(); ++i) {
+                hexDump << std::hex << std::setfill('0') << std::setw(2) << static_cast<int>(headerBytes[i]) << " ";
+            }
+            displayStatus("Debug: Header bytes", true, hexDump.str());
         }
         
         // Send header
-        boost::asio::write(*socket, boost::asio::buffer(&header, sizeof(header)));
-        
+        size_t headerBytesSent = boost::asio::write(*socket, boost::asio::buffer(headerBytes));
+        if (headerBytesSent != headerBytes.size()) {
+            displayError("Failed to send complete header", ErrorType::NETWORK);
+            return false;
+        }
+
         // Send payload if any
         if (!payload.empty()) {
-            boost::asio::write(*socket, boost::asio::buffer(payload));
+            size_t payloadBytes = boost::asio::write(*socket, boost::asio::buffer(payload));
+            if (payloadBytes != payload.size()) {
+                displayError("Failed to send complete payload", ErrorType::NETWORK);
+                return false;
+            }
         }
-        
+
+        // Force flush the socket to ensure data is sent immediately
+        ioContext.poll();
+
+        // Debug: confirm data was sent for important requests
+        if (code == REQ_REGISTER || code == REQ_RECONNECT || code == REQ_SEND_PUBLIC_KEY) {
+            displayStatus("Debug: Data sent", true,
+                         "Header: " + std::to_string(headerBytesSent) + " bytes, " +
+                         "Payload: " + std::to_string(payload.size()) + " bytes");
+        }
+
         return true;
         
     } catch (const std::exception& e) {

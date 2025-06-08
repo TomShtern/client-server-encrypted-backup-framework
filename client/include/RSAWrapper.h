@@ -7,8 +7,8 @@
 
 class RSAPublicWrapper {
 public:
-    static const unsigned int KEYSIZE = 80; // Reduced for 512-bit keys
-    static const unsigned int BITS = 512; // Reduced for faster testing
+    static const unsigned int KEYSIZE = 162; // Correct size for 1024-bit keys in DER format
+    static const unsigned int BITS = 1024; // Full 1024-bit keys as required by server
 
 private:
     std::vector<char> keyData;
@@ -32,7 +32,7 @@ public:
 
 class RSAPrivateWrapper {
 public:
-    static const unsigned int BITS = 512; // Reduced for faster testing
+    static const unsigned int BITS = 1024; // Full 1024-bit keys as required by server
 
 private:
     HCRYPTPROV hProv;

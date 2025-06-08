@@ -1,6 +1,6 @@
 #include <iostream>
 #include <stdexcept>
-#include "client/include/RSAWrapper.h"
+#include "../client/include/RSAWrapper.h"
 
 int main() {
     try {
