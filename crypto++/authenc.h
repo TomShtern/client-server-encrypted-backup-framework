@@ -43,12 +43,26 @@ public:
 	AuthenticatedSymmetricCipherBase() : m_totalHeaderLength(0), m_totalMessageLength(0),
 		m_totalFooterLength(0), m_bufferedDataLength(0), m_state(State_Start) {}
 
-	// StreamTransformation interface
+	/**
+ * @brief Indicates that random access is not supported by this cipher mode.
+ *
+ * @return false Always returns false, as authenticated encryption modes do not support random access.
+ */
 	bool IsRandomAccess() const {return false;}
-	bool IsSelfInverting() const {return true;}
+	/**
+ * @brief Indicates that the cipher operation is self-inverting.
+ *
+ * @return true Always returns true, signifying that applying the operation twice restores the original data.
+ */
+bool IsSelfInverting() const {return true;}
 
 	void SetKey(const byte *userKey, size_t keylength, const NameValuePairs &params);
-	void Restart() {if (m_state > State_KeySet) m_state = State_KeySet;}
+	/**
+ * @brief Resets the cipher state to after key setup, discarding any IV or processed data.
+ *
+ * Use this to prepare the cipher for a new operation with the same key but a new IV or data sequence.
+ */
+void Restart() {if (m_state > State_KeySet) m_state = State_KeySet;}
 	void Resynchronize(const byte *iv, int length=-1);
 	void Update(const byte *input, size_t length);
 	void ProcessData(byte *outString, const byte *inString, size_t length);
@@ -59,7 +73,14 @@ protected:
 		{CRYPTOPP_UNUSED(key), CRYPTOPP_UNUSED(length), CRYPTOPP_UNUSED(params); CRYPTOPP_ASSERT(false);}
 
 	void AuthenticateData(const byte *data, size_t len);
-	const SymmetricCipher & GetSymmetricCipher() const
+	/**
+		 * @brief Returns a constant reference to the underlying symmetric cipher.
+		 *
+		 * Provides access to the internal symmetric cipher used for encryption or decryption operations.
+		 *
+		 * @return Constant reference to the underlying SymmetricCipher instance.
+		 */
+		const SymmetricCipher & GetSymmetricCipher() const
 		{return const_cast<AuthenticatedSymmetricCipherBase *>(this)->AccessSymmetricCipher();}
 
 	virtual SymmetricCipher & AccessSymmetricCipher() =0;

@@ -25,6 +25,11 @@
 
 NAMESPACE_BEGIN(CryptoPP)
 
+/**
+ * @brief Invokes the current C++ new-handler or throws std::bad_alloc if none is set.
+ *
+ * This function retrieves the currently installed new-handler, restores it, and calls it to handle memory allocation failures. If no new-handler is set, it throws a std::bad_alloc exception.
+ */
 void CallNewHandler()
 {
 	std::new_handler newHandler = std::set_new_handler(NULLPTR);
@@ -37,6 +42,14 @@ void CallNewHandler()
 		throw std::bad_alloc();
 }
 
+/**
+ * @brief Allocates a block of memory aligned on a 16-byte boundary.
+ *
+ * Attempts to allocate a memory block of the specified size with 16-byte alignment, using platform-specific allocation methods when available. If allocation fails, repeatedly invokes the current new-handler until successful. The returned pointer is guaranteed to be 16-byte aligned.
+ *
+ * @param size Number of bytes to allocate.
+ * @return Pointer to the allocated, 16-byte aligned memory block.
+ */
 void * AlignedAllocate(size_t size)
 {
 	byte *p;
@@ -66,6 +79,13 @@ void * AlignedAllocate(size_t size)
 	return p;
 }
 
+/**
+ * @brief Deallocates memory previously allocated with AlignedAllocate.
+ *
+ * Frees a memory block that was allocated with 16-byte alignment, using the appropriate platform-specific deallocation method. The pointer must not be null and must have been returned by AlignedAllocate.
+ *
+ * @param p Pointer to the aligned memory block to deallocate.
+ */
 void AlignedDeallocate(void *p)
 {
 	// Guard pointer due to crash on AIX when CRYPTOPP_NO_ALIGNED_ALLOC
@@ -86,6 +106,14 @@ void AlignedDeallocate(void *p)
 	}
 }
 
+/**
+ * @brief Allocates a memory block of the specified size without alignment guarantees.
+ *
+ * Attempts to allocate a memory block of the given size using `malloc`. If allocation fails, repeatedly invokes the current new-handler until memory is successfully allocated.
+ *
+ * @param size Number of bytes to allocate.
+ * @return Pointer to the allocated memory block, or never returns if allocation repeatedly fails and the new-handler throws.
+ */
 void * UnalignedAllocate(size_t size)
 {
 	void *p;
@@ -94,6 +122,13 @@ void * UnalignedAllocate(size_t size)
 	return p;
 }
 
+/**
+ * @brief Deallocates memory previously allocated without alignment requirements.
+ *
+ * Frees a memory block allocated by UnalignedAllocate.
+ *
+ * @param p Pointer to the memory block to deallocate.
+ */
 void UnalignedDeallocate(void *p)
 {
 	free(p);

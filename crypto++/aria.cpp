@@ -27,18 +27,42 @@ using CryptoPP::ARIATab::X1;
 using CryptoPP::ARIATab::X2;
 using CryptoPP::ARIATab::KRK;
 
+/**
+ * @brief Extracts the y-th byte from a 32-bit word.
+ *
+ * @param x The 32-bit word to extract from.
+ * @param y The byte position (0 for least significant byte).
+ * @return byte The extracted byte.
+ */
 inline byte ARIA_BRF(const word32 x, const int y) {
 	return static_cast<byte>(GETBYTE(x, y));
 }
 
-// Key XOR Layer. Bumps the round key pointer.
+/**
+ * @brief XORs a 16-byte round key into a 4-word state and advances the key pointer.
+ *
+ * Applies the round key to the state array using native byte order, then returns the pointer to the next round key.
+ *
+ * @param rk Pointer to the current 16-byte round key.
+ * @param t Array of four 32-bit words representing the cipher state; updated in place.
+ * @return const byte* Pointer to the next round key (rk + 16).
+ */
 inline const byte* ARIA_KXL(const byte rk[16], word32 t[4]) {
 	typedef BlockGetAndPut<word32, NativeByteOrder, true, true>  NativeBlock;
 	NativeBlock::Put(rk, t)(t[0])(t[1])(t[2])(t[3]);
 	return rk+16;
 }
 
-// S-Box Layer 1 + M
+/**
+ * @brief Applies ARIA S-Box Layer 1 and mixing transformation to four 32-bit words.
+ *
+ * Substitutes each input word using S-boxes S1 and S2, and mixing tables X1 and X2, as defined by the ARIA cipher specification.
+ *
+ * @param T0 First 32-bit word to transform.
+ * @param T1 Second 32-bit word to transform.
+ * @param T2 Third 32-bit word to transform.
+ * @param T3 Fourth 32-bit word to transform.
+ */
 inline void SBL1_M(word32& T0, word32& T1, word32& T2, word32& T3) {
 	T0=S1[ARIA_BRF(T0,3)]^S2[ARIA_BRF(T0,2)]^X1[ARIA_BRF(T0,1)]^X2[ARIA_BRF(T0,0)];
 	T1=S1[ARIA_BRF(T1,3)]^S2[ARIA_BRF(T1,2)]^X1[ARIA_BRF(T1,1)]^X2[ARIA_BRF(T1,0)];
@@ -46,7 +70,16 @@ inline void SBL1_M(word32& T0, word32& T1, word32& T2, word32& T3) {
 	T3=S1[ARIA_BRF(T3,3)]^S2[ARIA_BRF(T3,2)]^X1[ARIA_BRF(T3,1)]^X2[ARIA_BRF(T3,0)];
 }
 
-// S-Box Layer 2 + M
+/**
+   * @brief Applies ARIA S-Box Layer 2 and mixing transformation to four 32-bit words.
+   *
+   * Substitutes and mixes each input word using lookup tables X1, X2, S1, and S2, as defined by the ARIA cipher's S-Box Layer 2.
+   *
+   * @param T0 First 32-bit word to transform.
+   * @param T1 Second 32-bit word to transform.
+   * @param T2 Third 32-bit word to transform.
+   * @param T3 Fourth 32-bit word to transform.
+   */
 inline void SBL2_M(word32& T0, word32& T1, word32& T2, word32& T3) {
 	T0=X1[ARIA_BRF(T0,3)]^X2[ARIA_BRF(T0,2)]^S1[ARIA_BRF(T0,1)]^S2[ARIA_BRF(T0,0)];
 	T1=X1[ARIA_BRF(T1,3)]^X2[ARIA_BRF(T1,2)]^S1[ARIA_BRF(T1,1)]^S2[ARIA_BRF(T1,0)];
@@ -54,6 +87,16 @@ inline void SBL2_M(word32& T0, word32& T1, word32& T2, word32& T3) {
 	T3=X1[ARIA_BRF(T3,3)]^X2[ARIA_BRF(T3,2)]^S1[ARIA_BRF(T3,1)]^S2[ARIA_BRF(T3,0)];
   }
 
+/**
+ * @brief Applies the ARIA permutation layer to three 32-bit words.
+ *
+ * Modifies T1 by swapping its bytes, rotates T2 right by 16 bits, and reverses the byte order of T3. T0 is unused.
+ *
+ * @param T0 Unused parameter.
+ * @param T1 Modified by byte swapping.
+ * @param T2 Modified by 16-bit right rotation.
+ * @param T3 Modified by byte reversal.
+ */
 inline void ARIA_P(word32& T0, word32& T1, word32& T2, word32& T3) {
 	CRYPTOPP_UNUSED(T0);
 	T1 = ((T1<< 8)&0xff00ff00) ^ ((T1>> 8)&0x00ff00ff);
@@ -61,16 +104,41 @@ inline void ARIA_P(word32& T0, word32& T1, word32& T2, word32& T3) {
 	T3 = ByteReverse((T3));
 }
 
+/**
+ * @brief Applies a mixing transformation to a 32-bit word.
+ *
+ * Computes a value by XORing left and right shifts of X by 8, 16, and 24 bits, and stores the result in Y.
+ *
+ * @param X Input 32-bit word to be mixed.
+ * @param Y Output 32-bit word receiving the mixed result.
+ */
 inline void ARIA_M(word32& X, word32& Y) {
 	Y=X<<8 ^ X>>8 ^ X<<16 ^ X>>16 ^ X<<24 ^ X>>24;
 }
 
 
+/**
+ * @brief Applies a mixing transformation to four 32-bit words using a series of XOR operations.
+ *
+ * This function is used in the ARIA cipher to provide diffusion by mixing the input words through multiple XOR steps.
+ *
+ * @param T0 First 32-bit word to be mixed (modified in place).
+ * @param T1 Second 32-bit word to be mixed (modified in place).
+ * @param T2 Third 32-bit word to be mixed (modified in place).
+ * @param T3 Fourth 32-bit word to be mixed (modified in place).
+ */
 inline void ARIA_MM(word32& T0, word32& T1, word32& T2, word32& T3) {
 	T1^=T2; T2^=T3; T0^=T1;
 	T3^=T1; T2^=T0; T1^=T2;
 }
 
+/**
+ * @brief Applies the ARIA FO (odd round) transformation to a 4-word state.
+ *
+ * Performs a sequence of S-box substitution, mixing, and permutation operations as defined for odd rounds in the ARIA block cipher.
+ *
+ * @param t Array of four 32-bit words representing the cipher state; modified in place.
+ */
 inline void ARIA_FO(word32 t[4]) {
 	SBL1_M(t[0],t[1],t[2],t[3]);
 	ARIA_MM(t[0],t[1],t[2],t[3]);
@@ -78,6 +146,13 @@ inline void ARIA_FO(word32 t[4]) {
 	ARIA_MM(t[0],t[1],t[2],t[3]);
 }
 
+/**
+ * @brief Applies the ARIA cipher's even round transformation to a 4-word state.
+ *
+ * This function performs the S-box Layer 2 substitution, mixing, permutation, and a second mixing step on the input state array, as defined for even rounds in the ARIA block cipher.
+ *
+ * @param t Array of four 32-bit words representing the cipher state; modified in place.
+ */
 inline void ARIA_FE(word32 t[4]) {
 	SBL2_M(t[0],t[1],t[2],t[3]);
 	ARIA_MM(t[0],t[1],t[2],t[3]);
@@ -87,6 +162,16 @@ inline void ARIA_FE(word32 t[4]) {
 
 // n-bit right shift of Y XORed to X
 template <unsigned int N>
+/**
+ * @brief Generates an ARIA round subkey by combining two 128-bit words with rotation and XOR.
+ *
+ * Computes a round key by XORing each 32-bit word of X with a rotated combination of words from Y, using a right shift by N bits and a left shift by (32-N) bits.
+ *
+ * @tparam N Number of bits to rotate Y.
+ * @param X First 128-bit input (4 words).
+ * @param Y Second 128-bit input (4 words), to be rotated and combined.
+ * @param RK Output buffer for the resulting 128-bit round key (4 words).
+ */
 inline void ARIA_GSRK(const word32 X[4], const word32 Y[4], word32 RK[4])
 {
 	// MSVC is not generating a "rotate immediate". Constify to help it along.
@@ -99,6 +184,16 @@ inline void ARIA_GSRK(const word32 X[4], const word32 Y[4], word32 RK[4])
 	RK[3] = (X[3]) ^ ((Y[(Q+3)%4])>>R) ^ ((Y[(Q+2)%4])<<(32-R));
 }
 
+/**
+ * @brief Initializes the ARIA cipher's round keys based on the provided key.
+ *
+ * Sets up the internal round key schedule for ARIA encryption or decryption, supporting 128, 192, and 256-bit keys. The function derives round keys using S-box layers, mixing, and permutation operations, and prepares the key schedule for the selected transformation direction.
+ *
+ * If decryption is selected, the round keys are reversed and transformed to produce the decryption key schedule.
+ *
+ * @param key Pointer to the user-supplied key.
+ * @param keylen Length of the key in bytes (must be 16, 24, or 32).
+ */
 void ARIA::Base::UncheckedSetKey(const byte *key, unsigned int keylen, const NameValuePairs &params)
 {
 	CRYPTOPP_UNUSED(params);
@@ -228,6 +323,15 @@ void ARIA::Base::UncheckedSetKey(const byte *key, unsigned int keylen, const Nam
 	CRYPTOPP_UNUSED(q); CRYPTOPP_UNUSED(r);
 }
 
+/**
+ * @brief Encrypts or decrypts a single 16-byte block using the ARIA cipher and applies optional XOR.
+ *
+ * Processes a 16-byte input block with the ARIA block cipher, writing the result to the output buffer. If an XOR block is provided, the output is XORed with it, supporting block cipher modes such as CBC. Handles both encryption and decryption depending on the key schedule. Output byte order is adjusted for platform endianness.
+ *
+ * @param inBlock Pointer to the 16-byte input block.
+ * @param xorBlock Optional pointer to a 16-byte block to XOR with the output; may be nullptr.
+ * @param outBlock Pointer to the 16-byte buffer where the result is written.
+ */
 void ARIA::Base::ProcessAndXorBlock(const byte *inBlock, const byte *xorBlock, byte *outBlock) const
 {
 	const byte *rk = reinterpret_cast<const byte*>(m_rk.data());

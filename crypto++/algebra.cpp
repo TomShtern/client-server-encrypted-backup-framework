@@ -12,48 +12,104 @@
 
 NAMESPACE_BEGIN(CryptoPP)
 
-template <class T> const T& AbstractGroup<T>::Double(const Element &a) const
+template <class T> /**
+ * @brief Returns the sum of an element with itself in the group.
+ *
+ * @param a The group element to be doubled.
+ * @return The result of adding a to itself.
+ */
+const T& AbstractGroup<T>::Double(const Element &a) const
 {
 	return this->Add(a, a);
 }
 
-template <class T> const T& AbstractGroup<T>::Subtract(const Element &a, const Element &b) const
+template <class T> /**
+ * @brief Returns the difference of two group elements.
+ *
+ * Computes the group operation of element `a` with the inverse of element `b`, effectively calculating `a - b` in the group.
+ *
+ * @param a The minuend element.
+ * @param b The subtrahend element.
+ * @return The result of the group operation `a + (-b)`.
+ */
+const T& AbstractGroup<T>::Subtract(const Element &a, const Element &b) const
 {
 	// make copy of a in case Inverse() overwrites it
 	Element a1(a);
 	return this->Add(a1, Inverse(b));
 }
 
-template <class T> T& AbstractGroup<T>::Accumulate(Element &a, const Element &b) const
+template <class T> /**
+ * @brief Adds an element to another and assigns the result to the first element.
+ *
+ * @param a The element to be updated with the sum.
+ * @param b The element to add.
+ * @return Reference to the updated element a.
+ */
+T& AbstractGroup<T>::Accumulate(Element &a, const Element &b) const
 {
 	return a = this->Add(a, b);
 }
 
-template <class T> T& AbstractGroup<T>::Reduce(Element &a, const Element &b) const
+template <class T> /**
+ * @brief Subtracts an element from another and assigns the result.
+ *
+ * Modifies element `a` by subtracting element `b` from it, assigning the result to `a`.
+ *
+ * @return Reference to the updated element `a`.
+ */
+T& AbstractGroup<T>::Reduce(Element &a, const Element &b) const
 {
 	return a = this->Subtract(a, b);
 }
 
-template <class T> const T& AbstractRing<T>::Square(const Element &a) const
+template <class T> /**
+ * @brief Computes the square of an element in the ring.
+ *
+ * @param a The element to be squared.
+ * @return The result of multiplying the element by itself.
+ */
+const T& AbstractRing<T>::Square(const Element &a) const
 {
 	return this->Multiply(a, a);
 }
 
-template <class T> const T& AbstractRing<T>::Divide(const Element &a, const Element &b) const
+template <class T> /**
+ * @brief Returns the result of dividing element a by element b in the ring.
+ *
+ * Computes the product of a and the multiplicative inverse of b. If b does not have an inverse, the result is the ring's identity element.
+ *
+ * @return The element representing a divided by b.
+ */
+const T& AbstractRing<T>::Divide(const Element &a, const Element &b) const
 {
 	// make copy of a in case MultiplicativeInverse() overwrites it
 	Element a1(a);
 	return this->Multiply(a1, this->MultiplicativeInverse(b));
 }
 
-template <class T> const T& AbstractEuclideanDomain<T>::Mod(const Element &a, const Element &b) const
+template <class T> /**
+ * @brief Computes the remainder of dividing one element by another in the Euclidean domain.
+ *
+ * Uses the division algorithm to return the modulus of element `a` by element `b`.
+ *
+ * @return The remainder of `a` divided by `b`.
+ */
+const T& AbstractEuclideanDomain<T>::Mod(const Element &a, const Element &b) const
 {
 	Element q;
 	this->DivisionAlgorithm(result, q, a, b);
 	return result;
 }
 
-template <class T> const T& AbstractEuclideanDomain<T>::Gcd(const Element &a, const Element &b) const
+template <class T> /**
+ * @brief Computes the greatest common divisor (GCD) of two elements.
+ *
+ * Uses the Euclidean algorithm to find the GCD of elements `a` and `b` in the domain.
+ *
+ * @return Reference to the GCD of `a` and `b`.
+ */
+const T& AbstractEuclideanDomain<T>::Gcd(const Element &a, const Element &b) const
 {
 	Element g[3]={b, a};
 	unsigned int i0=0, i1=1, i2=2;
@@ -67,7 +123,15 @@ template <class T> const T& AbstractEuclideanDomain<T>::Gcd(const Element &a, co
 	return result = g[i0];
 }
 
-template <class T> const typename QuotientRing<T>::Element& QuotientRing<T>::MultiplicativeInverse(const Element &a) const
+template <class T> /**
+ * @brief Computes the multiplicative inverse of an element in the quotient ring.
+ *
+ * Uses the extended Euclidean algorithm to find the multiplicative inverse of the given element modulo the ring's modulus. If the inverse exists, it is returned; otherwise, the identity element is returned.
+ *
+ * @param a The element for which to compute the multiplicative inverse.
+ * @return The multiplicative inverse of `a` modulo the ring's modulus, or the identity element if no inverse exists.
+ */
+const typename QuotientRing<T>::Element& QuotientRing<T>::MultiplicativeInverse(const Element &a) const
 {
 	Element g[3]={m_modulus, a};
 	Element v[3]={m_domain.Identity(), m_domain.MultiplicativeIdentity()};
@@ -87,14 +151,34 @@ template <class T> const typename QuotientRing<T>::Element& QuotientRing<T>::Mul
 	return m_domain.IsUnit(g[i0]) ? m_domain.Divide(v[i0], g[i0]) : m_domain.Identity();
 }
 
-template <class T> T AbstractGroup<T>::ScalarMultiply(const Element &base, const Integer &exponent) const
+template <class T> /**
+ * @brief Computes the scalar multiplication of a group element by an integer exponent.
+ *
+ * Returns the result of multiplying the given group element by the specified exponent using efficient simultaneous multiplication techniques.
+ *
+ * @param base The group element to be multiplied.
+ * @param exponent The integer exponent.
+ * @return The result of scalar multiplication.
+ */
+T AbstractGroup<T>::ScalarMultiply(const Element &base, const Integer &exponent) const
 {
 	Element result;
 	this->SimultaneousMultiply(&result, base, &exponent, 1);
 	return result;
 }
 
-template <class T> T AbstractGroup<T>::CascadeScalarMultiply(const Element &x, const Integer &e1, const Element &y, const Integer &e2) const
+template <class T> /**
+ * @brief Computes the simultaneous scalar multiplication of two group elements by two exponents.
+ *
+ * Calculates \( x^{e1} + y^{e2} \) efficiently using a windowed method with precomputed power tables and bit scanning, minimizing the number of group operations.
+ *
+ * @param x First group element.
+ * @param e1 Exponent for the first element.
+ * @param y Second group element.
+ * @param e2 Exponent for the second element.
+ * @return The group element resulting from the cascade scalar multiplication.
+ */
+T AbstractGroup<T>::CascadeScalarMultiply(const Element &x, const Integer &e1, const Element &y, const Integer &e2) const
 {
 	const unsigned expLen = STDMAX(e1.BitCount(), e2.BitCount());
 	if (expLen==0)
@@ -169,7 +253,19 @@ template <class T> T AbstractGroup<T>::CascadeScalarMultiply(const Element &x, c
 	return result;
 }
 
-template <class Element, class Iterator> Element GeneralCascadeMultiplication(const AbstractGroup<Element> &group, Iterator begin, Iterator end)
+template <class Element, class Iterator> /**
+ * @brief Performs cascade scalar multiplication for multiple base-exponent pairs in an abstract group.
+ *
+ * Computes the sum of each base multiplied by its corresponding exponent, i.e., \f$\sum_i \text{base}_i \cdot \text{exponent}_i\f$, using optimized strategies for one, two, or more pairs. For more than two pairs, it uses a heap-based approach to combine exponents and accumulate results efficiently.
+ *
+ * @tparam Element The group element type.
+ * @tparam Iterator An iterator type over pairs of base and exponent.
+ * @param group The abstract group in which the operation is performed.
+ * @param begin Iterator to the beginning of the base-exponent pairs.
+ * @param end Iterator to the end of the base-exponent pairs.
+ * @return The resulting group element after cascade multiplication.
+ */
+Element GeneralCascadeMultiplication(const AbstractGroup<Element> &group, Iterator begin, Iterator end)
 {
 	if (end-begin == 1)
 		return group.ScalarMultiply(begin->base, begin->exponent);
@@ -205,6 +301,15 @@ template <class Element, class Iterator> Element GeneralCascadeMultiplication(co
 
 struct WindowSlider
 {
+	/**
+	 * @brief Initializes a WindowSlider for managing sliding windows over an exponent.
+	 *
+	 * Constructs a WindowSlider to facilitate windowed exponentiation or multiplication by segmenting the given exponent into windows of configurable size. The window size is determined automatically based on the bit length of the exponent if not specified.
+	 *
+	 * @param expIn The exponent to be processed.
+	 * @param fastNegate Enables optimized handling of negative windows if true.
+	 * @param windowSizeIn Optional window size; if zero, an optimal size is chosen based on the exponent's bit length.
+	 */
 	WindowSlider(const Integer &expIn, bool fastNegate, unsigned int windowSizeIn=0)
 		: exp(expIn), windowModulus(Integer::One()), windowSize(windowSizeIn), windowBegin(0), expWindow(0)
 		, fastNegate(fastNegate), negateNext(false), firstTime(true), finished(false)
@@ -217,6 +322,11 @@ struct WindowSlider
 		windowModulus <<= windowSize;
 	}
 
+	/**
+	 * @brief Advances the exponent to the next nonzero window for windowed exponentiation.
+	 *
+	 * Updates internal state to locate the next window of bits in the exponent, skipping leading zeros, and prepares the window value for use in windowed multiplication or exponentiation. Handles fast negation if enabled.
+	 */
 	void FindNextWindow()
 	{
 		unsigned int expLen = exp.WordCount() * WORD_BITS;
@@ -253,6 +363,16 @@ struct WindowSlider
 };
 
 template <class T>
+/**
+ * @brief Computes multiple scalar multiplications of a base element by different exponents simultaneously.
+ *
+ * For each exponent in the input array, calculates the scalar multiplication of the base element by that exponent and stores the result in the corresponding position of the results array. Uses a windowed exponentiation technique with bucket accumulation for efficiency.
+ *
+ * @param results Pointer to an array where each computed scalar multiplication will be stored.
+ * @param base The group element to be multiplied by each exponent.
+ * @param expBegin Pointer to the beginning of an array of exponents.
+ * @param expCount The number of exponents (and results) to compute.
+ */
 void AbstractGroup<T>::SimultaneousMultiply(T *results, const T &base, const Integer *expBegin, unsigned int expCount) const
 {
 	std::vector<std::vector<Element> > buckets(expCount);
@@ -313,24 +433,61 @@ void AbstractGroup<T>::SimultaneousMultiply(T *results, const T &base, const Int
 	}
 }
 
-template <class T> T AbstractRing<T>::Exponentiate(const Element &base, const Integer &exponent) const
+template <class T> /**
+ * @brief Computes the exponentiation of a ring element by an integer exponent.
+ *
+ * Raises the given base element to the specified exponent using simultaneous exponentiation.
+ *
+ * @param base The element to be exponentiated.
+ * @param exponent The exponent to raise the base to.
+ * @return The result of base raised to the given exponent.
+ */
+T AbstractRing<T>::Exponentiate(const Element &base, const Integer &exponent) const
 {
 	Element result;
 	SimultaneousExponentiate(&result, base, &exponent, 1);
 	return result;
 }
 
-template <class T> T AbstractRing<T>::CascadeExponentiate(const Element &x, const Integer &e1, const Element &y, const Integer &e2) const
+template <class T> /**
+ * @brief Computes the simultaneous exponentiation of two elements with given exponents.
+ *
+ * Returns the product of x raised to e1 and y raised to e2, i.e., x^e1 * y^e2, using an efficient cascade method in the ring's multiplicative group.
+ *
+ * @param x First base element.
+ * @param e1 Exponent for the first base.
+ * @param y Second base element.
+ * @param e2 Exponent for the second base.
+ * @return T The result of x^e1 * y^e2.
+ */
+T AbstractRing<T>::CascadeExponentiate(const Element &x, const Integer &e1, const Element &y, const Integer &e2) const
 {
 	return MultiplicativeGroup().AbstractGroup<T>::CascadeScalarMultiply(x, e1, y, e2);
 }
 
-template <class Element, class Iterator> Element GeneralCascadeExponentiation(const AbstractRing<Element> &ring, Iterator begin, Iterator end)
+template <class Element, class Iterator> /**
+ * @brief Performs cascade exponentiation for multiple base-exponent pairs in a ring.
+ *
+ * Computes the product of multiple elements each raised to their respective exponents, using the ring's multiplicative group for efficient evaluation.
+ *
+ * @tparam Element The type of the ring element.
+ * @tparam Iterator An iterator type over pairs of (Element, exponent).
+ * @param ring The abstract ring in which exponentiation is performed.
+ * @param begin Iterator to the beginning of the base-exponent pairs.
+ * @param end Iterator to the end of the base-exponent pairs.
+ * @return Element The result of the cascade exponentiation.
+ */
+Element GeneralCascadeExponentiation(const AbstractRing<Element> &ring, Iterator begin, Iterator end)
 {
 	return GeneralCascadeMultiplication<Element>(ring.MultiplicativeGroup(), begin, end);
 }
 
 template <class T>
+/**
+ * @brief Computes multiple exponentiations of a base element with different exponents simultaneously.
+ *
+ * Calculates `results[i] = base ^ exponents[i]` for each exponent in the array, using the ring's multiplicative group for efficient simultaneous exponentiation.
+ */
 void AbstractRing<T>::SimultaneousExponentiate(T *results, const T &base, const Integer *exponents, unsigned int expCount) const
 {
 	MultiplicativeGroup().AbstractGroup<T>::SimultaneousMultiply(results, base, exponents, expCount);

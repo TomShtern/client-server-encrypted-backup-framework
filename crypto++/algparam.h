@@ -18,7 +18,16 @@
 #include <typeinfo>
 #include <exception>
 
-NAMESPACE_BEGIN(CryptoPP)
+/**
+	 * @brief Represents a constant byte array parameter for use in NameValuePairs.
+	 *
+	 * Constructs a parameter from a C-string, with an option to deep copy the data.
+	 * If deepCopy is true, the data is copied and owned by the parameter; otherwise, only a pointer is stored.
+	 *
+	 * @param data Pointer to a null-terminated C-string to use as the byte array, or NULLPTR for an empty parameter.
+	 * @param deepCopy If true, the data is copied internally; if false, only the pointer is stored.
+	 */
+	NAMESPACE_BEGIN(CryptoPP)
 
 /// \brief Used to pass byte array input as part of a NameValuePairs object
 class ConstByteArrayParameter
@@ -65,7 +74,15 @@ public:
 	/// \param size the length of the memory buffer
 	/// \param deepCopy flag indicating whether the data should be copied
 	/// \details The deepCopy option is used when the NameValuePairs object can't
-	///   keep a copy of the data available
+	/**
+	 * @brief Assigns a byte buffer to the parameter, with optional deep copy.
+	 *
+	 * If deepCopy is true, the data is copied into an internal buffer; otherwise, only the pointer and size are stored.
+	 *
+	 * @param data Pointer to the byte buffer.
+	 * @param size Number of bytes in the buffer.
+	 * @param deepCopy Whether to make an internal copy of the data.
+	 */
 	void Assign(const byte *data, size_t size, bool deepCopy)
 	{
 		// This fires, which means: no data with a size, or data with no size.
@@ -80,11 +97,29 @@ public:
 		m_deepCopy = deepCopy;
 	}
 
-	/// \brief Pointer to the first byte in the memory block
+	/**
+ * @brief Returns a pointer to the first byte of the parameter data.
+ *
+ * If deep copy is enabled, returns the start of the internal memory block; otherwise, returns the original data pointer.
+ *
+ * @return Pointer to the first byte of the data.
+ */
 	const byte *begin() const {return m_deepCopy ? m_block.begin() : m_data;}
-	/// \brief Pointer beyond the last byte in the memory block
+	/**
+ * @brief Returns a pointer to one past the last byte of the parameter data.
+ *
+ * If deep copy is enabled, returns the end of the internal memory block; otherwise, returns the pointer offset by the data size.
+ *
+ * @return Pointer to one past the last byte of the data.
+ */
 	const byte *end() const {return m_deepCopy ? m_block.end() : m_data + m_size;}
-	/// \brief Length of the memory block
+	/**
+ * @brief Returns the length of the underlying byte array parameter.
+ *
+ * If deep copy is enabled, returns the size of the internal memory block; otherwise, returns the externally provided size.
+ *
+ * @return size_t Number of bytes in the parameter.
+ */
 	size_t size() const {return m_deepCopy ? m_block.size() : m_size;}
 
 private:
@@ -94,7 +129,14 @@ private:
 	SecByteBlock m_block;
 };
 
-/// \brief Used to pass byte array input as part of a NameValuePairs object
+/**
+ * @brief Represents a mutable byte array parameter for use in NameValuePairs.
+ *
+ * Provides access to a non-const byte buffer and its size, allowing algorithms to receive and manipulate raw byte data as a named parameter.
+ *
+ * @param data Pointer to the byte buffer.
+ * @param size Number of bytes in the buffer.
+ */
 class ByteArrayParameter
 {
 public:
@@ -109,11 +151,25 @@ public:
 	ByteArrayParameter(SecByteBlock &block)
 		: m_data(block.begin()), m_size(block.size()) {}
 
-	/// \brief Pointer to the first byte in the memory block
+	/**
+ * @brief Returns a pointer to the beginning of the byte array.
+ *
+ * @return Pointer to the first byte in the memory block.
+ */
 	byte *begin() const {return m_data;}
-	/// \brief Pointer beyond the last byte in the memory block
+	/**
+ * @brief Returns a pointer to one past the last byte in the memory block.
+ *
+ * Useful for defining the end of a byte range.
+ *
+ * @return Pointer to the end of the byte array.
+ */
 	byte *end() const {return m_data + m_size;}
-	/// \brief Length of the memory block
+	/**
+ * @brief Returns the length of the memory block represented by the parameter.
+ *
+ * @return size_t Number of bytes in the memory block.
+ */
 	size_t size() const {return m_size;}
 
 private:
@@ -174,7 +230,12 @@ public:
 			m_found = pObject->BASE::GetVoidValue(m_name, valueType, pValue);
 	}
 
-	operator bool() const {return m_found;}
+	/**
+ * @brief Checks whether a parameter with the requested name was found.
+ *
+ * @return true if the parameter was found; false otherwise.
+ */
+operator bool() const {return m_found;}
 
 	template <class R>
 	GetValueHelperClass<T,BASE> & operator()(const char *name, const R & (T::*pm)() const)
@@ -299,7 +360,11 @@ CRYPTOPP_DLL bool AssignIntToInteger(const std::type_info &valueType, void *pInt
 
 CRYPTOPP_DLL const std::type_info & CRYPTOPP_API IntegerTypeId();
 
-/// \brief Base class for AlgorithmParameters
+/**
+	 * @brief Abstract base class for representing a single named algorithm parameter.
+	 *
+	 * Provides tracking of parameter usage and enforces usage if specified. Throws ParameterNotUsed if a parameter marked as required is not accessed before destruction. Supports move-like copy construction and chaining of parameters via a linked list.
+	 */
 class CRYPTOPP_DLL AlgorithmParametersBase
 {
 public:
@@ -310,6 +375,11 @@ public:
 		ParameterNotUsed(const char *name) : Exception(OTHER_ERROR, std::string("AlgorithmParametersBase: parameter \"") + name + "\" not used") {}
 	};
 
+	/**
+	 * @brief Destructor that enforces parameter usage if required.
+	 *
+	 * If the parameter was marked as required but not accessed, throws ParameterNotUsed unless an exception is already in flight.
+	 */
 	virtual ~AlgorithmParametersBase() CRYPTOPP_THROW
 	{
 
@@ -398,6 +468,13 @@ public:
 # undef new
 #endif
 
+	/**
+	 * @brief Constructs a copy of this parameter object in the specified memory buffer.
+	 *
+	 * Uses placement new to create a copy of the current `AlgorithmParametersTemplate<T>` instance at the provided memory location.
+	 *
+	 * @param buffer Pointer to the memory where the object will be constructed.
+	 */
 	void MoveInto(void *buffer) const
 	{
 		AlgorithmParametersTemplate<T>* p = new(buffer) AlgorithmParametersTemplate<T>(*this);

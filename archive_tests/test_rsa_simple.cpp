@@ -2,6 +2,13 @@
 #include <chrono>
 #include "client/include/RSAWrapper.h"
 
+/**
+ * @brief Entry point for testing RSA key generation using RSAPrivateWrapper.
+ *
+ * Measures the time taken to generate an RSA key pair, prints the key sizes, and reports success or errors.
+ *
+ * @return int Returns 0 on success, or 1 if an exception occurs.
+ */
 int main() {
     try {
         std::cout << "Testing RSA key generation with current settings..." << std::endl;

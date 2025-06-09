@@ -4,6 +4,13 @@
 
 using namespace CryptoPP;
 
+/**
+ * @brief Tests RSA 512-bit key generation using the Crypto++ library.
+ *
+ * Initializes a cryptographically secure random number generator, generates 512-bit RSA parameters, assigns them to a private key, and reports the outcome. Handles Crypto++ and standard exceptions, returning 0 on success and 1 on failure.
+ *
+ * @return int 0 if the test passes, 1 if an exception occurs.
+ */
 int main() {
     try {
         std::cout << "Testing RSA key generation..." << std::endl;

@@ -5,6 +5,13 @@
 #include <windows.h>
 #include <wincrypt.h>
 
+/**
+ * @brief Wrapper for handling 1024-bit RSA public keys and encryption using Windows CryptoAPI.
+ *
+ * Provides methods to load a public key from a DER-encoded buffer or file, retrieve the key, and encrypt data using the loaded key.
+ *
+ * The class prevents copying to ensure secure key management.
+ */
 class RSAPublicWrapper {
 public:
     static const unsigned int KEYSIZE = 162; // Correct size for 1024-bit keys in DER format
@@ -30,6 +37,11 @@ public:
     std::string encrypt(const char* plain, size_t length);
 };
 
+/**
+ * @brief Wrapper for managing a 1024-bit RSA private key using Windows CryptoAPI.
+ *
+ * Provides functionality to generate, load, and manage RSA private keys, as well as retrieve public/private key data and decrypt ciphertexts. Keys can be generated, loaded from DER-encoded buffers, or loaded from files in DER or Base64 format.
+ */
 class RSAPrivateWrapper {
 public:
     static const unsigned int BITS = 1024; // Full 1024-bit keys as required by server

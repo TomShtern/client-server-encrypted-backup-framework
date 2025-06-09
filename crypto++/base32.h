@@ -58,7 +58,13 @@ public:
 
 /// \brief Base32 decodes data using DUDE encoding
 /// \details Converts data from base32 using DUDE encoding. The default code is based on <A HREF="http://www.ietf.org/proceedings/51/I-D/draft-ietf-idn-dude-02.txt">Differential Unicode Domain Encoding (DUDE) (draft-ietf-idn-dude-02.txt)</A>.
-/// \sa Base32Encoder, Base32Decoder, Base32HexEncoder and Base32HexDecoder
+/**
+ * @brief Decodes Base32-encoded data using the DUDE encoding alphabet.
+ *
+ * The Base32Decoder class converts Base32-encoded input back to its original binary form using the DUDE encoding alphabet by default. It supports reconfiguration to use alternative alphabets, such as the RFC 4648 extended hex alphabet, via the IsolatedInitialize method.
+ *
+ * @param attachment Optional transformation to attach for output.
+ */
 class Base32Decoder : public BaseN_Decoder
 {
 public:
@@ -95,7 +101,17 @@ private:
 /// \brief Base32 encodes data using extended hex
 /// \details Converts data to base32 using extended hex alphabet. The alphabet is different than Base32Encoder.
 /// \sa Base32Encoder, Base32Decoder, Base32HexEncoder and Base32HexDecoder, <A HREF="http://tools.ietf.org/html/rfc4648#page-10">RFC 4648, Base 32 Encoding with Extended Hex Alphabet</A>.
-/// \since Crypto++ 6.0
+/**
+ * @brief Encodes data into Base32 using the extended hex alphabet (RFC 4648).
+ *
+ * Constructs a Base32HexEncoder that outputs encoded data using the extended hex alphabet, with options for uppercase output, grouping, custom separators, and terminators. Padding and line break behavior can be customized via IsolatedInitialize().
+ *
+ * @param attachment Optional transformation to attach encoded output.
+ * @param uppercase If true, output is in uppercase.
+ * @param groupSize Number of encoded characters per group; 0 disables grouping.
+ * @param separator String inserted between groups.
+ * @param terminator String appended after encoding is complete.
+ */
 class Base32HexEncoder : public SimpleProxyFilter
 {
 public:
@@ -130,7 +146,11 @@ public:
 /// \brief Base32 decodes data using extended hex
 /// \details Converts data from base32 using extended hex alphabet. The alphabet is different than Base32Decoder.
 /// \sa Base32Encoder, Base32Decoder, Base32HexEncoder and Base32HexDecoder, <A HREF="http://tools.ietf.org/html/rfc4648#page-10">RFC 4648, Base 32 Encoding with Extended Hex Alphabet</A>.
-/// \since Crypto++ 6.0
+/**
+ * @brief Decodes Base32 data using the extended hex alphabet (RFC 4648).
+ *
+ * The Base32HexDecoder class decodes Base32-encoded input using the extended hex alphabet as defined in RFC 4648. It supports flexible configuration through the IsolatedInitialize method, allowing customization of decoding parameters without affecting attached transformations.
+ */
 class Base32HexDecoder : public BaseN_Decoder
 {
 public:

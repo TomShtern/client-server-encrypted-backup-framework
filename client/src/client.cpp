@@ -104,9 +104,19 @@ struct TransferStats {
     double averageSpeed;
     int estimatedTimeRemaining;
     
-    TransferStats() : totalBytes(0), transferredBytes(0), lastTransferredBytes(0),
+    /**
+                       * @brief Initializes transfer statistics with zeroed values.
+                       *
+                       * Sets all fields related to file transfer progress, speed, and estimated time remaining to their initial states.
+                       */
+                      TransferStats() : totalBytes(0), transferredBytes(0), lastTransferredBytes(0),
                       currentSpeed(0.0), averageSpeed(0.0), estimatedTimeRemaining(0) {}
     
+    /**
+     * @brief Resets all transfer statistics to their initial state.
+     *
+     * Sets counters, speeds, and timers to zero and updates the start time for a new transfer session.
+     */
     void reset() {
         startTime = std::chrono::steady_clock::now();
         lastUpdateTime = startTime;
@@ -117,6 +127,13 @@ struct TransferStats {
         estimatedTimeRemaining = 0;
     }
     
+    /**
+     * @brief Updates transfer statistics with the latest transferred byte count.
+     *
+     * Recalculates current speed, average speed, and estimated time remaining based on the new total of transferred bytes.
+     *
+     * @param newBytes The updated total number of bytes transferred so far.
+     */
     void update(size_t newBytes) {
         auto now = std::chrono::steady_clock::now();
         transferredBytes = newBytes;
@@ -254,7 +271,11 @@ private:
     void displaySummary();
 };
 
-// Constructor
+/**
+ * @brief Constructs a Client instance and initializes member variables.
+ *
+ * Sets default values for connection state, retry counters, cryptographic pointers, and client ID. On Windows, initializes console handles and attempts to start the optional GUI, continuing gracefully if GUI initialization fails.
+ */
 Client::Client() : socket(nullptr), connected(false), rsaPrivate(nullptr), 
                    fileRetries(0), crcRetries(0), reconnectAttempts(0),
                    keepAliveEnabled(false), lastError(ErrorType::NONE) {
@@ -274,7 +295,11 @@ Client::Client() : socket(nullptr), connected(false), rsaPrivate(nullptr),
 #endif
 }
 
-// Destructor
+/**
+ * @brief Cleans up resources used by the Client, including network connections, cryptographic keys, and console or GUI state.
+ *
+ * Disables keep-alive, closes any open server connection, deletes the RSA private key, restores console attributes on Windows, and attempts to gracefully shut down the optional GUI.
+ */
 Client::~Client() {
     keepAliveEnabled = false;
     closeConnection();
@@ -293,7 +318,13 @@ Client::~Client() {
 #endif
 }
 
-// Initialize client
+/**
+ * @brief Initializes the client by loading configuration and preparing cryptographic keys.
+ *
+ * Reads configuration files, validates parameters, and loads or generates the RSA key pair required for secure communication. Displays initialization status and progress.
+ *
+ * @return true if initialization succeeds; false if configuration is invalid or key preparation fails.
+ */
 bool Client::initialize() {
     operationStartTime = std::chrono::steady_clock::now();
     displaySplashScreen();
@@ -329,7 +360,13 @@ bool Client::initialize() {
     return true;
 }
 
-// Main client run function
+/**
+ * @brief Executes the main client workflow for connecting, authenticating, and transferring a file.
+ *
+ * Attempts to connect to the server with retries, performs authentication via registration or reconnection, and transfers the configured file with retry logic. Displays progress and status updates throughout the process.
+ *
+ * @return true if the file transfer completes successfully; false if any critical step fails.
+ */
 bool Client::run() {
     displayPhase("Connection Setup");
     
@@ -427,7 +464,14 @@ bool Client::run() {
     return true;
 }
 
-// Read transfer.info configuration
+/**
+ * @brief Reads and parses the transfer.info configuration file.
+ *
+ * Loads the server address and port, username, and file path from the transfer.info file.
+ * Validates the format and value constraints for each field. Reports configuration errors if any field is missing or invalid.
+ *
+ * @return true if the configuration is successfully loaded and valid; false otherwise.
+ */
 bool Client::readTransferInfo() {
     std::ifstream file("transfer.info");
     if (!file.is_open()) {
@@ -478,7 +522,14 @@ bool Client::readTransferInfo() {
     return true;
 }
 
-// Validate configuration
+/**
+ * @brief Validates the client configuration parameters before starting the backup process.
+ *
+ * Checks that the server IP and port are set, verifies the existence and non-emptiness of the specified file, and updates transfer statistics with the file size.
+ * Displays status and error messages for each validation step.
+ *
+ * @return true if all configuration parameters are valid; false otherwise.
+ */
 bool Client::validateConfiguration() {
     displayStatus("Validating configuration", true, "Checking parameters");
     
@@ -517,7 +568,13 @@ bool Client::validateConfiguration() {
     return true;
 }
 
-// Load me.info
+/**
+ * @brief Loads client information from the "me.info" file.
+ *
+ * Reads the username and client ID from "me.info" and verifies that they match the expected values and format. The client ID is parsed from hexadecimal and stored internally. The private key is not loaded by this function.
+ *
+ * @return true if the information is successfully loaded and validated; false otherwise.
+ */
 bool Client::loadMeInfo() {
     std::ifstream file("me.info");
     if (!file.is_open()) {
@@ -548,7 +605,14 @@ bool Client::loadMeInfo() {
     return true;
 }
 
-// Save me.info
+/**
+ * @brief Saves the client's username, ID, and private key to the me.info file.
+ *
+ * Writes the username, client ID in hexadecimal, and the base64-encoded RSA private key to "me.info".
+ * Returns false if the file cannot be created or opened.
+ *
+ * @return true if the information was successfully saved; false otherwise.
+ */
 bool Client::saveMeInfo() {
     std::ofstream file("me.info");
     if (!file.is_open()) {
@@ -570,7 +634,13 @@ bool Client::saveMeInfo() {
     return true;
 }
 
-// Load private key
+/**
+ * @brief Loads the RSA private key from local storage.
+ *
+ * Attempts to load the private key from the binary file `priv.key`. If unavailable or invalid, tries to load a base64-encoded key from `me.info`, decodes it, and caches it to `priv.key`. Returns true on success, false otherwise.
+ *
+ * @return true if the private key was successfully loaded; false otherwise.
+ */
 bool Client::loadPrivateKey() {
     // Try priv.key first
     std::ifstream keyFile("priv.key", std::ios::binary);
@@ -624,7 +694,12 @@ bool Client::loadPrivateKey() {
     }
 }
 
-// Save private key
+/**
+ * @brief Saves the RSA private key to a file in binary format.
+ *
+ * Attempts to write the current RSA private key to "priv.key". Returns false if the key is unavailable or the file cannot be created.
+ * @return true if the private key was successfully saved; false otherwise.
+ */
 bool Client::savePrivateKey() {
     if (!rsaPrivate) return false;
     
@@ -640,7 +715,13 @@ bool Client::savePrivateKey() {
     return true;
 }
 
-// Connect to server
+/**
+ * @brief Establishes a TCP connection to the configured server.
+ *
+ * Attempts to resolve the server address and connect via TCP. Verifies the connection, sets socket options, and updates connection status. On failure, logs the error and resets the connection state.
+ *
+ * @return true if the connection is successfully established, false otherwise.
+ */
 bool Client::connectToServer() {
     try {
         socket = std::make_unique<boost::asio::ip::tcp::socket>(ioContext);
@@ -700,7 +781,13 @@ bool Client::connectToServer() {
     }
 }
 
-// Test connection quality
+/**
+ * @brief Tests the connection to the server and measures latency.
+ *
+ * Sends a minimal request to the server and calculates the round-trip time. Returns true if the latency is less than one second, indicating a good connection.
+ *
+ * @return true if the connection latency is under one second, false otherwise.
+ */
 bool Client::testConnection() {
     auto start = std::chrono::steady_clock::now();
     
@@ -716,7 +803,11 @@ bool Client::testConnection() {
     return latency < 1000; // Good if under 1 second
 }
 
-// Enable keep-alive
+/**
+ * @brief Enables TCP keep-alive on the client socket to maintain a stable connection.
+ *
+ * Attempts to set the keep-alive option on the active socket. Updates connection status accordingly.
+ */
 void Client::enableKeepAlive() {
     if (socket && socket->is_open()) {
         try {
@@ -729,7 +820,11 @@ void Client::enableKeepAlive() {
     }
 }
 
-// Close connection
+/**
+ * @brief Closes the current TCP connection to the server and updates connection status.
+ *
+ * Releases the socket resource, marks the client as disconnected, and updates the GUI connection status if available.
+ */
 void Client::closeConnection() {
     if (socket && socket->is_open()) {
         try {
@@ -748,7 +843,15 @@ void Client::closeConnection() {
     }
 }
 
-// Send request to server
+/**
+ * @brief Sends a protocol request to the server with the specified code and payload.
+ *
+ * Constructs and transmits a request header in little-endian format, followed by the optional payload, over the established TCP connection. Returns false if the client is not connected or if any transmission error occurs.
+ *
+ * @param code Protocol request code to send.
+ * @param payload Optional request payload data.
+ * @return true if the request and payload are sent successfully; false otherwise.
+ */
 bool Client::sendRequest(uint16_t code, const std::vector<uint8_t>& payload) {
     if (!connected || !socket || !socket->is_open()) {
         displayError("Not connected to server", ErrorType::NETWORK);
@@ -827,7 +930,15 @@ bool Client::sendRequest(uint16_t code, const std::vector<uint8_t>& payload) {
     }
 }
 
-// Receive response from server
+/**
+ * @brief Receives a response from the server and populates the header and payload.
+ *
+ * Reads the response header from the server, validates the protocol version, checks for error codes, and reads the payload if present. Returns false if the connection is not open, the server version is invalid, an error code is received, or a network exception occurs.
+ *
+ * @param header Reference to a ResponseHeader struct to be filled with the received header data.
+ * @param payload Reference to a vector to be filled with the response payload, if any.
+ * @return true if the response is successfully received and valid; false otherwise.
+ */
 bool Client::receiveResponse(ResponseHeader& header, std::vector<uint8_t>& payload) {
     if (!connected || !socket || !socket->is_open()) {
         displayError("Not connected to server", ErrorType::NETWORK);
@@ -865,7 +976,13 @@ bool Client::receiveResponse(ResponseHeader& header, std::vector<uint8_t>& paylo
     }
 }
 
-// Perform registration
+/**
+ * @brief Registers the client with the server using the current username and RSA keys.
+ *
+ * Sends a registration request containing the username to the server. On success, receives and stores a new client ID, and saves registration information and the RSA private key locally. Returns false if registration fails due to protocol errors, authentication issues, or file I/O problems.
+ *
+ * @return true if registration succeeds and client information is saved; false otherwise.
+ */
 bool Client::performRegistration() {
     displayStatus("Starting registration", true, "Using pre-generated RSA keys");
 
@@ -920,7 +1037,13 @@ bool Client::performRegistration() {
     return true;
 }
 
-// Perform reconnection
+/**
+ * @brief Attempts to reconnect to the server using the stored client credentials.
+ *
+ * Sends a reconnection request with the client's username, receives an encrypted AES key from the server, and decrypts it using the stored RSA private key. Returns true if reconnection and authentication succeed, false otherwise.
+ *
+ * @return true if reconnection and AES key decryption are successful; false otherwise.
+ */
 bool Client::performReconnection() {
     // Prepare reconnection payload
     std::vector<uint8_t> payload(MAX_NAME_SIZE, 0);
@@ -963,7 +1086,13 @@ bool Client::performReconnection() {
     return true;
 }
 
-// Send public key
+/**
+ * @brief Sends the client's RSA public key to the server and establishes an AES-256 session key.
+ *
+ * Prepares and transmits a payload containing the username and RSA public key to the server. Upon receiving the server's response, extracts and decrypts the AES key for secure file transfer. Returns false if any step fails, including missing RSA keys, protocol errors, or decryption failure.
+ *
+ * @return true if the public key is sent and the AES key is successfully established; false otherwise.
+ */
 bool Client::sendPublicKey() {
     if (!rsaPrivate) {
         displayError("No RSA keys available", ErrorType::CRYPTO);
@@ -1014,7 +1143,13 @@ bool Client::sendPublicKey() {
     return true;
 }
 
-// Transfer file
+/**
+ * @brief Encrypts and transfers the configured file to the server in encrypted packets.
+ *
+ * Reads the specified file, encrypts its contents using AES-256-CBC, splits the encrypted data into packets, and sends each packet to the server. After all packets are sent, waits for the server's CRC response and verifies file integrity.
+ *
+ * @return true if the file is successfully transferred and verified; false otherwise.
+ */
 bool Client::transferFile() {
     // Read file
     displayStatus("Reading file", true, filepath);
@@ -1095,7 +1230,18 @@ bool Client::transferFile() {
     return verifyCRC(serverCRC, fileData, filename);
 }
 
-// Send file packet
+/**
+ * @brief Sends a single encrypted file packet to the server.
+ *
+ * Constructs and transmits a file packet containing metadata (encrypted size, original size, packet number, total packets, and filename) along with the encrypted file data as part of the file transfer process.
+ *
+ * @param filename Name of the file being transferred.
+ * @param encryptedData Encrypted chunk of file data for this packet.
+ * @param originalSize Size of the original (unencrypted) data in this packet.
+ * @param packetNum Sequence number of this packet (starting from 1).
+ * @param totalPackets Total number of packets for the file transfer.
+ * @return true if the packet was sent successfully; false otherwise.
+ */
 bool Client::sendFilePacket(const std::string& filename, const std::string& encryptedData,
                            uint32_t originalSize, uint16_t packetNum, uint16_t totalPackets) {
     // Create payload
@@ -1126,7 +1272,16 @@ bool Client::sendFilePacket(const std::string& filename, const std::string& encr
     return sendRequest(REQ_SEND_FILE, payload);
 }
 
-// Verify CRC
+/**
+ * @brief Verifies file integrity by comparing CRC32 checksums with the server and handles retry logic.
+ *
+ * Compares the CRC32 checksum calculated from the original file data with the checksum provided by the server. If the checksums match, confirms integrity and notifies the server. If they do not match, attempts to retry the file transfer up to a maximum number of retries. Aborts the operation if the maximum retries are exceeded.
+ *
+ * @param serverCRC The CRC32 checksum received from the server.
+ * @param originalData The original file data used to calculate the local CRC32.
+ * @param filename The name of the file being verified.
+ * @return true if the CRCs match or a retry succeeds; false if verification fails after maximum retries.
+ */
 bool Client::verifyCRC(uint32_t serverCRC, const std::vector<uint8_t>& originalData, const std::string& filename) {
     displayStatus("Calculating CRC", true, "Using cksum algorithm");
     
@@ -1176,7 +1331,12 @@ bool Client::verifyCRC(uint32_t serverCRC, const std::vector<uint8_t>& originalD
     }
 }
 
-// Generate RSA keys
+/**
+ * @brief Generates a new RSA private key for the client.
+ *
+ * Attempts to create a new RSA private key and stores it in the client instance. Returns true on success, or false if key generation fails.
+ * @return true if the RSA key was generated successfully, false otherwise.
+ */
 bool Client::generateRSAKeys() {
     try {
         auto start = std::chrono::steady_clock::now();
@@ -1195,7 +1355,14 @@ bool Client::generateRSAKeys() {
     }
 }
 
-// Decrypt AES key
+/**
+ * @brief Decrypts an AES key using the client's RSA private key.
+ *
+ * Attempts to decrypt the provided RSA-encrypted AES key and validates its size. Reports errors if the private key is unavailable, decryption fails, or the resulting key is not 256 bits.
+ *
+ * @param encryptedKey The RSA-encrypted AES key as a byte vector.
+ * @return true if decryption and validation succeed; false otherwise.
+ */
 bool Client::decryptAESKey(const std::vector<uint8_t>& encryptedKey) {
     if (!rsaPrivate) {
         displayError("No RSA private key available", ErrorType::CRYPTO);
@@ -1219,7 +1386,14 @@ bool Client::decryptAESKey(const std::vector<uint8_t>& encryptedKey) {
     }
 }
 
-// Encrypt file with AES
+/**
+ * @brief Encrypts file data using AES-256-CBC with a static zero IV.
+ *
+ * Encrypts the provided data buffer using the stored 32-byte AES key in CBC mode with a static initialization vector of all zeros, as required by the protocol. Returns the encrypted data as a string, or an empty string if encryption fails or the key is invalid.
+ *
+ * @param data The file data to encrypt.
+ * @return std::string The encrypted data, or an empty string on failure.
+ */
 std::string Client::encryptFile(const std::vector<uint8_t>& data) {
     if (aesKey.empty()) {
         displayError("No AES key available", ErrorType::CRYPTO);
@@ -1254,7 +1428,15 @@ std::string Client::encryptFile(const std::vector<uint8_t>& data) {
     }
 }
 
-// Read file
+/**
+ * @brief Reads the contents of a file into a byte vector.
+ *
+ * Opens the specified file in binary mode and reads its entire contents into a vector of bytes.
+ * Returns an empty vector if the file cannot be opened.
+ *
+ * @param path Path to the file to be read.
+ * @return std::vector<uint8_t> Vector containing the file's contents, or empty if the file cannot be opened.
+ */
 std::vector<uint8_t> Client::readFile(const std::string& path) {
     std::ifstream file(path, std::ios::binary);
     if (!file.is_open()) {
@@ -1278,7 +1460,13 @@ std::vector<uint8_t> Client::readFile(const std::string& path) {
     return data;
 }
 
-// Convert bytes to hex string
+/**
+ * @brief Converts a byte array to its hexadecimal string representation.
+ *
+ * @param data Pointer to the byte array.
+ * @param size Number of bytes to convert.
+ * @return std::string Hexadecimal string representing the input bytes.
+ */
 std::string Client::bytesToHex(const uint8_t* data, size_t size) {
     std::stringstream ss;
     ss << std::hex << std::setfill('0');
@@ -1288,7 +1476,14 @@ std::string Client::bytesToHex(const uint8_t* data, size_t size) {
     return ss.str();
 }
 
-// Convert hex string to bytes
+/**
+ * @brief Converts a hexadecimal string to a vector of bytes.
+ *
+ * The input string must have an even length and contain only valid hexadecimal characters.
+ *
+ * @param hex Hexadecimal string to convert.
+ * @return std::vector<uint8_t> Byte vector representing the decoded data.
+ */
 std::vector<uint8_t> Client::hexToBytes(const std::string& hex) {
     std::vector<uint8_t> bytes;
     for (size_t i = 0; i < hex.length(); i += 2) {
@@ -1298,12 +1493,25 @@ std::vector<uint8_t> Client::hexToBytes(const std::string& hex) {
     return bytes;
 }
 
-// Calculate CRC32 using provided wrapper
+/**
+ * @brief Calculates the CRC32 checksum of the given data buffer.
+ *
+ * @param data Pointer to the data buffer.
+ * @param size Number of bytes in the buffer.
+ * @return uint32_t CRC32 checksum value.
+ */
 uint32_t Client::calculateCRC32(const uint8_t* data, size_t size) {
     return calculateCRC(data, size);
 }
 
-// Format bytes to human readable
+/**
+ * @brief Converts a byte count to a human-readable string with appropriate units.
+ *
+ * Formats the given number of bytes into a string using B, KB, MB, or GB units with two decimal places.
+ *
+ * @param bytes The number of bytes to format.
+ * @return std::string The formatted string representing the size in human-readable units.
+ */
 std::string Client::formatBytes(size_t bytes) {
     const char* sizes[] = {"B", "KB", "MB", "GB"};
     int order = 0;
@@ -1319,7 +1527,14 @@ std::string Client::formatBytes(size_t bytes) {
     return ss.str();
 }
 
-// Format duration to human readable
+/**
+ * @brief Converts a duration in seconds to a human-readable string.
+ *
+ * Formats the duration as "Xs", "Ym Zs", or "Wh Xm" depending on the length.
+ *
+ * @param seconds Duration in seconds.
+ * @return std::string Human-readable duration string.
+ */
 std::string Client::formatDuration(int seconds) {
     if (seconds < 60) {
         return std::to_string(seconds) + "s";
@@ -1334,7 +1549,11 @@ std::string Client::formatDuration(int seconds) {
     }
 }
 
-// Get current timestamp
+/**
+ * @brief Returns the current local time as a string in HH:MM:SS format.
+ *
+ * @return std::string Current timestamp formatted as hours, minutes, and seconds.
+ */
 std::string Client::getCurrentTimestamp() {
     auto now = std::chrono::system_clock::now();
     auto time_t = std::chrono::system_clock::to_time_t(now);
@@ -1343,7 +1562,15 @@ std::string Client::getCurrentTimestamp() {
     return ss.str();
 }
 
-// Visual feedback functions
+/**
+ * @brief Displays a timestamped status message for an operation, indicating success or failure.
+ *
+ * Shows the operation name with a colored status indicator and optional details. On Windows, also updates the GUI status if available.
+ *
+ * @param operation Name or description of the operation.
+ * @param success Whether the operation succeeded.
+ * @param details Optional additional information to display.
+ */
 void Client::displayStatus(const std::string& operation, bool success, const std::string& details) {
 #ifdef _WIN32
     clearLine();
@@ -1384,6 +1611,15 @@ void Client::displayStatus(const std::string& operation, bool success, const std
 #endif
 }
 
+/**
+ * @brief Displays a progress bar for the current operation in the console.
+ *
+ * Shows the percentage completed and bytes transferred out of the total, updating in place. On Windows, uses colored output and optionally updates GUI progress if available.
+ *
+ * @param operation Name or description of the current operation.
+ * @param current Number of bytes or units completed.
+ * @param total Total number of bytes or units to complete.
+ */
 void Client::displayProgress(const std::string& operation, size_t current, size_t total) {
     if (total == 0) return;
     
@@ -1435,6 +1671,11 @@ void Client::displayProgress(const std::string& operation, size_t current, size_
 #endif
 }
 
+/**
+ * @brief Displays current file transfer statistics including speed, average speed, and estimated time remaining.
+ *
+ * Shows a formatted summary of transfer performance metrics in the console, with colored output on Windows.
+ */
 void Client::displayTransferStats() {
 #ifdef _WIN32
     SetConsoleTextAttribute(hConsole, FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_INTENSITY);
@@ -1451,6 +1692,12 @@ void Client::displayTransferStats() {
 #endif
 }
 
+/**
+ * @brief Displays the client splash screen with version, build date, protocol, and encryption details.
+ *
+ * Clears the console and prints a formatted banner summarizing client version, build information, protocol version, and encryption algorithms.
+ * Uses colored output on Windows.
+ */
 void Client::displaySplashScreen() {
 #ifdef _WIN32
     system("cls");
@@ -1474,6 +1721,11 @@ void Client::displaySplashScreen() {
 #endif
 }
 
+/**
+ * @brief Clears the current console line.
+ *
+ * Overwrites or erases the current line in the console output, ensuring that any previous content is removed before new output is displayed. Uses platform-specific methods for Windows and other systems.
+ */
 void Client::clearLine() {
 #ifdef _WIN32
     std::cout << "\r" << std::string(120, ' ') << "\r";
@@ -1484,6 +1736,11 @@ void Client::clearLine() {
 #endif
 }
 
+/**
+ * @brief Displays the current connection and transfer configuration details.
+ *
+ * Prints the server address, client username, file path, and file size to the console.
+ */
 void Client::displayConnectionInfo() {
     displaySeparator();
     std::cout << "Connection Details:\n";
@@ -1494,6 +1751,11 @@ void Client::displayConnectionInfo() {
     displaySeparator();
 }
 
+/**
+ * @brief Displays an error message with categorized error type.
+ *
+ * Sets the last error type and details, prints a formatted error message to the console with appropriate category tags, and updates the GUI error status and notification if available.
+ */
 void Client::displayError(const std::string& message, ErrorType type) {
     lastError = type;
     lastErrorDetails = message;
@@ -1546,6 +1808,11 @@ void Client::displayError(const std::string& message, ErrorType type) {
     // }
 }
 
+/**
+ * @brief Prints a horizontal separator line to the console.
+ *
+ * On Windows, uses a bold line character and restores console attributes; on other platforms, uses a standard dash.
+ */
 void Client::displaySeparator() {
 #ifdef _WIN32
     SetConsoleTextAttribute(hConsole, FOREGROUND_INTENSITY);
@@ -1556,6 +1823,13 @@ void Client::displaySeparator() {
 #endif
 }
 
+/**
+ * @brief Displays the current operation phase with visual emphasis.
+ *
+ * Prints the specified phase to the console with formatting and color (on Windows), and updates the GUI phase indicator if available.
+ *
+ * @param phase Name or description of the current phase.
+ */
 void Client::displayPhase(const std::string& phase) {
 #ifdef _WIN32
     std::cout << "\n";
@@ -1576,6 +1850,11 @@ void Client::displayPhase(const std::string& phase) {
 #endif
 }
 
+/**
+ * @brief Displays a summary of the completed file backup operation.
+ *
+ * Prints a formatted summary including file name, size, duration, average speed, server address, and timestamp. Also shows a completion notification if GUI support is available.
+ */
 void Client::displaySummary() {
     auto endTime = std::chrono::steady_clock::now();
     auto totalDuration = std::chrono::duration_cast<std::chrono::seconds>(endTime - operationStartTime).count();
@@ -1608,7 +1887,13 @@ void Client::displaySummary() {
     }
 }
 
-// Main function
+/**
+ * @brief Entry point for the encrypted file backup client application.
+ *
+ * Initializes the client, performs configuration and authentication, and executes the file backup process. Handles errors and displays notifications via console and optional GUI on Windows.
+ *
+ * @return int Returns 0 on successful backup, or 1 on failure or exception.
+ */
 int main() {
     try {
         Client client;

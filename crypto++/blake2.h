@@ -36,7 +36,12 @@ struct BLAKE2s_Info : public VariableKeyLength<32,0,32,1,SimpleKeyingInterface::
     CRYPTOPP_CONSTANT(SALTSIZE = 8);
     CRYPTOPP_CONSTANT(PERSONALIZATIONSIZE = 8);
 
-    CRYPTOPP_STATIC_CONSTEXPR const char* StaticAlgorithmName() {return "BLAKE2s";}
+    /**
+ * @brief Returns the static algorithm name for BLAKE2s.
+ *
+ * @return The string "BLAKE2s".
+ */
+CRYPTOPP_STATIC_CONSTEXPR const char* StaticAlgorithmName() {return "BLAKE2s";}
 };
 
 /// \brief BLAKE2b hash information
@@ -53,10 +58,21 @@ struct BLAKE2b_Info : public VariableKeyLength<64,0,64,1,SimpleKeyingInterface::
     CRYPTOPP_CONSTANT(SALTSIZE = 16);
     CRYPTOPP_CONSTANT(PERSONALIZATIONSIZE = 16);
 
-    CRYPTOPP_STATIC_CONSTEXPR const char* StaticAlgorithmName() {return "BLAKE2b";}
+    /**
+ * @brief Returns the static algorithm name for BLAKE2b.
+ *
+ * @return The string "BLAKE2b".
+ */
+CRYPTOPP_STATIC_CONSTEXPR const char* StaticAlgorithmName() {return "BLAKE2b";}
 };
 
-/// \brief BLAKE2s parameter block
+/**
+     * @brief Represents the parameter block for BLAKE2s configuration.
+     *
+     * Encapsulates digest size, salt, and personalization parameters for BLAKE2s hashing, providing initialization and reset functionality.
+     *
+     * @param digestSize Optional digest size to initialize the parameter block with a specific output length.
+     */
 struct CRYPTOPP_NO_VTABLE BLAKE2s_ParameterBlock
 {
     CRYPTOPP_CONSTANT(SALTSIZE = BLAKE2s_Info::SALTSIZE);
@@ -78,22 +94,47 @@ struct CRYPTOPP_NO_VTABLE BLAKE2s_ParameterBlock
 
     void Reset(size_t digestLength=DIGESTSIZE, size_t keyLength=0);
 
+    /**
+     * @brief Returns a pointer to the underlying data buffer.
+     *
+     * @return Pointer to the internal byte array.
+     */
     byte* data() {
         return m_data.data();
     }
 
+    /**
+     * @brief Returns a pointer to the underlying parameter block data.
+     *
+     * @return Pointer to the parameter block's byte array.
+     */
     const byte* data() const {
         return m_data.data();
     }
 
+    /**
+     * @brief Returns the number of bytes in the parameter block.
+     *
+     * @return size_t The size of the underlying data buffer in bytes.
+     */
     size_t size() const {
         return m_data.size();
     }
 
+    /**
+     * @brief Returns a pointer to the salt field within the parameter block.
+     *
+     * @return byte* Pointer to the start of the salt data.
+     */
     byte* salt() {
         return m_data + SaltOff;
     }
 
+    /**
+     * @brief Returns a pointer to the personalization field within the parameter block.
+     *
+     * @return Pointer to the personalization bytes.
+     */
     byte* personalization() {
         return m_data + PersonalizationOff;
     }
@@ -107,7 +148,13 @@ struct CRYPTOPP_NO_VTABLE BLAKE2s_ParameterBlock
     FixedSizeAlignedSecBlock<byte, 32, true> m_data;
 };
 
-/// \brief BLAKE2b parameter block
+/**
+     * @brief Represents the parameter block for BLAKE2b hash configuration.
+     *
+     * Encapsulates configuration parameters for BLAKE2b, including digest size, key length, salt, and personalization, as specified in RFC 7693. Used to initialize or reset the hash function's parameters.
+     *
+     * @param digestSize Optional digest size in bytes to initialize the parameter block.
+     */
 struct CRYPTOPP_NO_VTABLE BLAKE2b_ParameterBlock
 {
     CRYPTOPP_CONSTANT(SALTSIZE = BLAKE2b_Info::SALTSIZE);
@@ -129,22 +176,47 @@ struct CRYPTOPP_NO_VTABLE BLAKE2b_ParameterBlock
 
     void Reset(size_t digestLength=DIGESTSIZE, size_t keyLength=0);
 
+    /**
+     * @brief Returns a pointer to the underlying data buffer.
+     *
+     * @return Pointer to the internal byte array.
+     */
     byte* data() {
         return m_data.data();
     }
 
+    /**
+     * @brief Returns a pointer to the underlying parameter block data.
+     *
+     * @return Pointer to the parameter block's byte array.
+     */
     const byte* data() const {
         return m_data.data();
     }
 
+    /**
+     * @brief Returns the number of bytes in the parameter block.
+     *
+     * @return size_t The size of the underlying data buffer in bytes.
+     */
     size_t size() const {
         return m_data.size();
     }
 
+    /**
+     * @brief Returns a pointer to the salt field within the parameter block.
+     *
+     * @return byte* Pointer to the start of the salt data.
+     */
     byte* salt() {
         return m_data + SaltOff;
     }
 
+    /**
+     * @brief Returns a pointer to the personalization field within the parameter block.
+     *
+     * @return Pointer to the personalization bytes.
+     */
     byte* personalization() {
         return m_data + PersonalizationOff;
     }
@@ -159,7 +231,11 @@ struct CRYPTOPP_NO_VTABLE BLAKE2b_ParameterBlock
 };
 
 /// \brief BLAKE2s state information
-/// \since Crypto++ 5.6.4
+/**
+ * @brief Maintains the internal state for a BLAKE2s hash computation.
+ *
+ * Holds the chaining values, counters, finalization flags, input buffer, and buffer length required for BLAKE2s hashing. Provides methods to reset the state and access internal arrays for hash state, counters, flags, and data buffer.
+ */
 struct CRYPTOPP_NO_VTABLE BLAKE2s_State
 {
     BLAKE2s_State() {
@@ -168,18 +244,38 @@ struct CRYPTOPP_NO_VTABLE BLAKE2s_State
 
     void Reset();
 
+    /**
+     * @brief Returns a pointer to the internal hash state array.
+     *
+     * @return word32* Pointer to the beginning of the hash state data.
+     */
     inline word32* h() {
         return m_hft.data();
     }
 
+    /**
+     * @brief Returns a pointer to the counter array within the internal state.
+     *
+     * @return word32* Pointer to the first element of the counter array.
+     */
     inline word32* t() {
         return m_hft.data() + 8;
     }
 
+    /**
+     * @brief Returns a pointer to the finalization flag field in the internal state array.
+     *
+     * @return word32* Pointer to the finalization flag within the state data.
+     */
     inline word32* f() {
         return m_hft.data() + 10;
     }
 
+    /**
+     * @brief Returns a pointer to the underlying data buffer.
+     *
+     * @return byte* Pointer to the start of the internal buffer.
+     */
     inline byte* data() {
         return m_buf.data();
     }
@@ -192,7 +288,11 @@ struct CRYPTOPP_NO_VTABLE BLAKE2s_State
 };
 
 /// \brief BLAKE2b state information
-/// \since Crypto++ 5.6.4
+/**
+ * @brief Maintains the internal state for BLAKE2b hash computations.
+ *
+ * Holds the chaining values, counters, finalization flags, input buffer, and buffer length for BLAKE2b. Provides accessors for the internal state arrays and buffer, and a method to reset the state to its initial values.
+ */
 struct CRYPTOPP_NO_VTABLE BLAKE2b_State
 {
     BLAKE2b_State() {
@@ -201,18 +301,38 @@ struct CRYPTOPP_NO_VTABLE BLAKE2b_State
 
     void Reset();
 
+    /**
+     * @brief Returns a pointer to the internal hash state array.
+     *
+     * @return word64* Pointer to the beginning of the hash state, counter, and flag array.
+     */
     inline word64* h() {
         return m_hft.data();
     }
 
+    /**
+     * @brief Returns a pointer to the counter array within the internal state.
+     *
+     * @return word64* Pointer to the start of the 2-element counter array.
+     */
     inline word64* t() {
         return m_hft.data() + 8;
     }
 
+    /**
+     * @brief Returns a pointer to the finalization flag array within the internal state.
+     *
+     * @return word64* Pointer to the finalization flag field.
+     */
     inline word64* f() {
         return m_hft.data() + 10;
     }
 
+    /**
+     * @brief Returns a pointer to the underlying data buffer.
+     *
+     * @return byte* Pointer to the start of the internal buffer.
+     */
     inline byte* data() {
         return m_buf.data();
     }
@@ -249,9 +369,17 @@ public:
     typedef BLAKE2s_State State;
     typedef BLAKE2s_ParameterBlock ParameterBlock;
 
-    CRYPTOPP_STATIC_CONSTEXPR const char* StaticAlgorithmName() {return "BLAKE2s";}
+    /**
+ * @brief Returns the static algorithm name for BLAKE2s.
+ *
+ * @return The string "BLAKE2s".
+ */
+CRYPTOPP_STATIC_CONSTEXPR const char* StaticAlgorithmName() {return "BLAKE2s";}
 
-    virtual ~BLAKE2s() {}
+    /**
+ * @brief Destroys the BLAKE2s object and securely clears sensitive data.
+ */
+virtual ~BLAKE2s() {}
 
     /// \brief Construct a BLAKE2s hash
     /// \param digestSize the digest size, in bytes
@@ -286,8 +414,23 @@ public:
     /// Message Authentication Code (MAC)</A>. For example, "BLAKE2b-512" and "BLAKE2s-256".
     std::string AlgorithmName() const {return std::string(BLAKE2s_Info::StaticAlgorithmName()) + "-" + IntToString(DigestSize()*8);}
 
-    unsigned int BlockSize() const {return BLOCKSIZE;}
-    unsigned int DigestSize() const {return m_digestSize;}
+    /**
+ * @brief Returns the block size used by the hash function in bytes.
+ *
+ * @return The block size in bytes.
+ */
+unsigned int BlockSize() const {return BLOCKSIZE;}
+    /**
+ * @brief Returns the digest size in bytes for the current BLAKE2 instance.
+ *
+ * @return The number of bytes in the hash output.
+ */
+unsigned int DigestSize() const {return m_digestSize;}
+    /**
+     * @brief Returns the optimal data alignment for BLAKE2s operations.
+     *
+     * @return The alignment, in bytes, required for optimal performance.
+     */
     unsigned int OptimalDataAlignment() const;
 
     void Update(const byte *input, size_t length);
@@ -309,7 +452,13 @@ public:
 
     /// \brief Get tree mode
     /// \return the current tree mode
-    /// \details Tree mode is persisted across calls to Restart().
+    /**
+ * @brief Returns whether tree hashing mode is enabled.
+ *
+ * Tree mode determines if the BLAKE2 instance operates in tree hashing mode, which is preserved across restarts.
+ *
+ * @return true if tree mode is enabled; false otherwise.
+ */
     bool GetTreeMode() const {return m_treeMode;}
 
     void TruncatedFinal(byte *hash, size_t size);
@@ -356,9 +505,17 @@ public:
     typedef BLAKE2b_State State;
     typedef BLAKE2b_ParameterBlock ParameterBlock;
 
-    CRYPTOPP_STATIC_CONSTEXPR const char* StaticAlgorithmName() {return "BLAKE2b";}
+    /**
+ * @brief Returns the static algorithm name for BLAKE2b.
+ *
+ * @return The string "BLAKE2b".
+ */
+CRYPTOPP_STATIC_CONSTEXPR const char* StaticAlgorithmName() {return "BLAKE2b";}
 
-    virtual ~BLAKE2b() {}
+    /**
+ * @brief Destroys the BLAKE2b object and securely clears sensitive data.
+ */
+virtual ~BLAKE2b() {}
 
     /// \brief Construct a BLAKE2b hash
     /// \param digestSize the digest size, in bytes
@@ -393,8 +550,25 @@ public:
     /// Message Authentication Code (MAC)</A>. For example, "BLAKE2b-512" and "BLAKE2s-256".
     std::string AlgorithmName() const {return std::string(BLAKE2b_Info::StaticAlgorithmName()) + "-" + IntToString(DigestSize()*8);}
 
-    unsigned int BlockSize() const {return BLOCKSIZE;}
-    unsigned int DigestSize() const {return m_digestSize;}
+    /**
+ * @brief Returns the block size used by the hash function in bytes.
+ *
+ * @return The block size in bytes.
+ */
+unsigned int BlockSize() const {return BLOCKSIZE;}
+    /**
+ * @brief Returns the digest size in bytes for the current BLAKE2 instance.
+ *
+ * @return The number of bytes in the hash output.
+ */
+unsigned int DigestSize() const {return m_digestSize;}
+    /**
+     * @brief Sets the tree hashing mode for BLAKE2b.
+     *
+     * @param mode If true, enables tree hashing mode; if false, uses sequential mode.
+     *
+     * Tree mode affects the handling of the internal finalization flags. When enabled, both State::f[0] and State::f[1] are set during finalization; otherwise, only State::f[0] is set. The selected mode persists across hash restarts.
+     */
     unsigned int OptimalDataAlignment() const;
 
     void Update(const byte *input, size_t length);
@@ -416,7 +590,13 @@ public:
 
     /// \brief Get tree mode
     /// \return the current tree mode
-    /// \details Tree mode is persisted across calls to Restart().
+    /**
+ * @brief Returns whether tree hashing mode is enabled.
+ *
+ * Tree mode determines if the BLAKE2 instance operates in tree hashing mode, which is preserved across restarts.
+ *
+ * @return true if tree mode is enabled; false otherwise.
+ */
     bool GetTreeMode() const {return m_treeMode;}
 
     void TruncatedFinal(byte *hash, size_t size);

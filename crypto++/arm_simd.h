@@ -26,7 +26,15 @@
 /// \param crc the starting crc value
 /// \param val the value to checksum
 /// \return CRC32 value
-/// \since Crypto++ 8.6
+/**
+ * @brief Computes the CRC32 checksum of an 8-bit value using ARM hardware acceleration.
+ *
+ * Calculates the CRC32 checksum of the byte \p val, starting from the initial CRC value \p crc, utilizing ARM's CRC32 instruction or compiler intrinsic.
+ *
+ * @param crc Initial CRC32 value.
+ * @param val 8-bit value to process.
+ * @return Updated CRC32 checksum.
+ */
 inline uint32_t CRC32B (uint32_t crc, uint8_t val)
 {
 #if defined(CRYPTOPP_MSC_VERSION)
@@ -42,7 +50,15 @@ inline uint32_t CRC32B (uint32_t crc, uint8_t val)
 /// \param crc the starting crc value
 /// \param val the value to checksum
 /// \return CRC32 value
-/// \since Crypto++ 8.6
+/**
+ * @brief Computes the CRC32 checksum of a 32-bit word using ARM hardware acceleration.
+ *
+ * Calculates the CRC32 checksum of the 32-bit value `val`, starting from the initial CRC value `crc`. Utilizes ARM CRC32 instructions or compiler intrinsics for efficient computation.
+ *
+ * @param crc Initial CRC32 value.
+ * @param val 32-bit input word to process.
+ * @return Updated CRC32 checksum after processing `val`.
+ */
 inline uint32_t CRC32W (uint32_t crc, uint32_t val)
 {
 #if defined(CRYPTOPP_MSC_VERSION)
@@ -58,7 +74,15 @@ inline uint32_t CRC32W (uint32_t crc, uint32_t val)
 /// \param crc the starting crc value
 /// \param vals the values to checksum
 /// \return CRC32 value
-/// \since Crypto++ 8.6
+/**
+ * @brief Computes the CRC32 checksum of four consecutive 32-bit words.
+ *
+ * Processes an array of four 32-bit values, updating the CRC32 checksum starting from the provided initial value.
+ *
+ * @param crc Initial CRC32 value.
+ * @param vals Array of four 32-bit words to process.
+ * @return Updated CRC32 checksum after processing all four words.
+ */
 inline uint32_t CRC32Wx4 (uint32_t crc, const uint32_t vals[4])
 {
 #if defined(CRYPTOPP_MSC_VERSION)
@@ -82,7 +106,15 @@ inline uint32_t CRC32Wx4 (uint32_t crc, const uint32_t vals[4])
 /// \param crc the starting crc value
 /// \param val the value to checksum
 /// \return CRC32-C value
-/// \since Crypto++ 8.6
+/**
+ * @brief Computes the CRC32-C (Castagnoli) checksum of an 8-bit value.
+ *
+ * Calculates the CRC32-C checksum for the given byte, updating the provided CRC value.
+ *
+ * @param crc Initial CRC32-C value.
+ * @param val 8-bit input value to process.
+ * @return Updated CRC32-C value after processing the input byte.
+ */
 inline uint32_t CRC32CB (uint32_t crc, uint8_t val)
 {
 #if defined(CRYPTOPP_MSC_VERSION)
@@ -98,7 +130,15 @@ inline uint32_t CRC32CB (uint32_t crc, uint8_t val)
 /// \param crc the starting crc value
 /// \param val the value to checksum
 /// \return CRC32-C value
-/// \since Crypto++ 8.6
+/**
+ * @brief Computes the CRC32-C (Castagnoli) checksum of a 32-bit value.
+ *
+ * Calculates the CRC32-C checksum for the 32-bit input value `val`, starting from the initial CRC value `crc`, using ARM hardware acceleration when available.
+ *
+ * @param crc Initial CRC32-C value.
+ * @param val 32-bit value to process.
+ * @return Updated CRC32-C checksum.
+ */
 inline uint32_t CRC32CW (uint32_t crc, uint32_t val)
 {
 #if defined(CRYPTOPP_MSC_VERSION)
@@ -114,7 +154,15 @@ inline uint32_t CRC32CW (uint32_t crc, uint32_t val)
 /// \param crc the starting crc value
 /// \param vals the values to checksum
 /// \return CRC32-C value
-/// \since Crypto++ 8.6
+/**
+ * @brief Computes the CRC32-C checksum of four 32-bit words.
+ *
+ * Processes an array of four 32-bit values using the CRC32-C algorithm, starting from the given initial CRC value.
+ *
+ * @param crc Initial CRC32-C value.
+ * @param vals Array of four 32-bit words to process.
+ * @return Updated CRC32-C value after processing all four words.
+ */
 inline uint32_t CRC32CWx4 (uint32_t crc, const uint32_t vals[4])
 {
 #if defined(CRYPTOPP_MSC_VERSION)
@@ -148,7 +196,15 @@ inline uint32_t CRC32CWx4 (uint32_t crc, const uint32_t vals[4])
 /// \note An Intel XMM register is composed of 128-bits. The leftmost bit
 ///  is MSB and numbered 127, while the rightmost bit is LSB and
 ///  numbered 0.
-/// \since Crypto++ 8.0
+/**
+ * @brief Performs polynomial multiplication of the low 64 bits of two 128-bit vectors.
+ *
+ * Multiplies the lower 64-bit lanes of vectors `a` and `b` as polynomials over GF(2), returning the 128-bit result in a NEON vector. This operation is equivalent to Intel's _mm_clmulepi64_si128(a, b, 0x00) intrinsic.
+ *
+ * @param a First 128-bit vector operand.
+ * @param b Second 128-bit vector operand.
+ * @return uint64x2_t 128-bit vector containing the polynomial multiplication result.
+ */
 inline uint64x2_t PMULL_00(const uint64x2_t a, const uint64x2_t b)
 {
 #if defined(CRYPTOPP_MSC_VERSION)
@@ -178,7 +234,17 @@ inline uint64x2_t PMULL_00(const uint64x2_t a, const uint64x2_t b)
 /// \note An Intel XMM register is composed of 128-bits. The leftmost bit
 ///  is MSB and numbered 127, while the rightmost bit is LSB and
 ///  numbered 0.
-/// \since Crypto++ 8.0
+/**
+ * @brief Performs polynomial multiplication of the low 64 bits of vector a and the high 64 bits of vector b.
+ *
+ * This function multiplies the lower 64-bit lane of the 128-bit vector a with the upper 64-bit lane of the 128-bit vector b using carry-less (polynomial) multiplication, returning the 128-bit result in a vector.
+ *
+ * @param a 128-bit vector operand.
+ * @param b 128-bit vector operand.
+ * @return 128-bit vector containing the polynomial multiplication result.
+ *
+ * @since Crypto++ 8.0
+ */
 inline uint64x2_t PMULL_01(const uint64x2_t a, const uint64x2_t b)
 {
 #if defined(CRYPTOPP_MSC_VERSION)
@@ -208,7 +274,15 @@ inline uint64x2_t PMULL_01(const uint64x2_t a, const uint64x2_t b)
 /// \note An Intel XMM register is composed of 128-bits. The leftmost bit
 ///  is MSB and numbered 127, while the rightmost bit is LSB and
 ///  numbered 0.
-/// \since Crypto++ 8.0
+/**
+ * @brief Performs polynomial multiplication of the high 64 bits of vector a and the low 64 bits of vector b.
+ *
+ * This function multiplies the upper 64-bit lane of the 128-bit vector a with the lower 64-bit lane of the 128-bit vector b using carry-less (polynomial) multiplication, returning the 128-bit result.
+ *
+ * @param a 128-bit vector; high 64 bits are used.
+ * @param b 128-bit vector; low 64 bits are used.
+ * @return 128-bit vector containing the polynomial multiplication result.
+ */
 inline uint64x2_t PMULL_10(const uint64x2_t a, const uint64x2_t b)
 {
 #if defined(CRYPTOPP_MSC_VERSION)
@@ -238,7 +312,16 @@ inline uint64x2_t PMULL_10(const uint64x2_t a, const uint64x2_t b)
 /// \note An Intel XMM register is composed of 128-bits. The leftmost bit
 ///  is MSB and numbered 127, while the rightmost bit is LSB and
 ///  numbered 0.
-/// \since Crypto++ 8.0
+/**
+ * @brief Performs polynomial multiplication of the high 64-bit lanes of two 128-bit vectors.
+ *
+ * Multiplies the upper 64 bits of vectors `a` and `b` as polynomials over GF(2), returning the 128-bit result.
+ * Equivalent to Intel's `_mm_clmulepi64_si128(a, b, 0x11)` intrinsic.
+ *
+ * @param a First 128-bit vector operand.
+ * @param b Second 128-bit vector operand.
+ * @return uint64x2_t 128-bit result of the polynomial multiplication of the high lanes.
+ */
 inline uint64x2_t PMULL_11(const uint64x2_t a, const uint64x2_t b)
 {
 #if defined(CRYPTOPP_MSC_VERSION)
@@ -263,7 +346,15 @@ inline uint64x2_t PMULL_11(const uint64x2_t a, const uint64x2_t b)
 /// \return vector product
 /// \details PMULL() performs vmull_p64(). PMULL is provided as
 ///  GCC inline assembly due to Clang and lack of support for the intrinsic.
-/// \since Crypto++ 8.0
+/**
+ * @brief Performs polynomial multiplication of the low 64 bits of two 128-bit vectors.
+ *
+ * Multiplies the lower 64-bit lanes of vectors `a` and `b` as polynomials over GF(2), returning the 128-bit result in a vector. This operation is equivalent to Intel's `_mm_clmulepi64_si128(a, b, 0x00)` intrinsic.
+ *
+ * @param a First 128-bit vector operand.
+ * @param b Second 128-bit vector operand.
+ * @return uint64x2_t 128-bit vector containing the polynomial multiplication result.
+ */
 inline uint64x2_t PMULL(const uint64x2_t a, const uint64x2_t b)
 {
 #if defined(CRYPTOPP_MSC_VERSION)
@@ -288,7 +379,15 @@ inline uint64x2_t PMULL(const uint64x2_t a, const uint64x2_t b)
 /// \return vector product
 /// \details PMULL_HIGH() performs vmull_high_p64(). PMULL_HIGH is provided as
 ///  GCC inline assembly due to Clang and lack of support for the intrinsic.
-/// \since Crypto++ 8.0
+/**
+ * @brief Performs polynomial multiplication on the high 64-bit lanes of two 128-bit vectors.
+ *
+ * Multiplies the upper 64 bits of vectors `a` and `b` as polynomials over GF(2), returning the 128-bit result.
+ *
+ * @param a First 128-bit vector operand.
+ * @param b Second 128-bit vector operand.
+ * @return uint64x2_t 128-bit result of the polynomial multiplication of the high lanes.
+ */
 inline uint64x2_t PMULL_HIGH(const uint64x2_t a, const uint64x2_t b)
 {
 #if defined(CRYPTOPP_MSC_VERSION)
@@ -317,7 +416,17 @@ inline uint64x2_t PMULL_HIGH(const uint64x2_t a, const uint64x2_t b)
 ///  as GCC inline assembly due to Clang and lack of support for the intrinsic.
 /// \since Crypto++ 8.0
 template <unsigned int C>
-inline uint64x2_t VEXT_U8(uint64x2_t a, uint64x2_t b)
+inline /**
+ * @brief Extracts a vector by concatenating two 128-bit vectors and selecting a byte-aligned window.
+ *
+ * Concatenates vectors `a` and `b`, then extracts 16 bytes starting at a compile-time constant offset `C` from the concatenated result. Equivalent to the ARM NEON `vextq_u8` intrinsic or the `ext` instruction.
+ *
+ * @tparam C Number of bytes to offset for extraction (must be a compile-time constant in [0, 16]).
+ * @param a First 128-bit vector.
+ * @param b Second 128-bit vector.
+ * @return uint64x2_t The extracted 128-bit vector.
+ */
+uint64x2_t VEXT_U8(uint64x2_t a, uint64x2_t b)
 {
     // https://github.com/weidai11/cryptopp/issues/366
 #if defined(CRYPTOPP_MSC_VERSION)
@@ -346,7 +455,16 @@ inline uint64x2_t VEXT_U8(uint64x2_t a, uint64x2_t b)
 /// \details VEOR3() performs veor3q_u64(). VEOR3 is provided as GCC inline assembly due
 ///  to Clang and lack of support for the intrinsic.
 /// \details VEOR3 requires ARMv8.2.
-/// \since Crypto++ 8.6
+/**
+ * @brief Computes the bitwise XOR of three 128-bit vectors.
+ *
+ * Performs a three-way XOR operation on the input vectors `a`, `b`, and `c`, returning the result as a 128-bit vector. Equivalent to the ARMv8.2 `eor3` instruction or the `veor3q_u64` intrinsic.
+ *
+ * @param a First input vector.
+ * @param b Second input vector.
+ * @param c Third input vector.
+ * @return uint64x2_t Result of `a ^ b ^ c`.
+ */
 inline uint64x2_t VEOR3(uint64x2_t a, uint64x2_t b, uint64x2_t c)
 {
 #if defined(CRYPTOPP_MSC_VERSION)
@@ -367,7 +485,16 @@ inline uint64x2_t VEOR3(uint64x2_t a, uint64x2_t b, uint64x2_t c)
 /// \details VXARQ() performs vxarq_u64(). VXARQ is provided as GCC inline assembly due
 ///  to Clang and lack of support for the intrinsic.
 /// \details VXARQ requires ARMv8.2.
-/// \since Crypto++ 8.6
+/**
+ * @brief Computes the bitwise XOR of two 128-bit vectors and rotates the result by a specified number of bits.
+ *
+ * Performs a vector XOR of `a` and `b`, then rotates each 64-bit lane of the result right by `c` bits. Uses the ARMv8.2 XAR instruction or equivalent intrinsic.
+ *
+ * @param a First 128-bit vector operand.
+ * @param b Second 128-bit vector operand.
+ * @param c Number of bits to rotate right (applied to each 64-bit lane).
+ * @return Resulting 128-bit vector after XOR and rotation.
+ */
 inline uint64x2_t VXAR(uint64x2_t a, uint64x2_t b, const int c)
 {
 #if defined(CRYPTOPP_MSC_VERSION)
@@ -390,7 +517,15 @@ inline uint64x2_t VXAR(uint64x2_t a, uint64x2_t b, const int c)
 /// \details VXARQ requires ARMv8.2.
 /// \since Crypto++ 8.6
 template <unsigned int C>
-inline uint64x2_t VXAR(uint64x2_t a, uint64x2_t b)
+inline /**
+ * @brief Computes the bitwise XOR of two 128-bit vectors and rotates the result by a compile-time constant.
+ *
+ * Performs a bitwise XOR of vectors `a` and `b`, then rotates the result left by `C` bits. This operation uses the ARMv8.2 XAR instruction and is typically used in cryptographic algorithms.
+ *
+ * @tparam C Number of bits to rotate left (must be a compile-time constant).
+ * @return The rotated XOR result as a 128-bit vector.
+ */
+uint64x2_t VXAR(uint64x2_t a, uint64x2_t b)
 {
 #if defined(CRYPTOPP_MSC_VERSION)
     return vxarq_u64(a, b, C);
@@ -409,7 +544,15 @@ inline uint64x2_t VXAR(uint64x2_t a, uint64x2_t b)
 /// \details VRAX1() performs vrax1q_u64(). VRAX1 is provided as GCC inline assembly due
 ///  to Clang and lack of support for the intrinsic.
 /// \details VRAX1 requires ARMv8.2.
-/// \since Crypto++ 8.6
+/**
+ * @brief Computes the bitwise XOR of two 128-bit vectors and rotates the result by 1 bit to the left.
+ *
+ * This function performs a vector XOR of `a` and `b`, then rotates the result left by 1 bit in each 64-bit lane. It uses the ARMv8.2 `rax1` instruction or the corresponding compiler intrinsic.
+ *
+ * @param a First 128-bit vector operand.
+ * @param b Second 128-bit vector operand.
+ * @return uint64x2_t The result of (a ^ b) rotated left by 1 bit per 64-bit lane.
+ */
 inline uint64x2_t VRAX1(uint64x2_t a, uint64x2_t b)
 {
 #if defined(CRYPTOPP_MSC_VERSION)

@@ -251,7 +251,26 @@ inline size_t AdvancedProcessBlocks128_6x1_NEON(F1 func1, F6 func6,
 ///  usually uint32x4_t or uint32x4_t. F1, F4, and W must use the same word and
 ///  vector type.
 template <typename F1, typename F4, typename W>
-inline size_t AdvancedProcessBlocks128_4x1_NEON(F1 func1, F4 func4,
+inline /**
+ * @brief Processes multiple 128-bit blocks in parallel using ARM NEON SIMD instructions (4x1 arrangement).
+ *
+ * Applies a user-supplied block transformation to input blocks, optionally XORing with a secondary block stream, and writes the results to output blocks. Supports counter mode, pointer increment control, reverse direction, and parallel processing flags. Processes blocks in groups of four when possible, falling back to single-block processing for remaining data.
+ *
+ * @tparam F1 Function type for single-block processing.
+ * @tparam F4 Function type for four-block parallel processing.
+ * @tparam W  Word type for the subkey table.
+ * @param func1 Function to process a single block.
+ * @param func4 Function to process four blocks in parallel.
+ * @param subKeys Pointer to the subkey table.
+ * @param rounds Number of cipher rounds.
+ * @param inBlocks Pointer to input blocks.
+ * @param xorBlocks Pointer to XOR blocks (optional, may be NULL).
+ * @param outBlocks Pointer to output blocks.
+ * @param length Number of bytes to process (must be at least one block).
+ * @param flags Block transformation flags controlling processing mode.
+ * @return Number of bytes remaining unprocessed (less than one block).
+ */
+size_t AdvancedProcessBlocks128_4x1_NEON(F1 func1, F4 func4,
             const W *subKeys, size_t rounds, const byte *inBlocks,
             const byte *xorBlocks, byte *outBlocks, size_t length, word32 flags)
 {
@@ -385,7 +404,14 @@ inline size_t AdvancedProcessBlocks128_4x1_NEON(F1 func1, F4 func4,
 /// \details The subkey type is usually word32 or word64. F2 and F6 must use the
 ///  same word type.
 template <typename F2, typename F6, typename W>
-inline size_t AdvancedProcessBlocks128_6x2_NEON(F2 func2, F6 func6,
+inline /**
+ * @brief Processes multiple 128-bit blocks in parallel using ARM NEON SIMD, handling 6 or 2 blocks at a time.
+ *
+ * Uses user-supplied SIMD functions to process blocks in chunks of 6 or 2, with support for counter mode, XOR input/output, and flexible pointer increments. Falls back to single-block processing with zero padding for partial blocks. Returns the number of bytes remaining unprocessed (less than one block).
+ *
+ * @return Number of bytes not processed (less than one block).
+ */
+size_t AdvancedProcessBlocks128_6x2_NEON(F2 func2, F6 func6,
             const W *subKeys, size_t rounds, const byte *inBlocks,
             const byte *xorBlocks, byte *outBlocks, size_t length, word32 flags)
 {
@@ -827,7 +853,26 @@ inline size_t AdvancedProcessBlocks128_6x2_SSE(F2 func2, F6 func6,
 /// \details The subkey type is usually word32 or word64. F1 and F4 must use the
 ///  same word type.
 template <typename F1, typename F4, typename W>
-inline size_t AdvancedProcessBlocks128_4x1_SSE(F1 func1, F4 func4,
+inline /**
+ * @brief Processes multiple 128-bit blocks in parallel using SSE instructions, with optional XOR and counter support.
+ *
+ * Uses the provided single-block and four-block functions to process input blocks in parallel, applying optional XOR with a secondary block stream and supporting counter mode incrementing. Handles pointer increments and direction based on flags, and returns the number of bytes remaining unprocessed (less than one block).
+ *
+ * @tparam F1 Function type for processing a single block.
+ * @tparam F4 Function type for processing four blocks in parallel.
+ * @tparam W  Word type for the subkey table.
+ * @param func1 Function to process a single 128-bit block.
+ * @param func4 Function to process four 128-bit blocks in parallel.
+ * @param subKeys Pointer to the subkey table.
+ * @param rounds Number of cipher rounds.
+ * @param inBlocks Pointer to input blocks.
+ * @param xorBlocks Pointer to blocks for optional XOR (may be null).
+ * @param outBlocks Pointer to output blocks.
+ * @param length Number of bytes to process (must be at least one block).
+ * @param flags Block transformation flags controlling processing mode.
+ * @return Number of bytes remaining unprocessed (less than one block).
+ */
+size_t AdvancedProcessBlocks128_4x1_SSE(F1 func1, F4 func4,
         MAYBE_CONST W *subKeys, size_t rounds, const byte *inBlocks,
         const byte *xorBlocks, byte *outBlocks, size_t length, word32 flags)
 {
@@ -1113,7 +1158,26 @@ inline size_t AdvancedProcessBlocks128_4x1_ALTIVEC(F1 func1, F4 func4,
 /// \details The subkey type is usually word32 or word64. F1 and F6 must use the
 ///  same word type.
 template <typename F1, typename F6, typename W>
-inline size_t AdvancedProcessBlocks128_6x1_ALTIVEC(F1 func1, F6 func6,
+inline /**
+ * @brief Processes multiple 128-bit blocks in parallel using Altivec SIMD instructions.
+ *
+ * Processes up to six 128-bit blocks at a time using the provided 6-block SIMD function, with optional XOR input/output and counter increment support. Handles pointer increments, reverse direction, and falls back to single-block processing for remaining data. Returns the number of bytes left unprocessed (less than one block).
+ *
+ * @tparam F1 Function type for processing a single block.
+ * @tparam F6 Function type for processing six blocks in parallel.
+ * @tparam W  Word type for the subkey table.
+ * @param func1 Function to process a single 128-bit block.
+ * @param func6 Function to process six 128-bit blocks in parallel.
+ * @param subKeys Pointer to the subkey table.
+ * @param rounds Number of cipher rounds.
+ * @param inBlocks Pointer to input blocks.
+ * @param xorBlocks Pointer to XOR blocks (optional, may be NULL).
+ * @param outBlocks Pointer to output blocks.
+ * @param length Number of bytes to process.
+ * @param flags Block transformation flags controlling processing mode.
+ * @return Number of bytes remaining unprocessed (less than one block).
+ */
+size_t AdvancedProcessBlocks128_6x1_ALTIVEC(F1 func1, F6 func6,
         const W *subKeys, size_t rounds, const byte *inBlocks,
         const byte *xorBlocks, byte *outBlocks, size_t length, word32 flags)
 {

@@ -53,7 +53,13 @@ public:
 };
 
 /// \brief Base64 decodes data using DUDE
-/// \details Base64 encodes data per <A HREF="http://tools.ietf.org/html/rfc4648#section-4">RFC 4648, Base 64 Encoding</A>.
+/**
+ * @brief Initializes or reinitializes the Base64Decoder with specified parameters, without propagating initialization to attached transformations.
+ *
+ * Allows customization of decoding behavior, such as specifying a custom decoding lookup array for alternative Base64 alphabets. The default decoding alphabet follows RFC 4648. Use this method to reconfigure the decoder after construction without affecting attached transformations.
+ *
+ * @param parameters NameValuePairs containing initialization options, such as a custom decoding lookup array.
+ */
 class Base64Decoder : public BaseN_Decoder
 {
 public:
@@ -90,7 +96,13 @@ private:
 
 /// \brief Base64 encodes data using a web safe alphabet
 /// \details Base64 encodes data per <A HREF="http://tools.ietf.org/html/rfc4648#section-5">RFC 4648, Base 64 Encoding
-///   with URL and Filename Safe Alphabet</A>.
+/**
+ * @brief Encodes data using the URL and Filename Safe Base64 alphabet (RFC 4648 section 5).
+ *
+ * Constructs a Base64 encoder that uses the URL-safe alphabet, disables line breaks and padding by default, and ignores line break and maximum line length parameters for API compatibility. Padding and line break behavior can be modified after construction using IsolatedInitialize().
+ *
+ * @param attachment Optional transformation to attach output to.
+ */
 class Base64URLEncoder : public SimpleProxyFilter
 {
 public:
@@ -127,7 +139,29 @@ public:
 
 /// \brief Base64 decodes data using a web safe alphabet
 /// \details Base64 encodes data per <A HREF="http://tools.ietf.org/html/rfc4648#section-5">RFC 4648, Base 64 Encoding
-///   with URL and Filename Safe Alphabet</A>.
+/**
+ * @brief Decodes Base64 data using the URL and Filename Safe alphabet as specified in RFC 4648 section 5.
+ *
+ * The Base64URLDecoder class decodes input encoded with the URL-safe Base64 alphabet, which replaces '+' and '/' with '-' and '_' and omits padding by default. It can be reconfigured after construction using IsolatedInitialize().
+ *
+ * @param attachment Optional. A BufferedTransformation to attach for output.
+ *
+ * @sa Base64Decoder for decoding with the standard Base64 alphabet.
+ */
+ 
+/**
+ * @brief Reinitializes the decoder with new parameters without propagating initialization to attached transformations.
+ *
+ * Use IsolatedInitialize() to modify decoder settings such as the decoding lookup table after construction. This method does not affect attached transformations.
+ *
+ * @param parameters NameValuePairs specifying decoder configuration options.
+ */
+ 
+/**
+ * @brief Returns the default decoding lookup table for the URL and Filename Safe Base64 alphabet.
+ *
+ * @return Pointer to the decoding lookup table.
+ */
 class Base64URLDecoder : public BaseN_Decoder
 {
 public:

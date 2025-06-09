@@ -11,6 +11,11 @@
 
 NAMESPACE_BEGIN(CryptoPP)
 
+/**
+ * @brief Initializes the BaseN encoder with encoding parameters.
+ *
+ * Retrieves the encoding alphabet, bits per character, and optional padding byte from the provided parameters. Validates that the bits per character value is between 1 and 7 inclusive. Calculates the output block size to ensure proper alignment for encoding. Initializes internal buffers and state for encoding operations.
+ */
 void BaseN_Encoder::IsolatedInitialize(const NameValuePairs &parameters)
 {
 	parameters.GetRequiredParameter("BaseN_Encoder", Name::EncodingLookupArray(), m_alphabet);
@@ -37,6 +42,17 @@ void BaseN_Encoder::IsolatedInitialize(const NameValuePairs &parameters)
 	m_outBuf.New(m_outputBlockSize);
 }
 
+/**
+ * @brief Encodes input bytes into BaseN representation and outputs encoded blocks.
+ *
+ * Processes the input buffer, converting bytes into BaseN-encoded characters using the configured alphabet and bits per character. Handles bit alignment across input and output, manages output buffering, and applies padding if enabled. On message end, outputs any remaining encoded data and finalizes the block.
+ *
+ * @param begin Pointer to the input byte buffer.
+ * @param length Number of bytes to encode from the input buffer.
+ * @param messageEnd Nonzero if this is the final input segment.
+ * @param blocking Indicates whether the operation should block (implementation-dependent).
+ * @return Number of input bytes processed.
+ */
 size_t BaseN_Encoder::Put2(const byte *begin, size_t length, int messageEnd, bool blocking)
 {
 	FILTER_BEGIN;
@@ -104,6 +120,11 @@ size_t BaseN_Encoder::Put2(const byte *begin, size_t length, int messageEnd, boo
 	FILTER_END_NO_MESSAGE_END;
 }
 
+/**
+ * @brief Initializes the BaseN decoder with decoding parameters.
+ *
+ * Retrieves and validates the decoding lookup array and bits per character from the provided parameters. Calculates the output block size based on the bits per character and prepares internal buffers for decoding operations.
+ */
 void BaseN_Decoder::IsolatedInitialize(const NameValuePairs &parameters)
 {
 	parameters.GetRequiredParameter("BaseN_Decoder", Name::DecodingLookupArray(), m_lookup);
@@ -122,6 +143,17 @@ void BaseN_Decoder::IsolatedInitialize(const NameValuePairs &parameters)
 	m_outBuf.New(m_outputBlockSize);
 }
 
+/**
+ * @brief Decodes BaseN-encoded input bytes into their original binary representation.
+ *
+ * Processes input characters using a lookup table to convert each character to its corresponding value, accumulating bits into output bytes according to the configured bits per character. Outputs decoded bytes in blocks when the output buffer is full. At message end, outputs any remaining decoded bytes.
+ *
+ * @param begin Pointer to the input buffer containing BaseN-encoded data.
+ * @param length Number of bytes to process from the input buffer.
+ * @param messageEnd Nonzero if this is the final input segment.
+ * @param blocking Indicates whether the operation should block (implementation-dependent).
+ * @return Number of input bytes processed.
+ */
 size_t BaseN_Decoder::Put2(const byte *begin, size_t length, int messageEnd, bool blocking)
 {
 	FILTER_BEGIN;
@@ -167,6 +199,16 @@ size_t BaseN_Decoder::Put2(const byte *begin, size_t length, int messageEnd, boo
 	FILTER_END_NO_MESSAGE_END;
 }
 
+/**
+ * @brief Initializes a lookup table for decoding BaseN-encoded characters.
+ *
+ * Populates the lookup array so that each entry maps a character code to its corresponding value in the provided BaseN alphabet. If case insensitivity is enabled, both uppercase and lowercase alphabetic characters are mapped to the same value.
+ *
+ * @param lookup Pointer to an array of 256 integers to be filled with decoding values.
+ * @param alphabet Pointer to the BaseN alphabet array.
+ * @param base Number of unique characters in the alphabet.
+ * @param caseInsensitive If true, mapping is case-insensitive for alphabetic characters.
+ */
 void BaseN_Decoder::InitializeDecodingLookupArray(int *lookup, const byte *alphabet, unsigned int base, bool caseInsensitive)
 {
 	std::fill(lookup, lookup+256, -1);
@@ -188,6 +230,11 @@ void BaseN_Decoder::InitializeDecodingLookupArray(int *lookup, const byte *alpha
 	}
 }
 
+/**
+ * @brief Initializes the Grouper filter with grouping, separator, and terminator parameters.
+ *
+ * Retrieves the group size, separator, and terminator from the provided parameters. If grouping is enabled (group size > 0), the separator is required; otherwise, it is optional. Initializes internal buffers and resets the group counter.
+ */
 void Grouper::IsolatedInitialize(const NameValuePairs &parameters)
 {
 	m_groupSize = parameters.GetIntValueWithDefault(Name::GroupSize(), 0);
