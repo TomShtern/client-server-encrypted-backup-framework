@@ -3,6 +3,13 @@
 #include <string>
 #include <vector>
 
+/**
+ * @brief AES encryption and decryption utility class.
+ *
+ * Provides methods for AES key generation, encryption, and decryption using a configurable key and initialization vector (IV).
+ *
+ * The class supports generating random AES keys, encrypting and decrypting data buffers, and retrieving the internal key. Optionally, a static IV of all zeros can be used for protocol compliance.
+ */
 class AESWrapper
 {
 public:

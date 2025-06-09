@@ -79,6 +79,14 @@ extern const word64 BLAKE2B_IV[8];
 #define TOF(reg) _mm_castsi128_ps((reg))
 #define TOI(reg) _mm_castps_si128((reg))
 
+/**
+ * @brief Performs a single BLAKE2b compression using SSE4.1 SIMD instructions.
+ *
+ * Processes a 128-byte message block and updates the internal BLAKE2b state using 12 rounds of the compression function, leveraging Intel SSE4.1 vector intrinsics for parallelism and performance.
+ *
+ * @param input Pointer to the 128-byte message block to compress.
+ * @param state Reference to the BLAKE2b state to be updated.
+ */
 void BLAKE2_Compress64_SSE4(const byte* input, BLAKE2b_State& state)
 {
     #define BLAKE2B_LOAD_MSG_0_1(b0, b1) \
@@ -506,6 +514,11 @@ void BLAKE2_Compress64_SSE4(const byte* input, BLAKE2b_State& state)
 #endif  // CRYPTOPP_SSE41_AVAILABLE
 
 #if CRYPTOPP_ARM_NEON_AVAILABLE
+/**
+ * @brief Performs a BLAKE2b compression round using ARM NEON SIMD instructions.
+ *
+ * Processes a single 128-byte message block and updates the internal BLAKE2b state using NEON vector operations for parallelism and performance. This function implements the BLAKE2b compression routine, including message word loading, 12 rounds of mixing with G functions, diagonalization, and state update, all optimized for ARM NEON.
+ */
 void BLAKE2_Compress64_NEON(const byte* input, BLAKE2b_State& state)
 {
     #define BLAKE2B_LOAD_MSG_0_1(b0, b1) \
@@ -763,11 +776,28 @@ void BLAKE2_Compress64_NEON(const byte* input, BLAKE2b_State& state)
 
 #if (CRYPTOPP_POWER8_AVAILABLE)
 
+/**
+ * @brief Loads a 128-bit vector from memory into a Power8 SIMD register.
+ *
+ * Loads two consecutive 64-bit words from the specified memory address into a Power8 vector register, without assuming alignment.
+ *
+ * @param p Pointer to the memory location to load from.
+ * @return uint64x2_p The loaded 128-bit vector.
+ */
 inline uint64x2_p VecLoad64(const void* p)
 {
     return (uint64x2_p)vec_xl(0, CONST_V32_CAST(p));
 }
 
+/**
+ * @brief Loads a 128-bit vector from memory as two little-endian 64-bit words.
+ *
+ * On big-endian systems, bytes are permuted using the provided mask to ensure little-endian order. On little-endian systems, the data is loaded directly.
+ *
+ * @param p Pointer to the memory location to load from.
+ * @param le_mask Permutation mask used for endian conversion on big-endian systems.
+ * @return uint64x2_p Vector containing two 64-bit words in little-endian order.
+ */
 inline uint64x2_p VecLoad64LE(const void* p, const uint8x16_p le_mask)
 {
 #if defined(CRYPTOPP_BIG_ENDIAN)
@@ -779,11 +809,28 @@ inline uint64x2_p VecLoad64LE(const void* p, const uint8x16_p le_mask)
 #endif
 }
 
+/**
+ * @brief Stores a 128-bit vector containing two 64-bit unsigned integers to memory.
+ *
+ * Stores the contents of the given vector to the specified memory location using PowerPC Altivec/VSX instructions.
+ *
+ * @param p Pointer to the destination memory.
+ * @param x 128-bit vector containing two 64-bit unsigned integers to store.
+ */
 inline void VecStore64(void* p, const uint64x2_p x)
 {
     vec_xst((uint32x4_p)x, 0, NCONST_V32_CAST(p));
 }
 
+/**
+ * @brief Stores a 128-bit vector as two little-endian 64-bit words in memory.
+ *
+ * On big-endian systems, the vector is permuted to little-endian order before storing. On little-endian systems, the vector is stored directly.
+ *
+ * @param p Pointer to the destination memory.
+ * @param x 128-bit vector containing two 64-bit words to store.
+ * @param le_mask Permutation mask used for endian conversion on big-endian systems.
+ */
 inline void VecStore64LE(void* p, const uint64x2_p x, const uint8x16_p le_mask)
 {
 #if defined(CRYPTOPP_BIG_ENDIAN)
@@ -805,6 +852,14 @@ inline void VecStore64LE(void* p, const uint64x2_p x, const uint8x16_p le_mask)
 #define vec_merge_hi_lo(a, b) vec_mergeh(a,(uint64x2_p)vec_sld((uint8x16_p)b,(uint8x16_p)b,8))
 #define vec_merge_lo(a, b) vec_mergel(a,b)
 
+/**
+ * @brief Performs a BLAKE2b compression round using Power8 SIMD instructions.
+ *
+ * Processes a single 128-byte message block and updates the internal BLAKE2b state using Power8 Altivec/VSX vector instructions for parallelism and performance. Handles both aligned and unaligned input, as well as endian conversion for big-endian systems.
+ *
+ * @param input Pointer to the 128-byte message block to be compressed.
+ * @param state Reference to the BLAKE2b state to be updated.
+ */
 void BLAKE2_Compress64_POWER8(const byte* input, BLAKE2b_State& state)
 {
     #define BLAKE2B_LOAD_MSG_0_1(b0, b1) \

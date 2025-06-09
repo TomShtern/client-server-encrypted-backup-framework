@@ -89,6 +89,14 @@ extern const word64 BLAKE2B_IV[8];
 #define TOF(reg) _mm_castsi128_ps((reg))
 #define TOI(reg) _mm_castps_si128((reg))
 
+/**
+ * @brief Performs a single BLAKE2s compression using SSE4.1 SIMD instructions.
+ *
+ * Processes a 64-byte message block and updates the internal state using the BLAKE2s compression function, optimized for x86 CPUs with SSE4.1 support. This function executes 10 rounds of the BLAKE2s G function using 128-bit SIMD operations for improved performance.
+ *
+ * @param input Pointer to the 64-byte message block to compress.
+ * @param state Reference to the BLAKE2s state to be updated.
+ */
 void BLAKE2_Compress32_SSE4(const byte* input, BLAKE2s_State& state)
 {
     #define BLAKE2S_LOAD_MSG_0_1(buf) \
@@ -392,6 +400,14 @@ void BLAKE2_Compress32_SSE4(const byte* input, BLAKE2s_State& state)
 #endif  // CRYPTOPP_SSE41_AVAILABLE
 
 #if CRYPTOPP_ARM_NEON_AVAILABLE
+/**
+ * @brief Performs a single BLAKE2s compression using ARM NEON SIMD instructions.
+ *
+ * Processes a 64-byte message block and updates the internal BLAKE2s state using NEON vector operations for accelerated hashing on ARM architectures. This function executes 10 rounds of the BLAKE2s compression function, applying the G mixing function and state transformations as specified by the BLAKE2s algorithm.
+ *
+ * @param input Pointer to the 64-byte message block to be compressed.
+ * @param state Reference to the BLAKE2s state to be updated.
+ */
 void BLAKE2_Compress32_NEON(const byte* input, BLAKE2s_State& state)
 {
     #define BLAKE2S_LOAD_MSG_0_1(buf) \
@@ -712,12 +728,29 @@ void BLAKE2_Compress32_NEON(const byte* input, BLAKE2s_State& state)
 #if (CRYPTOPP_ALTIVEC_AVAILABLE)
 
 template <class T>
+/**
+ * @brief Loads a 128-bit vector from memory as four 32-bit elements.
+ *
+ * @tparam T Pointer type to the source data.
+ * @param p Pointer to the memory location to load from.
+ * @return 128-bit SIMD vector containing four 32-bit values loaded from memory.
+ */
 inline uint32x4_p VecLoad32(const T* p)
 {
     return VecLoad(p);
 }
 
 template <class T>
+/**
+ * @brief Loads a 128-bit vector from memory in little-endian order.
+ *
+ * On big-endian systems, the loaded vector is permuted using the provided mask to ensure little-endian byte order. On little-endian systems, the vector is loaded directly.
+ *
+ * @tparam T Element type of the input pointer.
+ * @param p Pointer to the memory location to load from.
+ * @param le_mask Permutation mask used for endian conversion on big-endian systems.
+ * @return uint32x4_p The loaded 128-bit vector in little-endian order.
+ */
 inline uint32x4_p VecLoad32LE(const T* p, const uint8x16_p le_mask)
 {
 #if defined(CRYPTOPP_BIG_ENDIAN)
@@ -730,12 +763,28 @@ inline uint32x4_p VecLoad32LE(const T* p, const uint8x16_p le_mask)
 }
 
 template <class T>
+/**
+ * @brief Stores a 128-bit SIMD vector of four 32-bit unsigned integers to memory.
+ *
+ * @param p Pointer to the destination memory.
+ * @param x SIMD vector containing four 32-bit unsigned integers to store.
+ */
 inline void VecStore32(T* p, const uint32x4_p x)
 {
     VecStore(x, p);
 }
 
 template <class T>
+/**
+ * @brief Stores a 128-bit vector of 32-bit words to memory in little-endian order.
+ *
+ * On big-endian systems, the vector elements are permuted using the provided mask to ensure little-endian byte order before storing. On little-endian systems, the vector is stored directly.
+ *
+ * @tparam T Pointer type for the output memory.
+ * @param p Destination memory address.
+ * @param x 128-bit vector of 32-bit words to store.
+ * @param le_mask Permutation mask for endian conversion on big-endian systems.
+ */
 inline void VecStore32LE(T* p, const uint32x4_p x, const uint8x16_p le_mask)
 {
 #if defined(CRYPTOPP_BIG_ENDIAN)
@@ -748,6 +797,15 @@ inline void VecStore32LE(T* p, const uint32x4_p x, const uint8x16_p le_mask)
 }
 
 template <unsigned int E1, unsigned int E2>
+/**
+ * @brief Constructs a 128-bit vector by selecting and combining elements from two input vectors.
+ *
+ * Selects a specific 32-bit element from each of the input vectors `a` and `b`, and combines them into a new 128-bit vector using platform-specific permutation and shifting. The selection indices are determined by template parameters (not shown in this signature) and the function supports all combinations of element selection.
+ *
+ * @param a First input vector.
+ * @param b Second input vector.
+ * @return uint32x4_p New vector containing the selected elements from `a` and `b`.
+ */
 inline uint32x4_p VectorSet32(const uint32x4_p a, const uint32x4_p b)
 {
     // Re-index. I'd like to use something like Z=Y*4 and then
@@ -851,6 +909,13 @@ inline uint32x4_p VectorSet32(const uint32x4_p a, const uint32x4_p b)
 }
 
 template <unsigned int E1, unsigned int E2, unsigned int E3, unsigned int E4>
+/**
+ * @brief Combines four 128-bit vectors into a single vector by selecting specific 32-bit elements from each input.
+ *
+ * Selects and arranges 32-bit words from the input vectors `a`, `b`, `c`, and `d` according to template parameters, producing a new 128-bit vector. This is used to construct message words for SIMD-accelerated BLAKE2s compression on PowerPC Altivec.
+ *
+ * @return A 128-bit vector containing the selected and permuted 32-bit words.
+ */
 inline uint32x4_p VectorSet32(const uint32x4_p a, const uint32x4_p b,
                               const uint32x4_p c, const uint32x4_p d)
 {
@@ -866,6 +931,17 @@ inline uint32x4_p VectorSet32(const uint32x4_p a, const uint32x4_p b,
 }
 
 template<>
+/**
+ * @brief Creates a 128-bit vector by selecting elements 2 and 0 from two input vectors.
+ *
+ * Constructs a new vector by taking the 3rd and 1st 32-bit elements from vector `a` and the 3rd and 1st 32-bit elements from vector `c`, in that order.
+ *
+ * @param a First input vector.
+ * @param b Unused input vector.
+ * @param c Second input vector.
+ * @param d Unused input vector.
+ * @return uint32x4_p The resulting vector with selected elements.
+ */
 uint32x4_p VectorSet32<2,0,2,0>(const uint32x4_p a, const uint32x4_p b,
                                 const uint32x4_p c, const uint32x4_p d)
 {
@@ -876,6 +952,17 @@ uint32x4_p VectorSet32<2,0,2,0>(const uint32x4_p a, const uint32x4_p b,
 }
 
 template<>
+/**
+ * @brief Creates a 128-bit vector by selecting elements from two input vectors according to a fixed permutation pattern.
+ *
+ * Constructs a vector by permuting and combining elements from vectors `a` and `c` using a predefined mask, effectively selecting the 3rd and 1st 32-bit words from each input.
+ *
+ * @param a First input vector.
+ * @param b Unused input vector.
+ * @param c Second input vector.
+ * @param d Unused input vector.
+ * @return uint32x4_p The resulting permuted vector.
+ */
 uint32x4_p VectorSet32<3,1,3,1>(const uint32x4_p a, const uint32x4_p b,
                                 const uint32x4_p c, const uint32x4_p d)
 {
@@ -885,6 +972,14 @@ uint32x4_p VectorSet32<3,1,3,1>(const uint32x4_p a, const uint32x4_p b,
     return VecPermute(a, c, mask);
 }
 
+/**
+ * @brief Performs a BLAKE2s compression round using PowerPC Altivec SIMD instructions.
+ *
+ * Processes a single 64-byte message block and updates the internal BLAKE2s state using Altivec vector operations for improved performance on supported PowerPC architectures. Handles both aligned and unaligned input, as well as endian conversion for big-endian systems.
+ *
+ * @param input Pointer to the 64-byte message block to compress.
+ * @param state Reference to the BLAKE2s state to be updated.
+ */
 void BLAKE2_Compress32_ALTIVEC(const byte* input, BLAKE2s_State& state)
 {
     # define m1 m0

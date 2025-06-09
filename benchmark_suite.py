@@ -23,6 +23,11 @@ import shutil
 
 class BenchmarkSuite:
     def __init__(self):
+        """
+        Initializes the benchmark suite, setting up result storage, project paths, and test files.
+        
+        Creates test files of varying sizes for benchmarking and prints initialization details to the console.
+        """
         self.results = {}
         self.start_time = datetime.now()
         self.project_root = Path.cwd()
@@ -44,7 +49,16 @@ class BenchmarkSuite:
         print("=" * 70)
 
     def create_test_file(self, filename, size_bytes):
-        """Create test files of specific sizes for benchmarking"""
+        """
+        Creates a file with the specified name and size filled with repeated "A" characters.
+        
+        Args:
+            filename: Name of the file to create.
+            size_bytes: Size of the file in bytes.
+        
+        Returns:
+            The path to the created test file.
+        """
         filepath = self.project_root / filename
         content = "A" * size_bytes
         with open(filepath, 'w') as f:
@@ -52,7 +66,11 @@ class BenchmarkSuite:
         return filepath
 
     def log_benchmark(self, category, test_name, result, unit="ms", details=""):
-        """Log benchmark results in structured format"""
+        """
+        Logs a benchmark result under the specified category and test name.
+        
+        Records the result value, unit, details, and timestamp in a structured format within the results dictionary. Prints a status message indicating success or failure based on the result value.
+        """
         if category not in self.results:
             self.results[category] = {}
         
@@ -67,7 +85,11 @@ class BenchmarkSuite:
         print(f"{status} {category:20} | {test_name:25} | {result:8.2f} {unit:5} | {details}")
 
     def benchmark_build_performance(self):
-        """Benchmark build system performance"""
+        """
+        Measures and logs the performance of clean and incremental builds using project build scripts.
+        
+        Performs a clean build by running the clean script followed by the build script, timing the process. Then measures the time for an incremental build with no changes. Results are logged with success status and timing information.
+        """
         print("\n*** BUILD PERFORMANCE BENCHMARKS ***")
         print("-" * 50)
         
@@ -97,7 +119,11 @@ class BenchmarkSuite:
                              "ms", "No changes")
 
     def benchmark_startup_performance(self):
-        """Benchmark application startup times"""
+        """
+        Measures the server application's startup time by launching it multiple times and recording the duration until its TCP port is ready.
+        
+        For each of three attempts, starts the server process, waits up to 10 seconds for port 1256 to become available, logs the measured startup time if successful, or logs a failure if the timeout is reached. Terminates the server process after each attempt.
+        """
         print("\n*** STARTUP PERFORMANCE BENCHMARKS ***")
         print("-" * 50)
         
@@ -145,7 +171,11 @@ class BenchmarkSuite:
                 time.sleep(1)  # Brief pause between attempts
 
     def benchmark_memory_usage(self):
-        """Benchmark memory usage patterns"""
+        """
+        Measures the server's memory and CPU usage after startup.
+        
+        Launches the server script, waits for stabilization, then records resident set size (RSS), virtual memory size (VMS) in megabytes, and CPU usage percentage over a 1-second interval. Logs results or failure if the process is not found. Terminates the server process after measurement.
+        """
         print("\n*** MEMORY USAGE BENCHMARKS ***")
         print("-" * 50)
         
@@ -178,7 +208,11 @@ class BenchmarkSuite:
                 server_process.wait(timeout=5)
 
     def benchmark_crypto_performance(self):
-        """Benchmark cryptographic operations"""
+        """
+        Benchmarks the execution time of RSA cryptographic test executables.
+        
+        Runs each available RSA test executable multiple times, measures execution durations, and logs the average and standard deviation of successful runs.
+        """
         print("\n*** CRYPTO PERFORMANCE BENCHMARKS ***")
         print("-" * 50)
         
@@ -210,7 +244,11 @@ class BenchmarkSuite:
                                      f"±{std_dev:.2f}ms (n={len(times)})")
 
     def benchmark_file_operations(self):
-        """Benchmark file I/O operations"""
+        """
+        Benchmarks file read and write performance for test files of various sizes.
+        
+        Measures the time taken to read and write each prepared test file, logging the duration and byte count for both operations. Temporary files created during write benchmarks are deleted after use.
+        """
         print("\n*** FILE I/O BENCHMARKS ***")
         print("-" * 50)
         
@@ -239,7 +277,11 @@ class BenchmarkSuite:
                 temp_file.unlink()
 
     def benchmark_network_performance(self):
-        """Benchmark network operations"""
+        """
+        Measures the time required to establish TCP connections to localhost on port 1256.
+        
+        Attempts three TCP connections, recording the connection time in milliseconds for each attempt. Logs success or failure for each connection attempt.
+        """
         print("\n*** NETWORK PERFORMANCE BENCHMARKS ***")
         print("-" * 50)
         
@@ -260,7 +302,11 @@ class BenchmarkSuite:
                                  -1, "ms", f"Failed: {str(e)[:30]}")
 
     def run_all_benchmarks(self):
-        """Execute complete benchmark suite"""
+        """
+        Runs all benchmark tests in sequence, handling exceptions and ensuring cleanup.
+        
+        Executes the full suite of benchmarks for build performance, startup latency, memory usage, cryptographic operations, file I/O, and network connectivity. Any exceptions encountered during benchmarking are caught and reported, and all temporary test files are cleaned up afterward.
+        """
         try:
             self.benchmark_build_performance()
             self.benchmark_startup_performance()
@@ -275,13 +321,20 @@ class BenchmarkSuite:
             self.cleanup()
 
     def cleanup(self):
-        """Clean up test files and resources"""
+        """
+        Deletes all test files created for benchmarking to clean up resources.
+        """
         for filepath in self.test_files.values():
             if filepath.exists():
                 filepath.unlink()
 
     def save_results(self):
-        """Save benchmark results to JSON file"""
+        """
+        Saves all benchmark results and system metadata to a timestamped JSON file in the project root.
+        
+        Returns:
+            Path to the saved JSON results file.
+        """
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         results_file = self.project_root / f"benchmark_results_{timestamp}.json"
 

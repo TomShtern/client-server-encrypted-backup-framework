@@ -14,7 +14,17 @@
 NAMESPACE_BEGIN(CryptoPP)
 
 /// \brief Encoder for bases that are a power of 2
-class CRYPTOPP_DLL BaseN_Encoder : public Unflushable<Filter>
+class /**
+	 * @brief Constructs a BaseN_Encoder for encoding data into a base that is a power of 2.
+	 *
+	 * The encoder can be initialized with a custom alphabet, log2 of the base, and an optional padding character.
+	 * Throws InvalidArgument if log2base is not between 1 and 7.
+	 *
+	 * @param alphabet Pointer to the ASCII character table used as the encoding alphabet.
+	 * @param log2base Logarithm base 2 of the encoding base (must be between 1 and 7).
+	 * @param padding Character used for padding; if not specified, no padding is used.
+	 */
+	CRYPTOPP_DLL BaseN_Encoder : public Unflushable<Filter>
 {
 public:
 	/// \brief Construct a BaseN_Encoder

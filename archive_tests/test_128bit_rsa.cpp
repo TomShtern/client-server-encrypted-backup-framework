@@ -6,6 +6,14 @@
 
 using namespace CryptoPP;
 
+/**
+ * @brief Generates and validates a 128-bit RSA private key using the Crypto++ library.
+ *
+ * Measures the time taken to generate the key, validates the generated key, and outputs the results.
+ * Handles and reports exceptions from Crypto++ and standard libraries.
+ *
+ * @return int Returns 0 on success, or 1 if an exception occurs.
+ */
 int main() {
     try {
         std::cout << "Testing 128-bit RSA key generation..." << std::endl;

@@ -5,6 +5,14 @@
 
 NAMESPACE_BEGIN(CryptoPP)
 
+/**
+ * @brief Updates the Adler-32 checksum state with input data.
+ *
+ * Processes the provided input bytes to incrementally update the internal checksum sums using the Adler-32 algorithm. Handles input in blocks for efficiency and ensures sums remain within valid bounds.
+ *
+ * @param input Pointer to the input data buffer.
+ * @param length Number of bytes to process from the input buffer.
+ */
 void Adler32::Update(const byte *input, size_t length)
 {
 	const unsigned long BASE = 65521;
@@ -53,6 +61,15 @@ void Adler32::Update(const byte *input, size_t length)
 	m_s2 = (word16)s2;
 }
 
+/**
+ * @brief Writes the Adler-32 checksum to the output buffer, truncated to the specified number of bytes.
+ *
+ * The checksum is written in big-endian order, starting from the most significant byte of the internal state.
+ * After writing the output, the internal state is reset.
+ *
+ * @param hash Output buffer to receive the truncated checksum.
+ * @param size Number of bytes of the checksum to write (0 to 4).
+ */
 void Adler32::TruncatedFinal(byte *hash, size_t size)
 {
 	ThrowIfInvalidTruncatedSize(size);

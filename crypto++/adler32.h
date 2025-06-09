@@ -18,8 +18,18 @@ public:
 	Adler32() {Reset();}
 	void Update(const byte *input, size_t length);
 	void TruncatedFinal(byte *hash, size_t size);
-	unsigned int DigestSize() const {return DIGESTSIZE;}
-    CRYPTOPP_STATIC_CONSTEXPR const char* StaticAlgorithmName() {return "Adler32";}
+	/**
+ * @brief Returns the fixed size of the ADLER-32 checksum digest.
+ *
+ * @return The digest size in bytes (always 4).
+ */
+unsigned int DigestSize() const {return DIGESTSIZE;}
+    /**
+ * @brief Returns the static name of the algorithm.
+ *
+ * @return The string "Adler32".
+ */
+CRYPTOPP_STATIC_CONSTEXPR const char* StaticAlgorithmName() {return "Adler32";}
     std::string AlgorithmName() const {return StaticAlgorithmName();}
 
 private:

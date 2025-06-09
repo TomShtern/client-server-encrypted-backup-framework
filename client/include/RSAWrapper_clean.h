@@ -4,6 +4,11 @@
 #include "../../crypto++/rsa.h"
 #include <string>
 
+/**
+ * @brief Encapsulates RSA public key operations using the Crypto++ library.
+ *
+ * Provides methods for initializing an RSA public key from serialized data, retrieving the public key, and encrypting data using the public key. Copy construction and assignment are disabled.
+ */
 class RSAPublicWrapper
 {
 public:
@@ -29,6 +34,11 @@ public:
     std::string encrypt(const char* plain, size_t length);
 };
 
+/**
+ * @brief Encapsulates RSA private key operations, including key management and decryption.
+ *
+ * Provides functionality to generate or load an RSA private key, retrieve the private and corresponding public keys, and decrypt ciphertext using the private key. Keys can be serialized to or deserialized from strings or raw buffers.
+ */
 class RSAPrivateWrapper
 {
 public:

@@ -2,6 +2,13 @@
 #include <chrono>
 #include "client/include/RSAWrapper.h"
 
+/**
+ * @brief Entry point for testing the mock RSA implementation.
+ *
+ * Runs a test that measures the time to instantiate an RSAPrivateWrapper, attempts to retrieve its public key, and reports the results. Handles and reports exceptions that may occur during the process.
+ *
+ * @return int Returns 0 on success, or 1 if an exception is encountered.
+ */
 int main() {
     try {
         std::cout << "Testing mock RSA implementation..." << std::endl;

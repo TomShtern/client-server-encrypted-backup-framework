@@ -31,6 +31,16 @@ class ClientBenchmark {
 private:
     std::map<std::string, std::vector<double>> results;
     
+    /**
+     * @brief Records and logs the timing result for a benchmark test.
+     *
+     * Stores the measured time in milliseconds for a specific test under the given category and outputs a formatted log line, optionally including additional details.
+     *
+     * @param category The benchmark category (e.g., "RSA", "AES").
+     * @param test The specific test name within the category.
+     * @param timeMs The measured execution time in milliseconds.
+     * @param details Optional additional information to include in the log output.
+     */
     void logResult(const std::string& category, const std::string& test, double timeMs, const std::string& details = "") {
         results[category + "::" + test].push_back(timeMs);
         std::cout << std::fixed << std::setprecision(3) 
@@ -40,6 +50,16 @@ private:
     }
     
     template<typename Func>
+    /**
+     * @brief Measures the average execution time of a function over multiple iterations.
+     *
+     * Executes the provided function a specified number of times and returns the average duration per iteration in milliseconds.
+     *
+     * @tparam Func Type of the callable to benchmark.
+     * @param func The function or callable object to execute.
+     * @param iterations Number of times to execute the function. Defaults to 1.
+     * @return double Average execution time per iteration in milliseconds.
+     */
     double timeFunction(Func&& func, int iterations = 1) {
         auto start = std::chrono::high_resolution_clock::now();
         for (int i = 0; i < iterations; ++i) {
@@ -51,6 +71,11 @@ private:
     }
 
 public:
+    /**
+     * @brief Benchmarks RSA cryptographic operations including key loading, key generation, public key export, and memory usage estimation.
+     *
+     * Measures and logs the average execution time for loading RSA keys, attempts key generation, exports the public key, and estimates the memory footprint of an RSA private key wrapper instance. Results are recorded for later summary. Handles and logs exceptions encountered during benchmarking.
+     */
     void benchmarkRSAOperations() {
         std::cout << "\n[CRYPTO] RSA OPERATIONS BENCHMARK\n";
         std::cout << std::string(50, '-') << std::endl;
@@ -90,6 +115,11 @@ public:
         }
     }
     
+    /**
+     * @brief Benchmarks AES encryption and decryption performance on data of varying sizes.
+     *
+     * Measures and logs the average time to encrypt and decrypt data blocks of 1KB, 10KB, and 100KB using AES. Results are recorded for both operations and include the size of the processed data. Handles exceptions and logs failures if any occur during the benchmark.
+     */
     void benchmarkAESOperations() {
         std::cout << "\n[ENCRYPT] AES OPERATIONS BENCHMARK\n";
         std::cout << std::string(50, '-') << std::endl;
@@ -124,6 +154,11 @@ public:
         }
     }
     
+    /**
+     * @brief Benchmarks protocol message header creation and parsing operations.
+     *
+     * Measures the average execution time for creating registration, public key, and file transfer request headers, as well as parsing protocol headers, over multiple iterations. Logs timing results for each operation.
+     */
     void benchmarkProtocolOperations() {
         std::cout << "\n[SIGNAL] PROTOCOL OPERATIONS BENCHMARK\n";
         std::cout << std::string(50, '-') << std::endl;
@@ -165,6 +200,11 @@ public:
         }
     }
     
+    /**
+     * @brief Benchmarks file write and read operations for various file sizes.
+     *
+     * Measures the average time to write and read files of 1KB, 100KB, and 1MB, performing each operation three times per size. Results are logged with timing details, and temporary files are deleted after each test.
+     */
     void benchmarkFileOperations() {
         std::cout << "\n[FOLDER] FILE I/O OPERATIONS BENCHMARK\n";
         std::cout << std::string(50, '-') << std::endl;
@@ -202,6 +242,11 @@ public:
         }
     }
     
+    /**
+     * @brief Benchmarks memory-related operations including allocation, string manipulation, and memory copying.
+     *
+     * Measures the average execution time for allocating and filling a 1MB vector, performing string concatenation and clearing with 100KB strings, and copying 1MB of memory between vectors. Results are logged for each operation.
+     */
     void benchmarkMemoryOperations() {
         std::cout << "\n[SAVE] MEMORY OPERATIONS BENCHMARK\n";
         std::cout << std::string(50, '-') << std::endl;
@@ -230,6 +275,11 @@ public:
         logResult("Memory", "Memory_Copy", copyTime, "1MB copy x10 avg");
     }
     
+    /**
+     * @brief Executes all client-side benchmark categories and prints a summary.
+     *
+     * Runs benchmarks for RSA operations, AES encryption/decryption, protocol message handling, file I/O, and memory operations, then outputs a summary of the collected performance metrics.
+     */
     void runAllBenchmarks() {
         std::cout << "🔬 CLIENT-SIDE PERFORMANCE BENCHMARK SUITE\n";
         std::cout << std::string(70, '=') << std::endl;
@@ -243,6 +293,11 @@ public:
         printSummary();
     }
     
+    /**
+     * @brief Prints a summary of all benchmark results.
+     *
+     * Iterates over all recorded benchmark timings and outputs the average, minimum, maximum times, and sample count for each test with valid data.
+     */
     void printSummary() {
         std::cout << "\n[DATA] BENCHMARK SUMMARY\n";
         std::cout << std::string(70, '=') << std::endl;
@@ -264,6 +319,13 @@ public:
     }
 };
 
+/**
+ * @brief Entry point for the client benchmark suite.
+ *
+ * Runs all client-side performance benchmarks and prints a summary of results. Returns 0 on success, or 1 if an exception occurs.
+ *
+ * @return int Exit status code.
+ */
 int main() {
     try {
         ClientBenchmark benchmark;

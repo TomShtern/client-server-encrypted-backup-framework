@@ -23,7 +23,12 @@ class Integer;
 ///   <pre>    abcd = group.Add(group.Add(a,b), group.Add(c,d));</pre>
 ///   But this should be fine:
 ///   <pre>    abcd = group.Add(a, group.Add(b, group.Add(c,d));</pre>
-template <class T> class CRYPTOPP_NO_VTABLE AbstractGroup
+template <class T> class /**
+ * @brief Abstract base class representing a mathematical group over elements of type T.
+ *
+ * Defines the interface for group operations including equality, identity, addition, inversion, doubling, subtraction, accumulation, reduction, scalar multiplication, and simultaneous multiplication. Derived classes must implement core group operations and may override default behaviors for efficiency or specialized behavior.
+ */
+CRYPTOPP_NO_VTABLE AbstractGroup
 {
 public:
 	typedef T Element;
@@ -115,7 +120,18 @@ public:
 ///   <pre>    abcd = group.Add(group.Add(a,b), group.Add(c,d));</pre>
 ///   But this should be fine:
 ///   <pre>    abcd = group.Add(a, group.Add(b, group.Add(c,d));</pre>
-template <class T> class CRYPTOPP_NO_VTABLE AbstractRing : public AbstractGroup<T>
+template <class T> class /**
+		 * @brief Constructs an AbstractRing instance.
+		 *
+		 * Initializes the internal multiplicative group wrapper to reference this ring.
+		 */
+		
+		/**
+		 * @brief Copy constructs an AbstractRing instance.
+		 *
+		 * Initializes the internal multiplicative group wrapper to reference this ring. The source ring is not otherwise used.
+		 */
+		CRYPTOPP_NO_VTABLE AbstractRing : public AbstractGroup<T>
 {
 public:
 	typedef T Element;
@@ -190,7 +206,11 @@ public:
 	virtual void SimultaneousExponentiate(Element *results, const Element &base, const Integer *exponents, unsigned int exponentsCount) const;
 
 	/// \brief Retrieves the multiplicative group
-	/// \return the multiplicative group
+	/**
+		 * @brief Returns a reference to the multiplicative group associated with the ring.
+		 *
+		 * @return Reference to the multiplicative group as an AbstractGroup.
+		 */
 	virtual const AbstractGroup<T>& MultiplicativeGroup() const
 		{return m_mg;}
 
@@ -201,37 +221,107 @@ private:
 		const AbstractRing<T>& GetRing() const
 			{return *m_pRing;}
 
-		bool Equal(const Element &a, const Element &b) const
+		/**
+			 * @brief Determines if two elements are equivalent in the quotient ring.
+			 *
+			 * Two elements are considered equal if their difference modulo the ring's modulus is the additive identity.
+			 *
+			 * @param a First element to compare.
+			 * @param b Second element to compare.
+			 * @return true if the elements are equivalent in the quotient ring, false otherwise.
+			 */
+			bool Equal(const Element &a, const Element &b) const
 			{return GetRing().Equal(a, b);}
 
-		const Element& Identity() const
+		/**
+			 * @brief Returns the multiplicative identity element of the quotient ring.
+			 *
+			 * @return Reference to the multiplicative identity element.
+			 */
+			const Element& Identity() const
 			{return GetRing().MultiplicativeIdentity();}
 
-		const Element& Add(const Element &a, const Element &b) const
+		/**
+			 * @brief Returns the product of two elements in the quotient ring.
+			 *
+			 * Multiplies elements `a` and `b` using the underlying Euclidean domain's multiplication, then reduces the result modulo the ring's modulus.
+			 *
+			 * @param a First element.
+			 * @param b Second element.
+			 * @return Reference to the resulting element after multiplication and modular reduction.
+			 */
+			const Element& Add(const Element &a, const Element &b) const
 			{return GetRing().Multiply(a, b);}
 
 		Element& Accumulate(Element &a, const Element &b) const
 			{return a = GetRing().Multiply(a, b);}
 
-		const Element& Inverse(const Element &a) const
+		/**
+			 * @brief Returns the multiplicative inverse of the given element in the quotient ring.
+			 *
+			 * @param a The element whose multiplicative inverse is to be computed.
+			 * @return const Element& Reference to the multiplicative inverse of a.
+			 */
+			const Element& Inverse(const Element &a) const
 			{return GetRing().MultiplicativeInverse(a);}
 
-		const Element& Subtract(const Element &a, const Element &b) const
+		/**
+			 * @brief Returns the result of dividing element a by element b in the underlying ring.
+			 *
+			 * @param a The dividend element.
+			 * @param b The divisor element.
+			 * @return const Element& Reference to the result of the division.
+			 */
+			const Element& Subtract(const Element &a, const Element &b) const
 			{return GetRing().Divide(a, b);}
 
 		Element& Reduce(Element &a, const Element &b) const
 			{return a = GetRing().Divide(a, b);}
 
-		const Element& Double(const Element &a) const
+		/**
+			 * @brief Returns the result of doubling the given element in the ring.
+			 *
+			 * This is equivalent to squaring the element using the underlying ring's Square operation.
+			 *
+			 * @param a The element to double.
+			 * @return const Element& The doubled (squared) element.
+			 */
+			const Element& Double(const Element &a) const
 			{return GetRing().Square(a);}
 
-		Element ScalarMultiply(const Element &a, const Integer &e) const
+		/**
+			 * @brief Performs scalar multiplication of an element by an integer exponent.
+			 *
+			 * Computes the result of raising the element to the given integer exponent using the underlying ring's exponentiation operation.
+			 *
+			 * @param a The element to be exponentiated.
+			 * @param e The integer exponent.
+			 * @return Element The result of exponentiating a by e.
+			 */
+			Element ScalarMultiply(const Element &a, const Integer &e) const
 			{return GetRing().Exponentiate(a, e);}
 
-		Element CascadeScalarMultiply(const Element &x, const Integer &e1, const Element &y, const Integer &e2) const
+		/**
+			 * @brief Computes the combined scalar multiplication of two elements using their respective exponents.
+			 *
+			 * Returns the result of multiplying element `x` by exponent `e1` and element `y` by exponent `e2`, combined according to the ring's cascade exponentiation rules.
+			 *
+			 * @return The result of the cascade scalar multiplication.
+			 */
+			Element CascadeScalarMultiply(const Element &x, const Integer &e1, const Element &y, const Integer &e2) const
 			{return GetRing().CascadeExponentiate(x, e1, y, e2);}
 
-		void SimultaneousMultiply(Element *results, const Element &base, const Integer *exponents, unsigned int exponentsCount) const
+		/**
+			 * @brief Computes multiple exponentiations of a base element with different exponents.
+			 *
+			 * For each exponent in the array, raises the given base to that exponent and stores the result in the corresponding position of the results array.
+			 *
+			 * @param results Array to store the computed exponentiations.
+			 * @param base The base element to be exponentiated.
+			 * @param exponents Array of exponents.
+			 * @param exponentsCount Number of exponentiations to perform.
+			 */
+			void SimultaneousMultiply(Element *results, const Element &base, const Integer *exponents, unsigned int exponentsCount) const
 			{GetRing().SimultaneousExponentiate(results, base, exponents, exponentsCount);}
 
 		const AbstractRing<T> *m_pRing;
@@ -273,7 +363,41 @@ template <class Element, class Iterator>
 ///   <pre>    abcd = group.Add(group.Add(a,b), group.Add(c,d));</pre>
 ///   But this should be fine:
 ///   <pre>    abcd = group.Add(a, group.Add(b, group.Add(c,d));</pre>
-template <class T> class CRYPTOPP_NO_VTABLE AbstractEuclideanDomain : public AbstractRing<T>
+template <class T> class /**
+ * @brief Abstract base class for Euclidean domains.
+ *
+ * Defines the interface for performing division, modular reduction, and greatest common divisor computations in a Euclidean domain over elements of type T.
+ *
+ * @tparam T The element type of the Euclidean domain.
+ */
+ 
+/**
+ * @brief Performs the division algorithm on two elements.
+ *
+ * Computes quotient and remainder such that a = q * d + r, where r and q are output parameters.
+ *
+ * @param r Reference to store the remainder.
+ * @param q Reference to store the quotient.
+ * @param a The dividend.
+ * @param d The divisor.
+ */
+ 
+/**
+ * @brief Computes the modular reduction of two elements.
+ *
+ * @param a The element to reduce.
+ * @param b The modulus.
+ * @return Reference to the result of a modulo b.
+ */
+ 
+/**
+ * @brief Calculates the greatest common divisor of two elements.
+ *
+ * @param a The first element.
+ * @param b The second element.
+ * @return Reference to the greatest common divisor of a and b.
+ */
+CRYPTOPP_NO_VTABLE AbstractEuclideanDomain : public AbstractRing<T>
 {
 public:
 	typedef T Element;
@@ -319,55 +443,154 @@ public:
 
 	EuclideanDomainOf() {}
 
-	bool Equal(const Element &a, const Element &b) const
+	/**
+		 * @brief Checks if two elements are equal.
+		 *
+		 * @param a First element to compare.
+		 * @param b Second element to compare.
+		 * @return true if the elements are equal, false otherwise.
+		 */
+		bool Equal(const Element &a, const Element &b) const
 		{return a==b;}
 
-	const Element& Identity() const
+	/**
+		 * @brief Returns the additive identity element of the domain.
+		 *
+		 * @return Reference to the zero element.
+		 */
+		const Element& Identity() const
 		{return Element::Zero();}
 
-	const Element& Add(const Element &a, const Element &b) const
+	/**
+		 * @brief Returns the sum of two elements in the algebraic structure.
+		 *
+		 * @param a The first element.
+		 * @param b The second element.
+		 * @return Reference to the result of a + b.
+		 */
+		const Element& Add(const Element &a, const Element &b) const
 		{return result = a+b;}
 
 	Element& Accumulate(Element &a, const Element &b) const
 		{return a+=b;}
 
-	const Element& Inverse(const Element &a) const
+	/**
+		 * @brief Returns the additive inverse of the given element.
+		 *
+		 * @param a The element whose additive inverse is to be computed.
+		 * @return const Element& Reference to the result containing the additive inverse of a.
+		 */
+		const Element& Inverse(const Element &a) const
 		{return result = -a;}
 
-	const Element& Subtract(const Element &a, const Element &b) const
+	/**
+		 * @brief Returns the difference of two elements.
+		 *
+		 * Computes a - b and stores the result internally.
+		 *
+		 * @param a The minuend element.
+		 * @param b The subtrahend element.
+		 * @return const Element& Reference to the result of a - b.
+		 */
+		const Element& Subtract(const Element &a, const Element &b) const
 		{return result = a-b;}
 
 	Element& Reduce(Element &a, const Element &b) const
 		{return a-=b;}
 
-	const Element& Double(const Element &a) const
+	/**
+		 * @brief Returns the result of doubling the given element.
+		 *
+		 * @param a The element to double.
+		 * @return const Element& Reference to the doubled element.
+		 */
+		const Element& Double(const Element &a) const
 		{return result = a.Doubled();}
 
-	const Element& MultiplicativeIdentity() const
+	/**
+		 * @brief Returns the multiplicative identity element of the domain.
+		 *
+		 * @return Reference to the element representing one.
+		 */
+		const Element& MultiplicativeIdentity() const
 		{return Element::One();}
 
-	const Element& Multiply(const Element &a, const Element &b) const
+	/**
+		 * @brief Multiplies two elements in the ring.
+		 *
+		 * @param a The first element.
+		 * @param b The second element.
+		 * @return Reference to the product of a and b.
+		 */
+		const Element& Multiply(const Element &a, const Element &b) const
 		{return result = a*b;}
 
-	const Element& Square(const Element &a) const
+	/**
+		 * @brief Returns the square of the given element.
+		 *
+		 * @param a The element to be squared.
+		 * @return const Element& Reference to the result of squaring a.
+		 */
+		const Element& Square(const Element &a) const
 		{return result = a.Squared();}
 
-	bool IsUnit(const Element &a) const
+	/**
+		 * @brief Determines whether the given element is a unit in the domain.
+		 *
+		 * @param a The element to test.
+		 * @return true if the element is a unit (has a multiplicative inverse); false otherwise.
+		 */
+		bool IsUnit(const Element &a) const
 		{return a.IsUnit();}
 
-	const Element& MultiplicativeInverse(const Element &a) const
+	/**
+		 * @brief Returns the multiplicative inverse of the given element.
+		 *
+		 * @param a The element for which to compute the multiplicative inverse.
+		 * @return const Element& Reference to the result containing the multiplicative inverse of a.
+		 */
+		const Element& MultiplicativeInverse(const Element &a) const
 		{return result = a.MultiplicativeInverse();}
 
-	const Element& Divide(const Element &a, const Element &b) const
+	/**
+		 * @brief Divides one element by another in the Euclidean domain.
+		 *
+		 * @param a The dividend element.
+		 * @param b The divisor element.
+		 * @return const Element& Reference to the result of the division.
+		 */
+		const Element& Divide(const Element &a, const Element &b) const
 		{return result = a/b;}
 
-	const Element& Mod(const Element &a, const Element &b) const
+	/**
+		 * @brief Computes the remainder of dividing one element by another.
+		 *
+		 * Returns the result of `a` modulo `b`, using the `%` operator of the element type.
+		 *
+		 * @param a The dividend element.
+		 * @param b The divisor element.
+		 * @return Reference to the remainder of `a` divided by `b`.
+		 */
+		const Element& Mod(const Element &a, const Element &b) const
 		{return result = a%b;}
 
-	void DivisionAlgorithm(Element &r, Element &q, const Element &a, const Element &d) const
+	/**
+		 * @brief Performs the division algorithm on two elements.
+		 *
+		 * Computes the quotient and remainder of dividing element `a` by element `d`, storing the remainder in `r` and the quotient in `q`.
+		 */
+		void DivisionAlgorithm(Element &r, Element &q, const Element &a, const Element &d) const
 		{Element::Divide(r, q, a, d);}
 
-	// Override Gcd to use the proper Euclidean algorithm implementation
+	/**
+	 * @brief Computes the greatest common divisor (GCD) of two elements using the Euclidean algorithm.
+	 *
+	 * Iteratively applies modular reduction to find the GCD of elements `a` and `b` in the Euclidean domain.
+	 *
+	 * @param a First element.
+	 * @param b Second element.
+	 * @return const Element& Reference to the computed GCD.
+	 */
 	const Element& Gcd(const Element &a, const Element &b) const
 	{
 		Element g[3]={b, a};
@@ -382,7 +605,15 @@ public:
 		return result = g[i0];
 	}
 
-	// Override AbstractRing methods to use proper implementations
+	/**
+	 * @brief Raises an element to a given integer exponent.
+	 *
+	 * Computes base raised to the power of exponent within the algebraic structure.
+	 *
+	 * @param base The element to be exponentiated.
+	 * @param exponent The integer exponent.
+	 * @return Element The result of base raised to exponent.
+	 */
 	Element Exponentiate(const Element &base, const Integer &exponent) const
 	{
 		Element result;
@@ -390,27 +621,77 @@ public:
 		return result;
 	}
 
+	/**
+	 * @brief Computes the product of two elements each raised to a given exponent.
+	 *
+	 * Calculates \( x^{e1} \cdot y^{e2} \) using the ring's multiplicative group operations.
+	 *
+	 * @param x The first base element.
+	 * @param e1 The exponent for the first base.
+	 * @param y The second base element.
+	 * @param e2 The exponent for the second base.
+	 * @return The result of \( x^{e1} \cdot y^{e2} \).
+	 */
 	Element CascadeExponentiate(const Element &x, const Integer &e1, const Element &y, const Integer &e2) const
 	{
 		return this->MultiplicativeGroup().AbstractGroup<T>::CascadeScalarMultiply(x, e1, y, e2);
 	}
 
+	/**
+	 * @brief Computes multiple exponentiations of a base element with different exponents.
+	 *
+	 * Calculates `results[i] = base ^ exponents[i]` for each exponent in the array, using the ring's multiplicative group.
+	 *
+	 * @param results Array to store the computed exponentiations.
+	 * @param base The base element to be exponentiated.
+	 * @param exponents Array of exponents.
+	 * @param expCount Number of exponentiations to perform.
+	 */
 	void SimultaneousExponentiate(Element *results, const Element &base, const Integer *exponents, unsigned int expCount) const
 	{
 		this->MultiplicativeGroup().AbstractGroup<T>::SimultaneousMultiply(results, base, exponents, expCount);
 	}
 
-	// Override AbstractGroup methods to avoid dummy implementations
+	/**
+	 * @brief Computes the scalar multiple of a group element by an integer exponent.
+	 *
+	 * Returns the result of raising the given base element to the specified exponent using the ring's exponentiation operation.
+	 *
+	 * @param base The element to be exponentiated.
+	 * @param exponent The integer exponent.
+	 * @return Element The result of exponentiating base by exponent.
+	 */
 	Element ScalarMultiply(const Element &base, const Integer &exponent) const
 	{
 		return Exponentiate(base, exponent);
 	}
 
+	/**
+	 * @brief Computes the combined scalar multiplication of two elements.
+	 *
+	 * Returns the result of multiplying element `x` by scalar `e1` and element `y` by scalar `e2`, combined according to the group or ring operation. This implementation delegates to the cascade exponentiation method.
+	 *
+	 * @param x The first element.
+	 * @param e1 The scalar multiplier for the first element.
+	 * @param y The second element.
+	 * @param e2 The scalar multiplier for the second element.
+	 * @return Element The result of the combined scalar multiplication.
+	 */
 	Element CascadeScalarMultiply(const Element &x, const Integer &e1, const Element &y, const Integer &e2) const
 	{
 		return CascadeExponentiate(x, e1, y, e2);
 	}
 
+	/**
+	 * @brief Computes multiple exponentiations of a base element with different exponents.
+	 *
+	 * Calculates base raised to each exponent in the exponents array and stores the results in the results array.
+	 *
+	 * @param results Array to store the computed exponentiations.
+	 * @param base The base element to exponentiate.
+	 * @param exponents Array of exponents.
+	 * @param expCount Number of exponentiations to perform.
+	 */
 	void SimultaneousMultiply(Element *results, const Element &base, const Integer *exponents, unsigned int expCount) const
 	{
 		// Use the proper implementation from AbstractGroup<T>::SimultaneousMultiply
@@ -446,49 +727,143 @@ public:
 	QuotientRing(const EuclideanDomain &domain, const Element &modulus)
 		: m_domain(domain), m_modulus(modulus) {}
 
-	const EuclideanDomain & GetDomain() const
+	/**
+		 * @brief Returns a reference to the underlying Euclidean domain.
+		 *
+		 * @return const EuclideanDomain& Reference to the Euclidean domain used by this quotient ring.
+		 */
+		const EuclideanDomain & GetDomain() const
 		{return m_domain;}
 
-	const Element& GetModulus() const
+	/**
+		 * @brief Returns the modulus element used to define the quotient ring.
+		 *
+		 * @return Reference to the modulus element.
+		 */
+		const Element& GetModulus() const
 		{return m_modulus;}
 
-	bool Equal(const Element &a, const Element &b) const
+	/**
+		 * @brief Determines if two elements are equivalent in the quotient ring.
+		 *
+		 * Returns true if the difference between elements a and b is congruent to zero modulo the ring's modulus, indicating they represent the same equivalence class.
+		 *
+		 * @param a First element to compare.
+		 * @param b Second element to compare.
+		 * @return true if a and b are equivalent modulo the modulus, false otherwise.
+		 */
+		bool Equal(const Element &a, const Element &b) const
 		{return m_domain.Equal(m_domain.Mod(m_domain.Subtract(a, b), m_modulus), m_domain.Identity());}
 
-	const Element& Identity() const
+	/**
+		 * @brief Returns the additive identity element of the quotient ring.
+		 *
+		 * @return Reference to the additive identity element.
+		 */
+		const Element& Identity() const
 		{return m_domain.Identity();}
 
-	const Element& Add(const Element &a, const Element &b) const
+	/**
+		 * @brief Returns the sum of two elements in the quotient ring.
+		 *
+		 * Computes the addition of elements `a` and `b` using the underlying Euclidean domain, with the result reduced modulo the ring's modulus.
+		 *
+		 * @param a First element.
+		 * @param b Second element.
+		 * @return Reference to the resulting element in the quotient ring.
+		 */
+		const Element& Add(const Element &a, const Element &b) const
 		{return m_domain.Add(a, b);}
 
 	Element& Accumulate(Element &a, const Element &b) const
 		{return m_domain.Accumulate(a, b);}
 
-	const Element& Inverse(const Element &a) const
+	/**
+		 * @brief Returns the additive inverse of an element in the quotient ring.
+		 *
+		 * Computes the additive inverse of the given element by delegating to the underlying Euclidean domain.
+		 *
+		 * @param a The element whose additive inverse is to be computed.
+		 * @return const Element& Reference to the additive inverse of the element.
+		 */
+		const Element& Inverse(const Element &a) const
 		{return m_domain.Inverse(a);}
 
-	const Element& Subtract(const Element &a, const Element &b) const
+	/**
+		 * @brief Returns the difference of two elements in the quotient ring.
+		 *
+		 * Computes the subtraction of elements `a` and `b` in the underlying domain, then reduces the result modulo the ring's modulus.
+		 *
+		 * @param a The minuend element.
+		 * @param b The subtrahend element.
+		 * @return const Element& Reference to the result of (a - b) mod modulus.
+		 */
+		const Element& Subtract(const Element &a, const Element &b) const
 		{return m_domain.Subtract(a, b);}
 
 	Element& Reduce(Element &a, const Element &b) const
 		{return m_domain.Reduce(a, b);}
 
-	const Element& Double(const Element &a) const
+	/**
+		 * @brief Returns the result of doubling the given element in the underlying domain.
+		 *
+		 * @param a The element to double.
+		 * @return const Element& Reference to the doubled element.
+		 */
+		const Element& Double(const Element &a) const
 		{return m_domain.Double(a);}
 
-	bool IsUnit(const Element &a) const
+	/**
+		 * @brief Determines if an element is a unit in the quotient ring.
+		 *
+		 * An element is a unit if its greatest common divisor with the modulus is a unit in the underlying Euclidean domain.
+		 *
+		 * @param a The element to test for invertibility.
+		 * @return true if the element is a unit in the quotient ring; false otherwise.
+		 */
+		bool IsUnit(const Element &a) const
 		{return m_domain.IsUnit(m_domain.Gcd(a, m_modulus));}
 
-	const Element& MultiplicativeIdentity() const
+	/**
+		 * @brief Returns the multiplicative identity element of the quotient ring.
+		 *
+		 * The multiplicative identity is obtained from the underlying Euclidean domain.
+		 *
+		 * @return Reference to the multiplicative identity element.
+		 */
+		const Element& MultiplicativeIdentity() const
 		{return m_domain.MultiplicativeIdentity();}
 
-	const Element& Multiply(const Element &a, const Element &b) const
+	/**
+		 * @brief Multiplies two elements in the quotient ring and reduces the result modulo the modulus.
+		 *
+		 * @param a First element to multiply.
+		 * @param b Second element to multiply.
+		 * @return Reference to the product of a and b, reduced modulo the ring's modulus.
+		 */
+		const Element& Multiply(const Element &a, const Element &b) const
 		{return m_domain.Mod(m_domain.Multiply(a, b), m_modulus);}
 
-	const Element& Square(const Element &a) const
+	/**
+		 * @brief Computes the square of an element in the quotient ring.
+		 *
+		 * Returns the result of squaring the element `a` in the underlying domain and reducing it modulo the ring's modulus.
+		 *
+		 * @param a The element to be squared.
+		 * @return const Element& Reference to the squared and reduced element.
+		 */
+		const Element& Square(const Element &a) const
 		{return m_domain.Mod(m_domain.Square(a), m_modulus);}
 
-	const Element& MultiplicativeInverse(const Element &a) const;
+	/**
+		 * @brief Computes the multiplicative inverse of an element in the quotient ring.
+		 *
+		 * @param a The element for which to compute the multiplicative inverse.
+		 * @return const Element& Reference to the multiplicative inverse of `a` modulo the ring's modulus.
+		 *
+		 * @note The element `a` must be a unit in the quotient ring; otherwise, the behavior is undefined.
+		 */
+		const Element& MultiplicativeInverse(const Element &a) const;
 
 	bool operator==(const QuotientRing<T> &rhs) const
 		{return m_domain == rhs.m_domain && m_modulus == rhs.m_modulus;}

@@ -9,6 +9,13 @@
 
 using namespace CryptoPP;
 
+/**
+ * @brief Tests loading and saving a hardcoded DER-encoded RSA private key using Crypto++.
+ *
+ * Loads a minimal valid RSA private key from a hardcoded DER byte array, verifies successful deserialization, then serializes the key back to a string and reports the size. Handles and reports exceptions from Crypto++ and standard library errors.
+ *
+ * @return int Returns 0 on success, 1 on failure.
+ */
 int main() {
     try {
         std::cout << "=== Testing RSA Hardcoded Key Constructor ===" << std::endl;

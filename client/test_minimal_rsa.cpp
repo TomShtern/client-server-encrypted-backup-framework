@@ -1,7 +1,11 @@
 #include <iostream>
 #include <stdexcept>
 
-// Test the exact DER key bytes we're using
+/**
+ * @brief Validates the structure of a hardcoded DER-encoded RSA private key.
+ *
+ * Prints the size and first 10 bytes of the DER key for inspection, then checks that the key begins with a SEQUENCE tag and that the length field matches the actual key data size. Reports errors and returns 1 on failure, or confirms validity and returns 0 on success.
+ */
 int main() {
     try {
         // This is the exact DER key from RSAWrapper.cpp (corrected)

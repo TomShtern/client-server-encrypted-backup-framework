@@ -12,6 +12,29 @@
 #include "secblock.h"
 #include "smartptr.h"
 
+/**
+ * @brief Base class for the ARC4 stream cipher.
+ *
+ * Provides core ARC4 keystream generation, data processing, and key setup for both encryption and decryption.
+ *
+ * @since Crypto++ 3.1
+ */
+
+/**
+ * @brief Alleged RC4 stream cipher.
+ *
+ * Typedef for the ARC4 cipher implementation.
+ *
+ * @since Crypto++ 3.1
+ */
+
+/**
+ * @brief Base class for the MARC4 stream cipher variant.
+ *
+ * Implements ARC4 with the first 256 bytes of keystream discarded to mitigate known weaknesses.
+ *
+ * @since Crypto++ 3.1
+ */
 NAMESPACE_BEGIN(CryptoPP)
 
 namespace Weak1 {

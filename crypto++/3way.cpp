@@ -21,6 +21,14 @@ namespace
 	const word32 START_D = 0xb1b1; // round constant of first decryption round
 }
 
+/**
+ * @brief Reverses the order of bits in a 32-bit word.
+ *
+ * Each bit in the input word is mirrored to its opposite position in the output.
+ *
+ * @param a The 32-bit word to reverse.
+ * @return word32 The input word with its bits in reverse order.
+ */
 static inline word32 reverseBits(word32 a)
 {
 	a = ((a & 0xAAAAAAAA) >> 1) | ((a & 0x55555555) << 1);
@@ -65,6 +73,11 @@ static inline word32 reverseBits(word32 a)
 	pi_gamma_pi(a0, a1, a2);	\
 }
 
+/**
+ * @brief Sets the ThreeWay cipher key and prepares round keys.
+ *
+ * Loads a 12-byte user key into internal state, validates its length, and determines the number of rounds from parameters. For decryption, applies the theta and mu transformations and reverses the byte order of the key words.
+ */
 void ThreeWay::Base::UncheckedSetKey(const byte *uk, unsigned int length, const NameValuePairs &params)
 {
 	AssertValidKeyLength(length);
@@ -84,6 +97,15 @@ void ThreeWay::Base::UncheckedSetKey(const byte *uk, unsigned int length, const 
 	}
 }
 
+/**
+ * @brief Encrypts a 12-byte block using the ThreeWay cipher and writes the result XORed with an optional mask.
+ *
+ * Reads a 12-byte input block in big-endian order, applies the ThreeWay encryption rounds with the configured key, and writes the encrypted output XORed with the provided xorBlock to outBlock in big-endian order.
+ *
+ * @param inBlock Pointer to the 12-byte input block to encrypt.
+ * @param xorBlock Pointer to a 12-byte block to XOR with the encrypted output (may be null).
+ * @param outBlock Pointer to the buffer where the 12-byte encrypted (and XORed) output will be written.
+ */
 void ThreeWay::Enc::ProcessAndXorBlock(const byte *inBlock, const byte *xorBlock, byte *outBlock) const
 {
 	typedef BlockGetAndPut<word32, BigEndian> Block;
@@ -111,6 +133,15 @@ void ThreeWay::Enc::ProcessAndXorBlock(const byte *inBlock, const byte *xorBlock
 	Block::Put(xorBlock, outBlock)(a0)(a1)(a2);
 }
 
+/**
+ * @brief Decrypts a 12-byte block using the ThreeWay cipher and writes the result XORed with an optional block.
+ *
+ * Reads a 12-byte input block in little-endian order, applies the ThreeWay decryption rounds, and outputs the decrypted block XORed with `xorBlock` in little-endian order.
+ *
+ * @param inBlock Pointer to the 12-byte ciphertext input block.
+ * @param xorBlock Pointer to a 12-byte block to XOR with the decrypted output (may be null).
+ * @param outBlock Pointer to the 12-byte buffer where the decrypted (and XORed) output will be written.
+ */
 void ThreeWay::Dec::ProcessAndXorBlock(const byte *inBlock, const byte *xorBlock, byte *outBlock) const
 {
 	typedef BlockGetAndPut<word32, LittleEndian> Block;

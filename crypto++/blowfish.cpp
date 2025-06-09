@@ -6,6 +6,14 @@
 
 NAMESPACE_BEGIN(CryptoPP)
 
+/**
+ * @brief Initializes the Blowfish key schedule with the provided key.
+ *
+ * Expands the user-supplied key into the Blowfish P-box and S-box arrays, preparing the cipher for encryption or decryption. The key bytes are cyclically XORed into the P-box, and the arrays are further processed by repeated encryption of zero blocks to fully diffuse the key material. If the cipher is set for decryption, the P-box entries are swapped to reverse the key schedule.
+ *
+ * @param key_string Pointer to the key material.
+ * @param keylength Length of the key in bytes.
+ */
 void Blowfish::Base::UncheckedSetKey(const byte *key_string, unsigned int keylength, const NameValuePairs &)
 {
 	AssertValidKeyLength(keylength);
@@ -40,7 +48,14 @@ void Blowfish::Base::UncheckedSetKey(const byte *key_string, unsigned int keylen
 			std::swap(pbox[i], pbox[ROUNDS+1-i]);
 }
 
-// this version is only used to make pbox and sbox
+/**
+ * @brief Encrypts a 64-bit block using the Blowfish algorithm.
+ *
+ * Applies the Blowfish Feistel network to the input block using the current P-box and S-box values, producing an encrypted output block. The input and output are each represented as two 32-bit words.
+ *
+ * @param in Input block as two 32-bit words.
+ * @param out Output block as two 32-bit words containing the encrypted result.
+ */
 void Blowfish::Base::crypt_block(const word32 in[2], word32 out[2]) const
 {
 	word32 left = in[0];
@@ -68,6 +83,15 @@ void Blowfish::Base::crypt_block(const word32 in[2], word32 out[2]) const
 	out[1] = left;
 }
 
+/**
+ * @brief Encrypts a 64-bit input block with Blowfish and XORs the result with another block.
+ *
+ * Reads a 64-bit input block in big-endian order, encrypts it using the Blowfish algorithm, XORs the encrypted output with the provided xorBlock, and writes the result to outBlock in big-endian format.
+ *
+ * @param inBlock Pointer to the 8-byte input block to encrypt.
+ * @param xorBlock Pointer to the 8-byte block to XOR with the encrypted output.
+ * @param outBlock Pointer to the 8-byte buffer where the result is written.
+ */
 void Blowfish::Base::ProcessAndXorBlock(const byte *inBlock, const byte *xorBlock, byte *outBlock) const
 {
 	typedef BlockGetAndPut<word32, BigEndian> Block;

@@ -11,6 +11,14 @@
 using namespace CryptoPP;
 using namespace std;
 
+/**
+ * @brief Outputs binary data as a formatted C-style unsigned char array in hexadecimal.
+ *
+ * Converts the input binary string into a C array declaration named after `varName`, formatting the output as hexadecimal bytes with 16 bytes per line. Also prints a comment indicating the total size in bytes.
+ *
+ * @param data The binary data to be converted and printed.
+ * @param varName The name to use for the generated C array.
+ */
 void printAsHexArray(const string& data, const string& varName) {
     cout << "unsigned char " << varName << "[] = {" << endl;
     for (size_t i = 0; i < data.size(); i++) {
@@ -23,6 +31,13 @@ void printAsHexArray(const string& data, const string& varName) {
     cout << "// Size: " << dec << data.size() << " bytes" << endl;
 }
 
+/**
+ * @brief Generates, validates, and exports a minimal valid RSA private key as a C array.
+ *
+ * Manually constructs an RSA private key using small fixed primes, validates the key, serializes it to DER format, and prints it as a C-style byte array suitable for hardcoding. Also tests loading the key back from DER data and verifies basic functionality. Prints progress and error messages throughout. Returns 0 on success, or 1 on failure.
+ *
+ * @return int Exit code: 0 on success, 1 on failure.
+ */
 int main() {
     try {
         cout << "=== Generating Valid RSA Key for Hardcoding ===" << endl;

@@ -15,6 +15,14 @@
 using namespace CryptoPP;
 using namespace std;
 
+/**
+ * @brief Prints a byte array as a formatted C++ unsigned char array initializer.
+ *
+ * Outputs the given byte array in hexadecimal format, grouping 16 bytes per line, suitable for embedding in C++ source code.
+ *
+ * @param data Pointer to the byte array to print.
+ * @param len Number of bytes in the array.
+ */
 void printByteArray(const unsigned char* data, size_t len) {
     cout << "unsigned char derKey[] = {" << endl << "    ";
     for (size_t i = 0; i < len; i++) {
@@ -25,6 +33,13 @@ void printByteArray(const unsigned char* data, size_t len) {
     cout << endl << "};" << endl;
 }
 
+/**
+ * @brief Generates, encodes, prints, and verifies a 512-bit RSA private key using Crypto++.
+ *
+ * Generates a 512-bit RSA private key, encodes it in DER format, prints the encoded key as a C++ byte array, and verifies the key by loading it back from the DER data. Prints progress and error messages to standard output.
+ *
+ * @return int Returns 0 on success, or 1 if an exception occurs.
+ */
 int main() {
     try {
         cout << "=== Generating Valid RSA Key ===" << endl;

@@ -13,6 +13,14 @@
 using namespace CryptoPP;
 using namespace std;
 
+/**
+ * @brief Tests RSA private key generation, serialization, and deserialization for a given key size.
+ *
+ * Attempts to generate an RSA private key of the specified bit size using Crypto++. Measures the time taken, derives the public key, serializes the private key to DER format, and verifies correctness by deserializing it back. Reports success or failure, handling exceptions from Crypto++ and the standard library.
+ *
+ * @param keySize The desired RSA key size in bits.
+ * @return true if key generation, serialization, and deserialization succeed; false otherwise.
+ */
 bool testRSAGeneration(unsigned int keySize) {
     cout << "\nTesting RSA key generation at " << keySize << " bits..." << endl;
     
@@ -74,6 +82,14 @@ bool testRSAGeneration(unsigned int keySize) {
     }
 }
 
+/**
+ * @brief Tests RSA key generation for multiple key sizes and reports the first successful size.
+ *
+ * Iterates through a set of predefined RSA key sizes, attempting to generate a key for each.
+ * Reports success and exits on the first successful generation; otherwise, reports failure if all attempts fail.
+ *
+ * @return int Returns 0 on the first successful key generation, or 1 if all attempts fail.
+ */
 int main() {
     cout << "=== RSA Key Generation Size Testing ===" << endl;
     cout << "This will test different RSA key sizes to find what works." << endl;

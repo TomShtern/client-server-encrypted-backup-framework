@@ -8,6 +8,13 @@
 
 #include "cryptlib.h"
 
+/****
+ * @brief Defines an inline function that returns the string literal of its name.
+ *
+ * This macro creates an inline function with the specified name that, when called, returns the name as a string literal. It is used to standardize parameter name strings for use with NameValuePairs and related APIs.
+ *
+ * @param name The identifier for which to generate the string-returning function.
+ */
 NAMESPACE_BEGIN(CryptoPP)
 
 DOCUMENTED_NAMESPACE_BEGIN(Name)

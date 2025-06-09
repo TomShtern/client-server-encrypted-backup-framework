@@ -27,7 +27,14 @@
 
 using namespace CryptoPP;
 
-// RSAPublicWrapper implementation
+/**
+ * @brief Constructs an RSAPublicWrapper with the provided public key data.
+ *
+ * @param key Pointer to the raw public key data.
+ * @param keylen Length of the key data in bytes.
+ *
+ * @throws std::invalid_argument If the key pointer is null or the length is zero.
+ */
 RSAPublicWrapper::RSAPublicWrapper(const char* key, size_t keylen) {
     if (!key || keylen == 0) {
         throw std::invalid_argument("Invalid key data");
@@ -38,6 +45,12 @@ RSAPublicWrapper::RSAPublicWrapper(const char* key, size_t keylen) {
     std::cout << "[DEBUG] RSAPublicWrapper created with key size: " << keylen << std::endl;
 }
 
+/**
+ * @brief Constructs an RSAPublicWrapper by loading a public key from a binary file.
+ *
+ * @param filename Path to the file containing the public key in binary format.
+ * @throws std::runtime_error If the file cannot be opened or is empty.
+ */
 RSAPublicWrapper::RSAPublicWrapper(const std::string& filename) {
     std::ifstream file(filename, std::ios::binary);
     if (!file.is_open()) {
@@ -57,8 +70,22 @@ RSAPublicWrapper::RSAPublicWrapper(const std::string& filename) {
     std::cout << "[DEBUG] RSAPublicWrapper loaded from file: " << filename << std::endl;
 }
 
+/**
+ * @brief Destroys the RSAPublicWrapper instance and releases resources.
+ */
 RSAPublicWrapper::~RSAPublicWrapper() = default;
 
+/**
+ * @brief Encrypts plaintext using the stored RSA public key or a deterministic fallback.
+ *
+ * Attempts to encrypt the input string using RSA with PKCS1 padding if the stored key is a valid DER-encoded public key. If the key is invalid or encryption fails, falls back to a reversible enhanced XOR encryption using a key derived from the stored key data.
+ *
+ * @param plain The plaintext string to encrypt. Must not be empty or exceed 117 bytes.
+ * @return std::string The encrypted ciphertext.
+ *
+ * @throws std::invalid_argument If the input is empty or too large for the RSA key size.
+ * @throws std::runtime_error If RSA encryption fails unexpectedly.
+ */
 std::string RSAPublicWrapper::encrypt(const std::string& plain) {
     if (plain.empty()) {
         throw std::invalid_argument("Cannot encrypt empty data");
@@ -120,6 +147,17 @@ std::string RSAPublicWrapper::encrypt(const std::string& plain) {
     }
 }
 
+/**
+ * @brief Encrypts data using the stored RSA public key or fallback XOR method.
+ *
+ * Converts the input buffer to a string and encrypts it using RSA encryption if possible, or a deterministic XOR-based fallback if necessary.
+ *
+ * @param plain Pointer to the plaintext data.
+ * @param length Number of bytes to encrypt.
+ * @return std::string The encrypted data.
+ *
+ * @throws std::invalid_argument If the input buffer is null or length is zero.
+ */
 std::string RSAPublicWrapper::encrypt(const char* plain, size_t length) {
     if (!plain || length == 0) {
         throw std::invalid_argument("Cannot encrypt empty data");
@@ -128,6 +166,17 @@ std::string RSAPublicWrapper::encrypt(const char* plain, size_t length) {
     return encrypt(std::string(plain, length));
 }
 
+/**
+ * @brief Copies the stored public key data to the provided output buffer.
+ *
+ * @param keyout Pointer to the output buffer where the public key will be copied.
+ * @param keylen Size of the output buffer in bytes.
+ *
+ * @throws std::invalid_argument If the output buffer is null or the buffer size is zero.
+ * @throws std::runtime_error If the output buffer is too small to hold the public key data.
+ *
+ * If the buffer is larger than the key data, the output will be null-terminated.
+ */
 void RSAPublicWrapper::getPublicKey(char* keyout, size_t keylen) {
     if (!keyout || keylen == 0) {
         throw std::invalid_argument("Invalid output buffer");
@@ -143,11 +192,22 @@ void RSAPublicWrapper::getPublicKey(char* keyout, size_t keylen) {
     }
 }
 
+/**
+ * @brief Returns the stored public key as a string.
+ *
+ * The returned string contains the raw bytes of the internally stored public key.
+ *
+ * @return std::string Public key data.
+ */
 std::string RSAPublicWrapper::getPublicKey() {
     return std::string(keyData.begin(), keyData.end());
 }
 
-// RSAPrivateWrapper implementation
+/**
+ * @brief Constructs an RSAPrivateWrapper with a deterministic RSA key pair.
+ *
+ * Initializes the wrapper with a valid 1024-bit DER-encoded RSA public key and a corresponding deterministic private key. If deterministic key generation fails, falls back to a reproducible dummy key pair, optionally adding time-based variability for uniqueness. This ensures the wrapper always has a usable key pair for encryption and decryption operations.
+ */
 RSAPrivateWrapper::RSAPrivateWrapper() {
     std::cout << "[DEBUG] RSAPrivateWrapper constructor started" << std::endl;
 
@@ -226,6 +286,15 @@ RSAPrivateWrapper::RSAPrivateWrapper() {
     }
 }
 
+/**
+ * @brief Initializes the RSAPrivateWrapper with a private key from a raw buffer.
+ *
+ * Loads the private key data from the provided buffer and initializes a dummy public key of fixed size.
+ * Throws std::invalid_argument if the input buffer is null or empty.
+ *
+ * @param key Pointer to the raw private key data.
+ * @param keylen Length of the private key data in bytes.
+ */
 RSAPrivateWrapper::RSAPrivateWrapper(const char* key, size_t keylen) {
     if (!key || keylen == 0) {
         throw std::invalid_argument("Invalid key data");
@@ -239,6 +308,15 @@ RSAPrivateWrapper::RSAPrivateWrapper(const char* key, size_t keylen) {
     std::cout << "[DEBUG] RSAPrivateWrapper loaded from buffer" << std::endl;
 }
 
+/**
+ * @brief Constructs an RSAPrivateWrapper by loading a private key from a binary file.
+ *
+ * @param filename Path to the file containing the private key data.
+ *
+ * @throws std::runtime_error If the file cannot be opened or is empty.
+ *
+ * The loaded private key is stored internally. A dummy public key of fixed size is also initialized.
+ */
 RSAPrivateWrapper::RSAPrivateWrapper(const std::string& filename) {
     std::ifstream file(filename, std::ios::binary);
     if (!file.is_open()) {
@@ -262,6 +340,11 @@ RSAPrivateWrapper::RSAPrivateWrapper(const std::string& filename) {
     std::cout << "[DEBUG] RSAPrivateWrapper loaded from file: " << filename << std::endl;
 }
 
+/**
+ * @brief Releases cryptographic resources held by the RSAPrivateWrapper.
+ *
+ * Destroys the cryptographic key and releases the cryptographic provider context if they were initialized.
+ */
 RSAPrivateWrapper::~RSAPrivateWrapper() {
     if (hKey) {
         CryptDestroyKey(hKey);
@@ -271,6 +354,16 @@ RSAPrivateWrapper::~RSAPrivateWrapper() {
     }
 }
 
+/**
+ * @brief Decrypts ciphertext using the stored RSA private key or a deterministic fallback.
+ *
+ * Attempts to decrypt the input ciphertext using the internally stored DER-encoded RSA private key with Crypto++. If the key is invalid or decryption fails, falls back to a reversible enhanced XOR-based decryption using a key derived from the stored public key data. Throws if the input is empty or if decryption fails unexpectedly.
+ *
+ * @param cipher The ciphertext to decrypt.
+ * @return The decrypted plaintext string.
+ * @throws std::invalid_argument if the input is empty.
+ * @throws std::runtime_error if decryption fails unexpectedly.
+ */
 std::string RSAPrivateWrapper::decrypt(const std::string& cipher) {
     if (cipher.empty()) {
         throw std::invalid_argument("Cannot decrypt empty data");
@@ -327,6 +420,17 @@ std::string RSAPrivateWrapper::decrypt(const std::string& cipher) {
     }
 }
 
+/**
+ * @brief Decrypts ciphertext provided as a raw buffer.
+ *
+ * Converts the input buffer to a string and decrypts it using the stored private key, supporting both RSA and fallback XOR decryption.
+ *
+ * @param cipher Pointer to the ciphertext buffer.
+ * @param length Length of the ciphertext buffer.
+ * @return std::string The decrypted plaintext.
+ *
+ * @throws std::invalid_argument If the input buffer is null or empty.
+ */
 std::string RSAPrivateWrapper::decrypt(const char* cipher, size_t length) {
     if (!cipher || length == 0) {
         throw std::invalid_argument("Cannot decrypt empty data");
@@ -335,6 +439,17 @@ std::string RSAPrivateWrapper::decrypt(const char* cipher, size_t length) {
     return decrypt(std::string(cipher, length));
 }
 
+/**
+ * @brief Copies the stored private key data to the provided output buffer.
+ *
+ * @param keyout Pointer to the output buffer where the private key will be copied.
+ * @param keylen Size of the output buffer in bytes.
+ *
+ * @throws std::invalid_argument If the output buffer is null or the buffer size is zero.
+ * @throws std::runtime_error If the output buffer is smaller than the private key data.
+ *
+ * Copies the entire private key data to the buffer and null-terminates it if there is extra space.
+ */
 void RSAPrivateWrapper::getPrivateKey(char* keyout, size_t keylen) {
     if (!keyout || keylen == 0) {
         throw std::invalid_argument("Invalid output buffer");
@@ -350,11 +465,30 @@ void RSAPrivateWrapper::getPrivateKey(char* keyout, size_t keylen) {
     }
 }
 
+/**
+ * @brief Returns the stored private key data as a string.
+ *
+ * The returned string contains the raw private key bytes as stored internally.
+ * This method does not perform any encoding or transformation of the key data.
+ *
+ * @return std::string The private key data.
+ */
 std::string RSAPrivateWrapper::getPrivateKey() {
     std::cout << "[DEBUG] getPrivateKey() called - returning consistent private key data" << std::endl;
     return std::string(privateKeyData.begin(), privateKeyData.end());
 }
 
+/**
+ * @brief Copies the stored public key data to the provided output buffer.
+ *
+ * @param keyout Pointer to the output buffer where the public key will be copied.
+ * @param keylen Size of the output buffer in bytes.
+ *
+ * @throws std::invalid_argument If the output buffer is null or the size is zero.
+ * @throws std::runtime_error If the output buffer is too small to hold the public key data.
+ *
+ * Copies the internal public key data to the specified buffer and null-terminates it if space allows.
+ */
 void RSAPrivateWrapper::getPublicKey(char* keyout, size_t keylen) {
     if (!keyout || keylen == 0) {
         throw std::invalid_argument("Invalid output buffer");
@@ -370,6 +504,14 @@ void RSAPrivateWrapper::getPublicKey(char* keyout, size_t keylen) {
     }
 }
 
+/**
+ * @brief Returns the stored public key data as a string.
+ *
+ * The returned string contains the raw bytes of the internally stored public key.
+ * This data is consistent with the key used for encryption and decryption operations.
+ *
+ * @return std::string The public key data.
+ */
 std::string RSAPrivateWrapper::getPublicKey() {
     std::cout << "[DEBUG] getPublicKey() called - returning consistent public key data" << std::endl;
     return std::string(publicKeyData.begin(), publicKeyData.end());

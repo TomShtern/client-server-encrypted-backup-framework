@@ -9,6 +9,17 @@
 
 using namespace CryptoPP;
 
+/**
+ * @brief Constructs an AESWrapper instance with the specified key and IV configuration.
+ *
+ * Initializes the AES key from the provided buffer and sets the initialization vector (IV) to either a static zero vector or a randomly generated value, depending on the `useStaticZeroIV` flag.
+ *
+ * @param key Pointer to the AES key buffer. Must be non-null and of length `DEFAULT_KEYLENGTH`.
+ * @param keyLength Length of the key buffer in bytes. Must equal `DEFAULT_KEYLENGTH`.
+ * @param useStaticZeroIV If true, the IV is set to all zeros; otherwise, a random IV is generated.
+ *
+ * @throws std::invalid_argument if the key is null or the key length is invalid.
+ */
 AESWrapper::AESWrapper(const unsigned char* key, size_t keyLength, bool useStaticZeroIV) {
     if (!key || keyLength != AESWrapper::DEFAULT_KEYLENGTH) {
         throw std::invalid_argument("Invalid key or key length");
@@ -26,16 +37,39 @@ AESWrapper::AESWrapper(const unsigned char* key, size_t keyLength, bool useStati
     }
 }
 
+/**
+ * @brief Securely clears sensitive key and IV data from memory upon destruction.
+ *
+ * Overwrites the internal key and IV vectors with zeros to prevent sensitive information from remaining in memory after the object is destroyed.
+ */
 AESWrapper::~AESWrapper() {
     // Clear sensitive data
     std::fill(keyData.begin(), keyData.end(), 0);
     std::fill(iv.begin(), iv.end(), 0);
 }
 
+/**
+ * @brief Returns a pointer to the internal AES key data.
+ *
+ * @return Pointer to the key data if available, or nullptr if the key is not set.
+ */
 const unsigned char* AESWrapper::getKey() const {
     return keyData.empty() ? nullptr : keyData.data();
 }
 
+/**
+ * @brief Encrypts plaintext using AES in CBC mode and prepends the IV to the ciphertext.
+ *
+ * Encrypts the provided plaintext buffer using the internally stored AES key and IV.
+ * The output consists of the IV followed by the ciphertext, both as a single string.
+ *
+ * @param plain Pointer to the plaintext buffer.
+ * @param length Length of the plaintext buffer in bytes.
+ * @return std::string The IV concatenated with the ciphertext.
+ *
+ * @throws std::invalid_argument If the input buffer is null or length is zero.
+ * @throws std::runtime_error If encryption fails due to a cryptographic error.
+ */
 std::string AESWrapper::encrypt(const char* plain, size_t length) {
     if (!plain || length == 0) {
         throw std::invalid_argument("Invalid input data");
@@ -65,6 +99,18 @@ std::string AESWrapper::encrypt(const char* plain, size_t length) {
     }
 }
 
+/**
+ * @brief Decrypts AES-encrypted data using CBC mode.
+ *
+ * Extracts the initialization vector (IV) from the beginning of the input buffer, then decrypts the remaining ciphertext using the stored AES key and the extracted IV.
+ *
+ * @param cipher Pointer to the buffer containing the IV followed by the ciphertext.
+ * @param length Length of the buffer in bytes; must be at least one AES block size.
+ * @return Decrypted plaintext as a string.
+ *
+ * @throws std::invalid_argument If the input buffer is null or too short.
+ * @throws std::runtime_error If decryption fails due to a cryptographic error.
+ */
 std::string AESWrapper::decrypt(const char* cipher, size_t length) {
     if (!cipher || length < AES::BLOCKSIZE) {
         throw std::invalid_argument("Invalid cipher data or length too short");
@@ -95,6 +141,16 @@ std::string AESWrapper::decrypt(const char* cipher, size_t length) {
     }
 }
 
+/**
+ * @brief Fills the provided buffer with a randomly generated AES key.
+ *
+ * Generates a cryptographically secure random key of length `DEFAULT_KEYLENGTH` and writes it to the specified buffer.
+ *
+ * @param buffer Pointer to the buffer where the generated key will be stored. Must not be null.
+ * @param length Length of the buffer. Must be equal to `DEFAULT_KEYLENGTH`.
+ *
+ * @throws std::invalid_argument If the buffer is null or the length does not match `DEFAULT_KEYLENGTH`.
+ */
 void AESWrapper::generateKey(unsigned char* buffer, size_t length) {
     if (!buffer || length != AESWrapper::DEFAULT_KEYLENGTH) {
         throw std::invalid_argument("Invalid buffer or length");

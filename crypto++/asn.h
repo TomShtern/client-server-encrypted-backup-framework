@@ -22,6 +22,210 @@
 # pragma GCC diagnostic ignored "-Wsign-conversion"
 #endif
 
+/**
+ * @brief Exception thrown when an unknown object identifier is encountered during BER decoding.
+ *
+ * The UnknownOID exception is derived from BERDecodeErr and is used to signal that a BER-decoded object identifier does not match any known or expected OID.
+ */
+
+/**
+ * @brief ASN.1 type tags for common data types.
+ *
+ * Enumerates standard ASN.1 tags such as BOOLEAN, INTEGER, BIT_STRING, OCTET_STRING, NULL, OBJECT_IDENTIFIER, SEQUENCE, SET, and various string types. These tags are used to identify the type of ASN.1 encoded data.
+ */
+
+/**
+ * @brief ASN.1 identifier flags for class and encoding type.
+ *
+ * Enumerates ASN.1 class and encoding flags, including UNIVERSAL, PRIMITIVE, CONSTRUCTED, APPLICATION, CONTEXT_SPECIFIC, and PRIVATE. These flags are used to specify the class and structure of ASN.1 objects.
+ */
+
+/**
+ * @brief Throws a BERDecodeErr exception to indicate a BER decoding error.
+ */
+
+/**
+ * @brief DER encodes a length value to a BufferedTransformation.
+ *
+ * @param bt Output stream for encoded data.
+ * @param length Length value to encode.
+ * @return Number of octets used for the encoding.
+ */
+
+/**
+ * @brief BER decodes a length value from a BufferedTransformation.
+ *
+ * @param bt Input stream for encoded data.
+ * @param length Decoded length value.
+ * @return True if the value was decoded; false if indefinite length encoding is used.
+ * @throws BERDecodeErr if the value fails to decode or is too large for size_t.
+ */
+
+/**
+ * @brief DER encodes an ASN.1 NULL value to a BufferedTransformation.
+ *
+ * @param bt Output stream for encoded data.
+ */
+
+/**
+ * @brief BER decodes an ASN.1 NULL value from a BufferedTransformation.
+ *
+ * @param bt Input stream for encoded data.
+ */
+
+/**
+ * @brief DER encodes an octet string to a BufferedTransformation.
+ *
+ * @param bt Output stream for encoded data.
+ * @param str Pointer to the octet string.
+ * @param strLen Length of the octet string.
+ * @return Number of octets used for the encoding.
+ */
+
+/**
+ * @brief DER encodes an octet string to a BufferedTransformation.
+ *
+ * @param bt Output stream for encoded data.
+ * @param str Octet string to encode.
+ * @return Number of octets used for the encoding.
+ */
+
+/**
+ * @brief BER decodes an octet string from a BufferedTransformation into a SecByteBlock.
+ *
+ * @param bt Input stream for encoded data.
+ * @param str Output SecByteBlock for decoded string.
+ * @return Number of octets used for the encoding.
+ */
+
+/**
+ * @brief BER decodes an octet string from a BufferedTransformation into another BufferedTransformation.
+ *
+ * @param bt Input stream for encoded data.
+ * @param str Output stream for decoded string.
+ * @return Number of octets used for the encoding.
+ */
+
+/**
+ * @brief DER encodes a text string to a BufferedTransformation with a specified ASN.1 tag.
+ *
+ * Can be used for UTF8_STRING, PRINTABLE_STRING, and IA5_STRING.
+ *
+ * @param bt Output stream for encoded data.
+ * @param str Pointer to the string data.
+ * @param strLen Length of the string in bytes.
+ * @param asnTag ASN.1 tag identifying the string type.
+ * @return Number of octets used for the encoding.
+ */
+
+/**
+ * @brief DER encodes a text string to a BufferedTransformation with a specified ASN.1 tag.
+ *
+ * Can be used for UTF8_STRING, PRINTABLE_STRING, and IA5_STRING.
+ *
+ * @param bt Output stream for encoded data.
+ * @param str String to encode.
+ * @param asnTag ASN.1 tag identifying the string type.
+ * @return Number of octets used for the encoding.
+ */
+
+/**
+ * @brief DER encodes a text string to a BufferedTransformation with a specified ASN.1 tag.
+ *
+ * Can be used for UTF8_STRING, PRINTABLE_STRING, and IA5_STRING.
+ *
+ * @param bt Output stream for encoded data.
+ * @param str String to encode.
+ * @param asnTag ASN.1 tag identifying the string type.
+ * @return Number of octets used for the encoding.
+ */
+
+/**
+ * @brief BER decodes a text string from a BufferedTransformation into a SecByteBlock.
+ *
+ * Can be used for UTF8_STRING, PRINTABLE_STRING, and IA5_STRING.
+ *
+ * @param bt Input stream for encoded data.
+ * @param str Output SecByteBlock for decoded string.
+ * @param asnTag ASN.1 tag identifying the string type.
+ * @return Number of octets used for the encoding.
+ */
+
+/**
+ * @brief BER decodes a text string from a BufferedTransformation into a std::string.
+ *
+ * Can be used for UTF8_STRING, PRINTABLE_STRING, and IA5_STRING.
+ *
+ * @param bt Input stream for encoded data.
+ * @param str Output string for decoded data.
+ * @param asnTag ASN.1 tag identifying the string type.
+ * @return Number of octets used for the encoding.
+ */
+
+/**
+ * @brief DER encodes a date string to a BufferedTransformation with a specified ASN.1 tag.
+ *
+ * Can be used for UTC_TIME and GENERALIZED_TIME.
+ *
+ * @param bt Output stream for encoded data.
+ * @param str Date string to encode.
+ * @param asnTag ASN.1 tag identifying the date type.
+ * @return Number of octets used for the encoding.
+ */
+
+/**
+ * @brief BER decodes a date string from a BufferedTransformation with a specified ASN.1 tag.
+ *
+ * Can be used for UTC_TIME and GENERALIZED_TIME.
+ *
+ * @param bt Input stream for encoded data.
+ * @param str Output SecByteBlock for decoded date.
+ * @param asnTag ASN.1 tag identifying the date type.
+ * @return Number of octets used for the encoding.
+ */
+
+/**
+ * @brief DER encodes a bit string to a BufferedTransformation.
+ *
+ * The caller is responsible for shifting octets if unusedBits is not 0.
+ *
+ * @param bt Output stream for encoded data.
+ * @param str Pointer to the bit string.
+ * @param strLen Length of the bit string.
+ * @param unusedBits Number of unused bits in the last octet.
+ * @return Number of octets used for the encoding.
+ */
+
+/**
+ * @brief BER decodes a bit string from a BufferedTransformation.
+ *
+ * The caller is responsible for shifting octets if unusedBits is not 0.
+ *
+ * @param bt Input stream for encoded data.
+ * @param str Output SecByteBlock for decoded bit string.
+ * @param unusedBits Number of unused bits in the last octet.
+ * @return Number of octets used for the encoding.
+ */
+
+/**
+ * @brief BER decodes data and DER re-encodes it to another BufferedTransformation.
+ *
+ * @param bt Input stream for BER encoded data.
+ * @param dest Output stream for DER encoded data.
+ */
+
+/**
+ * @brief Peeks the length of an ASN.1 value in a BufferedTransformation without consuming bytes.
+ *
+ * @param bt Input stream for encoded data.
+ * @return Length of the ASN.1 value in bytes, or 0 if indefinite length encoding is used or an error occurs.
+ */
+
+/**
+ * @brief Represents an ASN.1 Object Identifier (OID).
+ *
+ * Provides methods for constructing, encoding, decoding, appending values, checking if empty, retrieving values, and printing in dot notation. Supports comparison and stream output operators.
+ */
 NAMESPACE_BEGIN(CryptoPP)
 
 /// \brief ASN.1 types
@@ -342,14 +546,26 @@ private:
 	static size_t DecodeValue(BufferedTransformation &bt, word32 &v);
 };
 
-/// \brief ASN.1 encoded object filter
+/**
+ * @brief Processes ASN.1 encoded objects from input bytes and manages object boundaries.
+ *
+ * EncodedObjectFilter parses ASN.1 encoded data, tracking the completion and positions of multiple objects within the input stream. It supports configurable flags to control object output and message signaling behavior.
+ *
+ * @param inString Pointer to the input byte buffer.
+ * @param length Number of bytes to process from the buffer.
+ */
 class EncodedObjectFilter : public Filter
 {
 public:
 	enum Flag {PUT_OBJECTS=1, PUT_MESSANGE_END_AFTER_EACH_OBJECT=2, PUT_MESSANGE_END_AFTER_ALL_OBJECTS=4, PUT_MESSANGE_SERIES_END_AFTER_ALL_OBJECTS=8};
 	enum State {IDENTIFIER, LENGTH, BODY, TAIL, ALL_DONE} m_state;
 
-	virtual ~EncodedObjectFilter() {}
+	/**
+ * @brief Destroys the EncodedObjectFilter instance.
+ *
+ * Cleans up resources used by the filter. Called automatically when the object is deleted.
+ */
+virtual ~EncodedObjectFilter() {}
 
 	/// \brief Construct an EncodedObjectFilter
 	/// \param attachment a BufferedTrasformation to attach to this object
@@ -362,8 +578,19 @@ public:
 	/// \param length the size of the string, in bytes
 	void Put(const byte *inString, size_t length);
 
-	unsigned int GetNumberOfCompletedObjects() const {return m_nCurrentObject;}
-	unsigned long GetPositionOfObject(unsigned int i) const {return m_positions[i];}
+	/**
+ * @brief Returns the number of ASN.1 objects that have been fully processed.
+ *
+ * @return The count of completed ASN.1 objects.
+ */
+unsigned int GetNumberOfCompletedObjects() const {return m_nCurrentObject;}
+	/**
+ * @brief Returns the byte position of the specified ASN.1 object.
+ *
+ * @param i Index of the ASN.1 object.
+ * @return The byte position of the i-th ASN.1 object within the input stream.
+ */
+unsigned long GetPositionOfObject(unsigned int i) const {return m_positions[i];}
 
 private:
 	BufferedTransformation & CurrentTarget();
@@ -400,7 +627,11 @@ public:
 	explicit BERGeneralDecoder(BERGeneralDecoder &inQueue, byte asnTag);
 
 	/// \brief Determine length encoding
-	/// \return true if the ASN.1 object is definite length encoded, false otherwise
+	/**
+	 * @brief Indicates whether the ASN.1 object uses definite length encoding.
+	 *
+	 * @return true if the object is definite length encoded; false if it uses indefinite length encoding.
+	 */
 	bool IsDefiniteLength() const {
 		return m_definiteLength;
 	}
@@ -408,7 +639,11 @@ public:
 	/// \brief Determine remaining length
 	/// \return number of octets that remain to be consumed
 	/// \details RemainingLength() is only valid if IsDefiniteLength()
-	///  returns true.
+	/**
+	 * @brief Returns the remaining length of the ASN.1 object if definite length encoding is used.
+	 *
+	 * @return The number of bytes remaining, or 0 if the length is indefinite.
+	 */
 	lword RemainingLength() const {
 		CRYPTOPP_ASSERT(m_definiteLength);
 		return IsDefiniteLength() ? m_length : 0;
@@ -481,7 +716,12 @@ protected:
 
 private:
 	void Init(byte asnTag);
-	void StoreInitialize(const NameValuePairs &parameters)
+	/**
+		 * @brief Initializes the store with the given parameters.
+		 *
+		 * This implementation is a stub and will always trigger an assertion failure.
+		 */
+		void StoreInitialize(const NameValuePairs &parameters)
 		{CRYPTOPP_UNUSED(parameters); CRYPTOPP_ASSERT(false);}
 	lword ReduceLength(lword delta);
 };
@@ -529,25 +769,43 @@ public:
 
 	/// \brief Construct an ASN.1 decoder
 	/// \param inQueue input byte queue
-	/// \details BERSequenceDecoder uses DefaultTag
+	/**
+		 * @brief Initializes a BER decoder for ASN.1 SEQUENCE objects.
+		 *
+		 * Constructs a BERSequenceDecoder that reads from the specified input queue and expects the ASN.1 SEQUENCE tag.
+		 */
 	explicit BERSequenceDecoder(BufferedTransformation &inQueue)
 		: BERGeneralDecoder(inQueue, DefaultTag) {}
 
 	/// \brief Construct an ASN.1 decoder
 	/// \param inQueue input byte queue
-	/// \param asnTag ASN.1 tag
+	/**
+		 * @brief Initializes a BER decoder for an ASN.1 SEQUENCE with a specified tag.
+		 *
+		 * Constructs a BERSequenceDecoder to decode ASN.1 SEQUENCE objects from the given input queue, using the provided ASN.1 tag.
+		 *
+		 * @param asnTag The ASN.1 tag identifying the SEQUENCE type to decode.
+		 */
 	explicit BERSequenceDecoder(BufferedTransformation &inQueue, byte asnTag)
 		: BERGeneralDecoder(inQueue, asnTag) {}
 
 	/// \brief Construct an ASN.1 decoder
 	/// \param inQueue input byte queue
-	/// \details BERSequenceDecoder uses DefaultTag
+	/**
+		 * @brief Constructs a BERSequenceDecoder with the default SEQUENCE tag.
+		 *
+		 * Initializes the decoder to process ASN.1 SEQUENCE objects using BER encoding from the provided input queue.
+		 */
 	explicit BERSequenceDecoder(BERSequenceDecoder &inQueue)
 		: BERGeneralDecoder(inQueue, DefaultTag) {}
 
 	/// \brief Construct an ASN.1 decoder
 	/// \param inQueue input byte queue
-	/// \param asnTag ASN.1 tag
+	/**
+		 * @brief Initializes a BERSequenceDecoder for decoding an ASN.1 SEQUENCE with a specific tag.
+		 *
+		 * @param asnTag The ASN.1 tag identifying the SEQUENCE type to decode.
+		 */
 	explicit BERSequenceDecoder(BERSequenceDecoder &inQueue, byte asnTag)
 		: BERGeneralDecoder(inQueue, asnTag) {}
 };
@@ -561,25 +819,43 @@ public:
 
 	/// \brief Construct an ASN.1 encoder
 	/// \param outQueue output byte queue
-	/// \details DERSequenceEncoder uses DefaultTag
+	/**
+		 * @brief Constructs a DER encoder for ASN.1 SEQUENCE objects using the default SEQUENCE tag.
+		 *
+		 * Initializes the encoder to write DER-encoded SEQUENCE data to the specified output queue.
+		 *
+		 * @param outQueue The output queue to which the DER-encoded SEQUENCE will be written.
+		 */
 	explicit DERSequenceEncoder(BufferedTransformation &outQueue)
 		: DERGeneralEncoder(outQueue, DefaultTag) {}
 
 	/// \brief Construct an ASN.1 encoder
 	/// \param outQueue output byte queue
-	/// \param asnTag ASN.1 tag
+	/**
+		 * @brief Initializes a DER encoder for an ASN.1 SEQUENCE with a specified tag.
+		 *
+		 * Constructs a DERSequenceEncoder that writes encoded SEQUENCE data to the given output queue using the provided ASN.1 tag.
+		 */
 	explicit DERSequenceEncoder(BufferedTransformation &outQueue, byte asnTag)
 		: DERGeneralEncoder(outQueue, asnTag) {}
 
 	/// \brief Construct an ASN.1 encoder
 	/// \param outQueue output byte queue
-	/// \details DERSequenceEncoder uses DefaultTag
+	/**
+		 * @brief Constructs a DER encoder for an ASN.1 SEQUENCE using the default SEQUENCE tag.
+		 *
+		 * Initializes a DERSequenceEncoder that writes encoded SEQUENCE data to the specified output queue.
+		 */
 	explicit DERSequenceEncoder(DERSequenceEncoder &outQueue)
 		: DERGeneralEncoder(outQueue, DefaultTag) {}
 
 	/// \brief Construct an ASN.1 encoder
 	/// \param outQueue output byte queue
-	/// \param asnTag ASN.1 tag
+	/**
+		 * @brief Constructs a DER encoder for an ASN.1 SEQUENCE with a specified tag.
+		 *
+		 * Initializes a DERSequenceEncoder that encodes ASN.1 SEQUENCE objects to the provided output queue using the given ASN.1 tag.
+		 */
 	explicit DERSequenceEncoder(DERSequenceEncoder &outQueue, byte asnTag)
 		: DERGeneralEncoder(outQueue, asnTag) {}
 };
@@ -593,25 +869,41 @@ public:
 
 	/// \brief Construct an ASN.1 decoder
 	/// \param inQueue input byte queue
-	/// \details BERSetDecoder uses DefaultTag
+	/**
+		 * @brief Initializes a BER decoder for ASN.1 SET objects.
+		 *
+		 * Constructs a BERSetDecoder to decode ASN.1 SET structures from the provided input queue using the default SET tag.
+		 */
 	explicit BERSetDecoder(BufferedTransformation &inQueue)
 		: BERGeneralDecoder(inQueue, DefaultTag) {}
 
 	/// \brief Construct an ASN.1 decoder
 	/// \param inQueue input byte queue
-	/// \param asnTag ASN.1 tag
+	/**
+		 * @brief Initializes a BER decoder for an ASN.1 SET with a specified tag.
+		 *
+		 * Constructs a BERSetDecoder to decode ASN.1 SET objects from the given input queue, using the provided ASN.1 tag.
+		 */
 	explicit BERSetDecoder(BufferedTransformation &inQueue, byte asnTag)
 		: BERGeneralDecoder(inQueue, asnTag) {}
 
 	/// \brief Construct an ASN.1 decoder
 	/// \param inQueue input byte queue
-	/// \details BERSetDecoder uses DefaultTag
+	/**
+		 * @brief Constructs a BERSetDecoder for decoding ASN.1 SET objects.
+		 *
+		 * Initializes the decoder with the provided input queue and sets the ASN.1 tag to SET.
+		 */
 	explicit BERSetDecoder(BERSetDecoder &inQueue)
 		: BERGeneralDecoder(inQueue, DefaultTag) {}
 
 	/// \brief Construct an ASN.1 decoder
 	/// \param inQueue input byte queue
-	/// \param asnTag ASN.1 tag
+	/**
+		 * @brief Constructs a BERSetDecoder for decoding ASN.1 SET objects with a specified tag.
+		 *
+		 * @param asnTag The ASN.1 tag identifying the SET type to decode.
+		 */
 	explicit BERSetDecoder(BERSetDecoder &inQueue, byte asnTag)
 		: BERGeneralDecoder(inQueue, asnTag) {}
 };
@@ -625,25 +917,41 @@ public:
 
 	/// \brief Construct an ASN.1 encoder
 	/// \param outQueue output byte queue
-	/// \details DERSetEncoder uses DefaultTag
+	/**
+		 * @brief Constructs a DER encoder for ASN.1 SET objects.
+		 *
+		 * Initializes a DERSetEncoder to encode ASN.1 SET structures using the default SET tag.
+		 */
 	explicit DERSetEncoder(BufferedTransformation &outQueue)
 		: DERGeneralEncoder(outQueue, DefaultTag) {}
 
 	/// \brief Construct an ASN.1 encoder
 	/// \param outQueue output byte queue
-	/// \param asnTag ASN.1 tag
+	/**
+		 * @brief Constructs a DER encoder for an ASN.1 SET with a specified tag.
+		 *
+		 * @param asnTag The ASN.1 tag to use for the SET.
+		 */
 	explicit DERSetEncoder(BufferedTransformation &outQueue, byte asnTag)
 		: DERGeneralEncoder(outQueue, asnTag) {}
 
 	/// \brief Construct an ASN.1 encoder
 	/// \param outQueue output byte queue
-	/// \details DERSetEncoder uses DefaultTag
+	/**
+		 * @brief Initializes a DER encoder for ASN.1 SET objects using the default SET tag.
+		 *
+		 * Constructs a DERSetEncoder that encodes ASN.1 SET structures, writing output to the specified queue.
+		 */
 	explicit DERSetEncoder(DERSetEncoder &outQueue)
 		: DERGeneralEncoder(outQueue, DefaultTag) {}
 
 	/// \brief Construct an ASN.1 encoder
 	/// \param outQueue output byte queue
-	/// \param asnTag ASN.1 tag
+	/**
+		 * @brief Constructs a DER encoder for an ASN.1 SET with a specified tag.
+		 *
+		 * Initializes a DERSetEncoder to encode ASN.1 SET objects using the given tag.
+		 */
 	explicit DERSetEncoder(DERSetEncoder &outQueue, byte asnTag)
 		: DERGeneralEncoder(outQueue, asnTag) {}
 };
@@ -667,7 +975,11 @@ public:
 	}
 
 	/// \brief DER encode optional data
-	/// \param out BufferedTransformation object
+	/**
+	 * @brief DER encodes the contained object if present.
+	 *
+	 * If the optional object is set, its DER encoding is written to the provided output transformation.
+	 */
 	void DEREncode(BufferedTransformation &out)
 	{
 		if (this->get() != NULLPTR)
@@ -692,7 +1004,11 @@ public:
 		{BEREncode(bt);}
 
 	/// \brief BER decode ASN.1 object
-	/// \param bt BufferedTransformation object
+	/**
+		 * @brief Loads and BER-decodes ASN.1 data from a buffered transformation.
+		 *
+		 * Reads ASN.1-encoded data from the provided buffered transformation and decodes it into the current object using BER rules.
+		 */
 	void Load(BufferedTransformation &bt)
 		{BERDecode(bt);}
 };

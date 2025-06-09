@@ -68,7 +68,15 @@ static const uint32_t crc_table[256] = {
     0xBCB4666D, 0xB8757BDA, 0xB5365D03, 0xB1F740B4
 };
 
-// Linux cksum compatible implementation
+/**
+ * @brief Computes the CRC32 checksum of a data buffer using the Linux cksum algorithm.
+ *
+ * Calculates the CRC32 checksum for the given data using the polynomial 0x04C11DB7, matching the behavior of the Linux `cksum` utility. The checksum incorporates both the data bytes and the length of the data.
+ *
+ * @param data Pointer to the input data buffer.
+ * @param size Number of bytes in the data buffer.
+ * @return uint32_t The computed CRC32 checksum.
+ */
 uint32_t calculateCRC(const uint8_t* data, size_t size) {
     uint32_t crc = 0x00000000;
     
@@ -88,7 +96,15 @@ uint32_t calculateCRC(const uint8_t* data, size_t size) {
     return ~crc;
 }
 
-// Alias for compatibility
+/**
+ * @brief Computes the CRC32 checksum of a data buffer using the 0x04C11DB7 polynomial.
+ *
+ * This function is an alias for calculateCRC and is provided for compatibility with common CRC32 naming conventions.
+ *
+ * @param data Pointer to the input data buffer.
+ * @param size Number of bytes in the data buffer.
+ * @return uint32_t The computed CRC32 checksum.
+ */
 uint32_t calculateCRC32(const uint8_t* data, size_t size) {
     return calculateCRC(data, size);
 }

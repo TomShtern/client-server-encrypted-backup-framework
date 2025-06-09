@@ -47,6 +47,11 @@ const int s_urlArray[256] = {
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1
 };
 
+/**
+ * @brief Initializes the Base64 encoder with specified parameters.
+ *
+ * Configures the encoder to use the standard Base64 alphabet, optional line breaks, and padding. Line breaks and maximum line length can be controlled via parameters.
+ */
 ANONYMOUS_NAMESPACE_END
 
 void Base64Encoder::IsolatedInitialize(const NameValuePairs &parameters)
@@ -66,6 +71,11 @@ void Base64Encoder::IsolatedInitialize(const NameValuePairs &parameters)
 			(Name::Log2Base(), 6, true)));
 }
 
+/**
+ * @brief Initializes the Base64URLEncoder with URL-safe encoding parameters.
+ *
+ * Configures the encoder to use the URL-safe Base64 alphabet, optional line breaks, and padding. Line break insertion and maximum line length can be customized via parameters.
+ */
 void Base64URLEncoder::IsolatedInitialize(const NameValuePairs &parameters)
 {
 	bool insertLineBreaks = parameters.GetValueWithDefault(Name::InsertLineBreaks(), true);
@@ -83,6 +93,11 @@ void Base64URLEncoder::IsolatedInitialize(const NameValuePairs &parameters)
 			(Name::Log2Base(), 6, true)));
 }
 
+/**
+ * @brief Initializes the Base64 decoder with the standard Base64 decoding parameters.
+ *
+ * Configures the decoder to use the standard Base64 decoding lookup array and a log base of 6 bits. Additional parameters can be provided to customize decoding behavior.
+ */
 void Base64Decoder::IsolatedInitialize(const NameValuePairs &parameters)
 {
 	BaseN_Decoder::IsolatedInitialize(CombinedNameValuePairs(
@@ -90,11 +105,21 @@ void Base64Decoder::IsolatedInitialize(const NameValuePairs &parameters)
 		MakeParameters(Name::DecodingLookupArray(), GetDecodingLookupArray(), false)(Name::Log2Base(), 6, true)));
 }
 
+/**
+ * @brief Returns the decoding lookup array for standard Base64.
+ *
+ * @return Pointer to the array mapping ASCII values to Base64 indices for standard Base64 decoding.
+ */
 const int *Base64Decoder::GetDecodingLookupArray()
 {
 	return s_stdArray;
 }
 
+/**
+ * @brief Initializes the Base64URLDecoder with decoding parameters.
+ *
+ * Configures the decoder to use the URL-safe Base64 decoding lookup array and sets the log base to 6 bits. Additional parameters can be provided to customize the decoding process.
+ */
 void Base64URLDecoder::IsolatedInitialize(const NameValuePairs &parameters)
 {
 	BaseN_Decoder::IsolatedInitialize(CombinedNameValuePairs(
@@ -102,7 +127,11 @@ void Base64URLDecoder::IsolatedInitialize(const NameValuePairs &parameters)
 		MakeParameters(Name::DecodingLookupArray(), GetDecodingLookupArray(), false)(Name::Log2Base(), 6, true)));
 }
 
-// Unrolled initialization, http://github.com/weidai11/cryptopp/issues/376
+/**
+ * @brief Returns the decoding lookup array for URL-safe Base64.
+ *
+ * @return Pointer to the array mapping ASCII values to Base64 indices for URL-safe decoding.
+ */
 const int *Base64URLDecoder::GetDecodingLookupArray()
 {
 	return s_urlArray;

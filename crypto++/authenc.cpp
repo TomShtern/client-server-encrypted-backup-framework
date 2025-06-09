@@ -8,6 +8,14 @@
 
 NAMESPACE_BEGIN(CryptoPP)
 
+/**
+ * @brief Authenticates input data in fixed-size blocks, buffering incomplete blocks.
+ *
+ * Processes the input data in blocks of the cipher's authentication block size, authenticating each full block. Any remaining partial block data is buffered for future calls. Handles leftover buffered data from previous calls to ensure all data is authenticated in block-aligned segments.
+ *
+ * @param input Pointer to the data to authenticate.
+ * @param len Length of the input data in bytes.
+ */
 void AuthenticatedSymmetricCipherBase::AuthenticateData(const byte *input, size_t len)
 {
 	// UBsan finding with -std=c++03 using memcpy
@@ -50,6 +58,11 @@ void AuthenticatedSymmetricCipherBase::AuthenticateData(const byte *input, size_
 	num = (unsigned int)len;
 }
 
+/**
+ * @brief Sets the encryption key and initializes the cipher state.
+ *
+ * Initializes the cipher with the provided key and parameters, resets internal state and buffered data, and optionally resynchronizes with an IV if supplied in the parameters.
+ */
 void AuthenticatedSymmetricCipherBase::SetKey(const byte *userKey, size_t keylength, const NameValuePairs &params)
 {
 	m_bufferedDataLength = 0;
@@ -64,6 +77,16 @@ void AuthenticatedSymmetricCipherBase::SetKey(const byte *userKey, size_t keylen
 		Resynchronize(iv, (int)length);
 }
 
+/**
+ * @brief Reinitializes the cipher with a new initialization vector (IV).
+ *
+ * Resets internal state and counters, then calls Resync with the provided IV after validating its length. Throws an exception if called before the key is set.
+ *
+ * @param iv Pointer to the initialization vector.
+ * @param length Length of the initialization vector in bytes.
+ *
+ * @throws BadState if the key has not been set prior to calling this method.
+ */
 void AuthenticatedSymmetricCipherBase::Resynchronize(const byte *iv, int length)
 {
 	if (m_state < State_KeySet)
@@ -77,6 +100,16 @@ void AuthenticatedSymmetricCipherBase::Resynchronize(const byte *iv, int length)
 	m_state = State_IVSet;
 }
 
+/**
+ * @brief Processes additional authenticated data (AAD) or footer data based on the current cipher state.
+ *
+ * Accepts input data for authentication as either header (AAD) or footer, depending on the internal state. Throws an exception if called before both key and IV are set. Transitions to footer authentication if called after message processing has begun.
+ *
+ * @param input Pointer to the data to authenticate.
+ * @param length Number of bytes to authenticate.
+ *
+ * @throws BadState if called before key and IV are set.
+ */
 void AuthenticatedSymmetricCipherBase::Update(const byte *input, size_t length)
 {
 	// Part of original authenc.cpp code. Don't remove it.
@@ -106,6 +139,15 @@ void AuthenticatedSymmetricCipherBase::Update(const byte *input, size_t length)
 	}
 }
 
+/**
+ * @brief Processes input data for authenticated encryption or decryption.
+ *
+ * Depending on the current state, this function authenticates and transforms the input data as required by the cipher mode. It enforces message length limits and correct state transitions, authenticating data either before or after transformation based on whether authentication is performed on plaintext or ciphertext. Throws an exception if called in an invalid state or if the message length exceeds the allowed maximum.
+ *
+ * @param outString Buffer to receive the processed output data.
+ * @param inString Input data to be processed.
+ * @param length Number of bytes to process.
+ */
 void AuthenticatedSymmetricCipherBase::ProcessData(byte *outString, const byte *inString, size_t length)
 {
 	if (m_state >= State_IVSet && length > MaxMessageLength()-m_totalMessageLength)
@@ -138,6 +180,17 @@ reswitch:
 	}
 }
 
+/**
+ * @brief Finalizes authentication and produces a truncated MAC.
+ *
+ * Validates the requested MAC size and ensures header and footer lengths do not exceed their maximum allowed values. Depending on the current state, finalizes authentication of any remaining header, message, or footer data, and writes the truncated MAC to the provided buffer. Resets the internal state to allow for new operations.
+ *
+ * @param mac Pointer to the buffer where the truncated MAC will be written.
+ * @param macSize Number of bytes of the MAC to output.
+ *
+ * @throws InvalidArgument if the MAC size, header length, or footer length is invalid.
+ * @throws BadState if called before key and IV are set.
+ */
 void AuthenticatedSymmetricCipherBase::TruncatedFinal(byte *mac, size_t macSize)
 {
 	// https://github.com/weidai11/cryptopp/issues/954

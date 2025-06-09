@@ -8,6 +8,12 @@
 // *** ClientGUIHelpers implementations are OUTSIDE _WIN32 block ***
 // These are the stubs that should always be available for linking.
 namespace ClientGUIHelpers {
+    /**
+     * @brief Initializes the graphical user interface for the client application.
+     *
+     * On Windows, starts the GUI thread and creates necessary windows and tray icon. On other platforms, this function is a stub and returns true.
+     * @return true if the GUI was successfully initialized or not required; false if initialization failed on Windows.
+     */
     bool initializeGUI() { 
         #ifdef _WIN32
             // If on Windows, delegate to the actual GUI implementation
@@ -17,6 +23,11 @@ namespace ClientGUIHelpers {
             return true; // Or false, depending on desired default behavior
         #endif
     }
+    /**
+     * @brief Shuts down the GUI client and cleans up associated resources.
+     *
+     * On Windows, this signals the GUI thread to exit and removes GUI elements such as the tray icon and status window. On other platforms, this function does nothing.
+     */
     void shutdownGUI() {
         #ifdef _WIN32
             if(ClientGUI::getInstance()) ClientGUI::getInstance()->shutdown();
@@ -24,6 +35,13 @@ namespace ClientGUIHelpers {
             // Stub
         #endif
     }
+    /**
+     * @brief Updates the current phase displayed in the GUI.
+     *
+     * Sets the phase string shown in the status window and tray tooltip, if the GUI is available.
+     *
+     * @param phase The new phase description to display.
+     */
     void updatePhase(const std::string& phase) { // Added const std::string& for parameter names
         #ifdef _WIN32
             if(ClientGUI::getInstance()) ClientGUI::getInstance()->updatePhase(phase);
@@ -31,6 +49,11 @@ namespace ClientGUIHelpers {
             // Stub
         #endif
     }
+    /**
+     * @brief Updates the GUI with the current operation status.
+     *
+     * Reflects the specified operation, its success state, and additional details in the GUI status display.
+     */
     void updateOperation(const std::string& operation, bool success, const std::string& details) { // Added names
         #ifdef _WIN32
             if(ClientGUI::getInstance()) ClientGUI::getInstance()->updateOperation(operation, success, details);
@@ -38,6 +61,14 @@ namespace ClientGUIHelpers {
             // Stub
         #endif
     }
+    /**
+     * @brief Updates the GUI with the current progress, speed, and estimated time remaining.
+     *
+     * @param current The current progress value.
+     * @param total The total value representing completion.
+     * @param speed The current speed as a string (e.g., "5 MB/s").
+     * @param eta The estimated time remaining as a string (e.g., "2m 30s").
+     */
     void updateProgress(int current, int total, const std::string& speed, const std::string& eta) { // Added names
         #ifdef _WIN32
             if(ClientGUI::getInstance()) ClientGUI::getInstance()->updateProgress(current, total, speed, eta);
@@ -45,6 +76,11 @@ namespace ClientGUIHelpers {
             // Stub
         #endif
     }
+    /**
+     * @brief Updates the GUI to reflect the current connection status.
+     *
+     * @param connected True if the client is connected; false otherwise.
+     */
     void updateConnectionStatus(bool connected) { // Added name
         #ifdef _WIN32
             if(ClientGUI::getInstance()) ClientGUI::getInstance()->updateConnectionStatus(connected);
@@ -52,6 +88,13 @@ namespace ClientGUIHelpers {
             // Stub
         #endif
     }
+    /**
+     * @brief Updates the GUI to display the specified error message.
+     *
+     * On Windows, forwards the error message to the client GUI for display. On other platforms, this function has no effect.
+     *
+     * @param message The error message to display in the GUI.
+     */
     void updateError(const std::string& message) { // Added name
         #ifdef _WIN32
             if(ClientGUI::getInstance()) ClientGUI::getInstance()->updateError(message);
@@ -59,6 +102,14 @@ namespace ClientGUIHelpers {
             // Stub
         #endif
     }
+    /**
+     * @brief Displays a notification to the user with the specified title and message.
+     *
+     * On Windows, shows a system tray balloon notification. On other platforms, this function has no effect.
+     *
+     * @param title The notification title.
+     * @param message The notification message content.
+     */
     void showNotification(const std::string& title, const std::string& message) { // Added names
         #ifdef _WIN32
             if(ClientGUI::getInstance()) ClientGUI::getInstance()->showNotification(title, message);
@@ -82,7 +133,11 @@ static ClientGUI* g_clientGUI = nullptr;
 static const wchar_t* STATUS_WINDOW_CLASS = L"EncryptedBackupStatusWindow";
 static const wchar_t* TRAY_WINDOW_CLASS = L"EncryptedBackupTrayWindow";
 
-// Constructor
+/**
+ * @brief Constructs a ClientGUI instance and initializes GUI-related members.
+ *
+ * Initializes synchronization primitives, tray icon data, and default status values for the GUI client.
+ */
 ClientGUI::ClientGUI() 
     : statusWindow(nullptr)
     , hTrayWnd_(nullptr) 
@@ -100,13 +155,23 @@ ClientGUI::ClientGUI()
     currentStatus.totalProgress = 100;
 }
 
-// Destructor
+/**
+ * @brief Cleans up resources used by the ClientGUI instance.
+ *
+ * Shuts down the GUI and deletes the critical section used for status synchronization.
+ */
 ClientGUI::~ClientGUI() {
     shutdown();
     DeleteCriticalSection(&statusLock);
 }
 
-// Get singleton instance
+/**
+ * @brief Returns the singleton instance of the ClientGUI class.
+ *
+ * Creates the instance if it does not already exist.
+ *
+ * @return Pointer to the singleton ClientGUI instance.
+ */
 ClientGUI* ClientGUI::getInstance() {
     if (!g_clientGUI) {
         g_clientGUI = new ClientGUI();
@@ -114,6 +179,13 @@ ClientGUI* ClientGUI::getInstance() {
     return g_clientGUI;
 }
 
+/**
+ * @brief Initializes the GUI by registering window classes and starting the GUI thread.
+ *
+ * Registers the status and tray window classes, launches the GUI message loop in a separate thread, and waits for the GUI to become ready. Returns true if initialization succeeds, or false if any step fails.
+ *
+ * @return true if the GUI was successfully initialized; false otherwise.
+ */
 bool ClientGUI::initialize() {
     if (guiInitialized.load()) {
         return true; 
@@ -158,6 +230,11 @@ bool ClientGUI::initialize() {
     }
 }
 
+/**
+ * @brief Runs the GUI thread message loop for the client application.
+ *
+ * Initializes the hidden tray window, tray icon, and status window, then enters the Windows message loop to process GUI events until shutdown is requested. Cleans up resources and destroys windows on exit.
+ */
 void ClientGUI::guiMessageLoop() {
     try {
         hTrayWnd_ = CreateWindowExW(0, TRAY_WINDOW_CLASS, L"EncryptedBackupTrayHiddenWindow", 0, 0, 0, 0, 0, 
@@ -208,6 +285,13 @@ void ClientGUI::guiMessageLoop() {
     guiInitialized.store(false); 
 }
 
+/**
+ * @brief Initializes the system tray icon for the client application.
+ *
+ * Sets up the tray icon with default tooltip and notification information, and adds it to the Windows system tray.
+ *
+ * @return true if the tray icon was successfully added; false otherwise.
+ */
 bool ClientGUI::initializeTrayIcon() {
     if (!hTrayWnd_) return false; 
 
@@ -233,6 +317,13 @@ bool ClientGUI::initializeTrayIcon() {
     return Shell_NotifyIconW(NIM_ADD, &trayIcon) == TRUE;
 }
 
+/**
+ * @brief Creates and initializes the status window for displaying client status.
+ *
+ * The window is created as a topmost, tool window with a caption and system menu, centered on the screen, and initially hidden.
+ *
+ * @return true if the status window was successfully created; false otherwise.
+ */
 bool ClientGUI::createStatusWindow() {
     statusWindow = CreateWindowExW(
         WS_EX_TOPMOST | WS_EX_TOOLWINDOW, 
@@ -263,6 +354,17 @@ bool ClientGUI::createStatusWindow() {
     return statusWindow != nullptr;
 }
 
+/**
+ * @brief Window procedure for the status window, handling painting, close, and update messages.
+ *
+ * Processes window messages for the status window, including repainting the window, hiding it on close, and triggering updates when status changes. All other messages are passed to the default window procedure.
+ *
+ * @param hwnd Handle to the status window.
+ * @param msg Window message identifier.
+ * @param wParam Additional message information.
+ * @param lParam Additional message information.
+ * @return LRESULT Result of message processing.
+ */
 LRESULT CALLBACK ClientGUI::StatusWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     ClientGUI* gui = nullptr;
     
@@ -300,6 +402,17 @@ LRESULT CALLBACK ClientGUI::StatusWindowProc(HWND hwnd, UINT msg, WPARAM wParam,
     }
 }
 
+/**
+ * @brief Window procedure for the hidden tray window handling tray icon events and context menu commands.
+ *
+ * Processes custom tray icon messages, context menu selections, and standard window messages for the tray window. Handles right-click to show the context menu, double-click to toggle the status window, and menu commands to show/hide windows or exit the application.
+ *
+ * @param hwnd Handle to the tray window.
+ * @param msg Window message identifier.
+ * @param wParam Additional message information.
+ * @param lParam Additional message information.
+ * @return LRESULT Result of message processing, or result from DefWindowProc for unhandled messages.
+ */
 LRESULT CALLBACK ClientGUI::TrayWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     ClientGUI* gui = nullptr;
 
@@ -346,6 +459,13 @@ LRESULT CALLBACK ClientGUI::TrayWindowProc(HWND hwnd, UINT msg, WPARAM wParam, L
     }
 }
 
+/**
+ * @brief Displays the system tray context menu at the specified screen position.
+ *
+ * Shows a popup menu with options to show or hide the status window, toggle the console window, and exit the application. The menu is displayed at the given screen coordinates.
+ *
+ * @param pt The screen coordinates where the context menu should appear.
+ */
 void ClientGUI::showContextMenu(POINT pt) {
     if (!hTrayWnd_) return; 
 
@@ -368,6 +488,11 @@ void ClientGUI::showContextMenu(POINT pt) {
     DestroyMenu(menu); 
 }
 
+/**
+ * @brief Repaints the status window with the latest client status information.
+ *
+ * Displays connection status, phase, operation, progress (with percentage and progress bar), speed, ETA, and error messages in the status window. Colors and formatting are used to highlight connection and error states.
+ */
 void ClientGUI::updateStatusWindow() {
     if (!statusWindow || !IsWindowVisible(statusWindow)) return; 
     
@@ -453,6 +578,13 @@ void ClientGUI::updateStatusWindow() {
     ReleaseDC(statusWindow, hdc);
 }
 
+/**
+ * @brief Updates the current phase displayed in the GUI and tray icon tooltip.
+ *
+ * Sets the phase string in the status data, triggers a status window repaint if visible, and updates the tray icon tooltip to reflect the new phase.
+ *
+ * @param phase The new phase description to display.
+ */
 void ClientGUI::updatePhase(const std::string& phase) {
     EnterCriticalSection(&statusLock);
     currentStatus.phase = phase;
@@ -469,6 +601,11 @@ void ClientGUI::updatePhase(const std::string& phase) {
     }
 }
 
+/**
+ * @brief Updates the current operation status displayed in the GUI.
+ *
+ * Sets the operation name, success state, and details. If the operation failed and details are provided, the error message is updated accordingly; if successful, any previous error is cleared. Triggers a status window update if visible.
+ */
 void ClientGUI::updateOperation(const std::string& operation, bool success, const std::string& details) {
     EnterCriticalSection(&statusLock);
     currentStatus.operation = operation;
@@ -486,6 +623,16 @@ void ClientGUI::updateOperation(const std::string& operation, bool success, cons
     }
 }
 
+/**
+ * @brief Updates the progress, speed, and estimated time remaining displayed in the status window.
+ *
+ * Updates the current and total progress values, transfer speed, and ETA shown in the GUI. Triggers a status window refresh if it is visible.
+ *
+ * @param current Current progress value.
+ * @param total Total progress value.
+ * @param speed Human-readable transfer speed string (e.g., "5 MB/s").
+ * @param eta Estimated time remaining string (e.g., "2m 30s").
+ */
 void ClientGUI::updateProgress(int current, int total, const std::string& speed, const std::string& eta) {
     EnterCriticalSection(&statusLock);
     currentStatus.progress = current;
@@ -499,6 +646,13 @@ void ClientGUI::updateProgress(int current, int total, const std::string& speed,
     }
 }
 
+/**
+ * @brief Updates the connection status displayed in the GUI.
+ *
+ * Sets the internal connection status and refreshes the status window and tray icon to reflect the new state.
+ *
+ * @param connected True if the client is connected; false otherwise.
+ */
 void ClientGUI::updateConnectionStatus(bool connected) {
     EnterCriticalSection(&statusLock);
     currentStatus.connected = connected;
@@ -513,6 +667,13 @@ void ClientGUI::updateConnectionStatus(bool connected) {
     }
 }
 
+/**
+ * @brief Updates the displayed error message in the GUI.
+ *
+ * Sets the current error message and triggers a status window update if visible.
+ *
+ * @param error The error message to display.
+ */
 void ClientGUI::updateError(const std::string& error) {
     EnterCriticalSection(&statusLock);
     currentStatus.error = error;
@@ -523,6 +684,15 @@ void ClientGUI::updateError(const std::string& error) {
     }
 }
 
+/**
+ * @brief Displays a notification balloon from the system tray icon.
+ *
+ * Shows a balloon tooltip with the specified title, message, and icon type using the tray icon.
+ *
+ * @param title The title of the notification balloon.
+ * @param message The message content of the notification balloon.
+ * @param iconType The icon type for the notification (e.g., NIIF_INFO, NIIF_WARNING).
+ */
 void ClientGUI::showNotification(const std::string& title, const std::string& message, DWORD iconType) {
     if (!guiInitialized.load() || !hTrayWnd_) return; 
     
@@ -538,6 +708,15 @@ void ClientGUI::showNotification(const std::string& title, const std::string& me
     Shell_NotifyIconW(NIM_MODIFY, &trayIcon);
 }
 
+/**
+ * @brief Displays a modal message box with the specified title, message, and type.
+ *
+ * The message box is parented to the status window if it is visible; otherwise, it is unparented.
+ *
+ * @param title The title of the message box.
+ * @param message The message to display.
+ * @param type The type of message box (e.g., MB_OK, MB_ICONERROR).
+ */
 void ClientGUI::showPopup(const std::string& title, const std::string& message, UINT type) {
     std::wstring wTitle(title.begin(), title.end());
     std::wstring wMessage(message.begin(), message.end());
@@ -545,10 +724,22 @@ void ClientGUI::showPopup(const std::string& title, const std::string& message, 
     MessageBoxW(statusWindowVisible.load() ? statusWindow : nullptr, wMessage.c_str(), wTitle.c_str(), type);
 }
 
+/**
+ * @brief Toggles the visibility of the status window.
+ *
+ * If the status window is currently visible, it will be hidden; if hidden, it will be shown.
+ */
 void ClientGUI::toggleStatusWindow() {
     showStatusWindow(!statusWindowVisible.load());
 }
 
+/**
+ * @brief Shows or hides the status window.
+ *
+ * When shown, the status window is brought to the foreground, set as topmost, and repainted.
+ *
+ * @param show If true, displays the status window; if false, hides it.
+ */
 void ClientGUI::showStatusWindow(bool show) {
     if (!statusWindow) return;
     
@@ -562,6 +753,11 @@ void ClientGUI::showStatusWindow(bool show) {
     }
 }
 
+/**
+ * @brief Toggles the visibility of the console window.
+ *
+ * If the console window is currently visible, it will be hidden; if hidden, it will be shown.
+ */
 void ClientGUI::toggleConsoleWindow() {
     if (consoleWindow) { 
         bool visible = IsWindowVisible(consoleWindow) != FALSE;
@@ -569,12 +765,22 @@ void ClientGUI::toggleConsoleWindow() {
     }
 }
 
+/**
+ * @brief Shows or hides the console window.
+ *
+ * @param show If true, the console window is shown; if false, it is hidden.
+ */
 void ClientGUI::showConsoleWindow(bool show) {
     if (consoleWindow) {
         ShowWindow(consoleWindow, show ? SW_SHOW : SW_HIDE);
     }
 }
 
+/**
+ * @brief Shuts down the GUI by signaling the GUI thread to exit and waiting for its termination.
+ *
+ * If the GUI is initialized or the GUI thread is running, this method signals the thread to close, posts a quit or wake message to ensure the message loop exits, and joins the thread to complete shutdown.
+ */
 void ClientGUI::shutdown() {
     if (!guiInitialized.load() && !guiThread.joinable()) { 
          return;
@@ -600,6 +806,11 @@ void ClientGUI::shutdown() {
     }
 }
 
+/**
+ * @brief Cleans up GUI resources by removing the tray icon and destroying the status window.
+ *
+ * This method is called during shutdown to ensure that all GUI-related resources are properly released.
+ */
 void ClientGUI::cleanup() {
     if (hTrayWnd_ && trayIcon.hWnd) { 
         trayIcon.uFlags = 0; 
