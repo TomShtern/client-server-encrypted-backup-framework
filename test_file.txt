@@ -1,0 +1,9 @@
+This is a test file for the Client Server Encrypted Backup Framework.
+It contains multiple lines of text to test the file transfer functionality.
+The content should be encrypted by the client using AES encryption.
+Then transmitted to the server and decrypted successfully.
+This tests the complete end-to-end encryption workflow.
+
+Test data: Hello World!
+Numbers: 1234567890
+Special characters: !@#$%^&*()_+-=[]{}|;':\",./<>?

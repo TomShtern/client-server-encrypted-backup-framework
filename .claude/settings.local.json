@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:docs.anthropic.com)",
+      "Bash(ls:*)",
+      "Bash(python3:*)",
+      "Bash(/usr/bin/python3:*)",
+      "Bash(./build.bat)",
+      "Bash(./EncryptedBackupClient.exe)",
+      "WebFetch(domain:github.com)",
+      "Bash(python:*)",
+      "Bash(./test_rsa_final.exe)",
+      "Bash(./test_rsa_wrapper_final.exe)",
+      "Bash(./clean.bat)",
+      "Bash(rm:*)",
+      "Bash(g++:*)",
+      "Bash(./test_rsa_crypto_plus_plus:*)",
+      "Bash(pip3 install:*)",
+      "Bash(apt list:*)",
+      "Bash(rg:*)",
+      "Bash(./tests/test_rsa_final.exe)",
+      "Bash(cmd.exe:*)"
+    ],
+    "deny": []
+  }
+}

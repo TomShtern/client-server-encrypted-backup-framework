@@ -1,0 +1,26 @@
+name: Backup Branch Sync
+
+on:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  backup-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Git user
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Create or update backup branch
+        run: |
+          git fetch origin backup || true
+          git checkout -B backup
+          git merge --no-edit ${{ github.ref_name }}
+          git push origin backup

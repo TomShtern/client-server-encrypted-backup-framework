@@ -1,0 +1,115 @@
+#ifndef CLIENT_GUI_H
+#define CLIENT_GUI_H
+
+#ifdef _WIN32
+#include <windows.h>
+#include <shellapi.h>
+#include <commctrl.h>
+#include <string>
+#include <functional>
+#include <thread>
+#include <atomic>
+#include <memory>
+
+// GUI Message identifiers
+#define WM_TRAYICON (WM_USER + 1)
+#define WM_STATUS_UPDATE (WM_USER + 2)
+
+// Menu item IDs
+#define ID_SHOW_STATUS 1001
+#define ID_SHOW_CONSOLE 1002
+#define ID_EXIT 1003
+
+// GUI Status information structure
+struct GUIStatus {
+    std::string phase;
+    std::string operation;
+    std::string details;
+    bool success;
+    int progress;
+    int totalProgress;
+    std::string speed;
+    std::string eta;
+    bool connected;
+    std::string error;
+};
+
+// Forward declarations
+class Client;
+
+class ClientGUI {
+private:
+    HWND statusWindow;
+    HWND consoleWindow;
+    NOTIFYICONDATA trayIcon;
+    bool guiEnabled;
+    bool statusWindowVisible;
+    std::atomic<bool> shouldClose;
+    std::thread guiThread;
+    std::atomic<bool> guiInitialized;
+    
+    // Status data
+    GUIStatus currentStatus;
+    CRITICAL_SECTION statusLock;
+    
+    // Window procedures
+    static LRESULT CALLBACK StatusWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+    static LRESULT CALLBACK TrayWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+    
+    // Internal methods
+    bool initializeTrayIcon();
+    bool createStatusWindow();
+    void updateStatusWindow();
+    void showContextMenu(POINT pt);
+    void guiMessageLoop();
+    void cleanup();
+    
+public:
+    ClientGUI();
+    ~ClientGUI();
+    
+    // Main interface methods
+    bool initialize();
+    void shutdown();
+    
+    // Status update methods
+    void updatePhase(const std::string& phase);
+    void updateOperation(const std::string& operation, bool success, const std::string& details = "");
+    void updateProgress(int current, int total, const std::string& speed = "", const std::string& eta = "");
+    void updateConnectionStatus(bool connected);
+    void updateError(const std::string& error);
+    
+    // Notification methods
+    void showNotification(const std::string& title, const std::string& message, DWORD iconType = NIIF_INFO);
+    void showPopup(const std::string& title, const std::string& message, UINT type = MB_ICONINFORMATION);
+    
+    // Window management
+    void toggleStatusWindow();
+    void toggleConsoleWindow();
+    void showStatusWindow(bool show = true);
+    void showConsoleWindow(bool show = true);
+    
+    // Utility methods
+    bool isInitialized() const { return guiInitialized.load(); }
+    bool isStatusWindowVisible() const { return statusWindowVisible; }
+    
+    // Static helper for getting instance
+    static ClientGUI* getInstance();
+};
+
+// Global GUI functions for easy integration
+namespace ClientGUIHelpers {
+    bool initializeGUI();
+    void shutdownGUI();
+    void updatePhase(const std::string& phase);
+    void updateOperation(const std::string& operation, bool success, const std::string& details = "");
+    void updateProgress(int current, int total, const std::string& speed = "", const std::string& eta = "");
+    void updateConnectionStatus(bool connected);
+    void updateError(const std::string& error);
+    void showNotification(const std::string& title, const std::string& message);
+    void showPopup(const std::string& title, const std::string& message, UINT type = MB_ICONINFORMATION);
+}
+
+#endif // _WIN32
+
+#endif // CLIENT_GUI_H

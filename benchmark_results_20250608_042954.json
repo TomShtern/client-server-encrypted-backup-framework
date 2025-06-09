@@ -1,0 +1,140 @@
+{
+  "metadata": {
+    "timestamp": "2025-06-08T04:28:33.263355",
+    "duration_seconds": 81.100921,
+    "system_info": {
+      "platform": "win32",
+      "python_version": "3.13.4 (tags/v3.13.4:8a526ec, Jun  3 2025, 17:46:04) [MSC v.1943 64 bit (AMD64)]",
+      "cpu_count": 12,
+      "memory_total_gb": 15.700725555419922
+    }
+  },
+  "results": {
+    "Build": {
+      "Full_Clean_Build": {
+        "value": 32786.76176071167,
+        "unit": "ms",
+        "details": "Success: True",
+        "timestamp": "2025-06-08T04:29:06.124355"
+      },
+      "Incremental_Build": {
+        "value": 32363.168001174927,
+        "unit": "ms",
+        "details": "No changes",
+        "timestamp": "2025-06-08T04:29:38.487572"
+      }
+    },
+    "Startup": {
+      "Server_Startup_Attempt_1": {
+        "value": 1050.0361919403076,
+        "unit": "ms",
+        "details": "Port 1256 ready",
+        "timestamp": "2025-06-08T04:29:39.557718"
+      },
+      "Server_Startup_Attempt_2": {
+        "value": 1053.3325672149658,
+        "unit": "ms",
+        "details": "Port 1256 ready",
+        "timestamp": "2025-06-08T04:29:41.635050"
+      },
+      "Server_Startup_Attempt_3": {
+        "value": 841.0606384277344,
+        "unit": "ms",
+        "details": "Port 1256 ready",
+        "timestamp": "2025-06-08T04:29:43.502555"
+      }
+    },
+    "Memory": {
+      "Server_RSS_Memory": {
+        "value": 51.3828125,
+        "unit": "MB",
+        "details": "Resident Set Size",
+        "timestamp": "2025-06-08T04:29:46.508147"
+      },
+      "Server_VMS_Memory": {
+        "value": 29.21484375,
+        "unit": "MB",
+        "details": "Virtual Memory Size",
+        "timestamp": "2025-06-08T04:29:46.508178"
+      },
+      "Server_CPU_Usage": {
+        "value": 0.0,
+        "unit": "%",
+        "details": "1-second sample",
+        "timestamp": "2025-06-08T04:29:47.508835"
+      }
+    },
+    "Crypto": {
+      "test_rsa_final_Average": {
+        "value": 89.1594409942627,
+        "unit": "ms",
+        "details": "\u00b1161.49ms (n=5)",
+        "timestamp": "2025-06-08T04:29:47.976976"
+      },
+      "test_rsa_wrapper_final_Average": {
+        "value": 39.42422866821289,
+        "unit": "ms",
+        "details": "\u00b165.23ms (n=5)",
+        "timestamp": "2025-06-08T04:29:48.174832"
+      }
+    },
+    "FileIO": {
+      "Read_small": {
+        "value": 0.3044605255126953,
+        "unit": "ms",
+        "details": "1024 bytes",
+        "timestamp": "2025-06-08T04:29:48.175186"
+      },
+      "Write_small": {
+        "value": 0.9570121765136719,
+        "unit": "ms",
+        "details": "1024 bytes",
+        "timestamp": "2025-06-08T04:29:48.176196"
+      },
+      "Read_medium": {
+        "value": 0.23818016052246094,
+        "unit": "ms",
+        "details": "102400 bytes",
+        "timestamp": "2025-06-08T04:29:48.176904"
+      },
+      "Write_medium": {
+        "value": 0.7579326629638672,
+        "unit": "ms",
+        "details": "102400 bytes",
+        "timestamp": "2025-06-08T04:29:48.177702"
+      },
+      "Read_large": {
+        "value": 1.7690658569335938,
+        "unit": "ms",
+        "details": "1048576 bytes",
+        "timestamp": "2025-06-08T04:29:48.179742"
+      },
+      "Write_large": {
+        "value": 5.384683609008789,
+        "unit": "ms",
+        "details": "1048576 bytes",
+        "timestamp": "2025-06-08T04:29:48.185167"
+      }
+    },
+    "Network": {
+      "TCP_Connect_Attempt_1": {
+        "value": -1,
+        "unit": "ms",
+        "details": "Failed: [WinError 10061] No connection",
+        "timestamp": "2025-06-08T04:29:50.231164"
+      },
+      "TCP_Connect_Attempt_2": {
+        "value": -1,
+        "unit": "ms",
+        "details": "Failed: [WinError 10061] No connection",
+        "timestamp": "2025-06-08T04:29:52.289505"
+      },
+      "TCP_Connect_Attempt_3": {
+        "value": -1,
+        "unit": "ms",
+        "details": "Failed: [WinError 10061] No connection",
+        "timestamp": "2025-06-08T04:29:54.362397"
+      }
+    }
+  }
+}

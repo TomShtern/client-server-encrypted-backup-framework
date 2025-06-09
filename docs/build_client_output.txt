@@ -1,0 +1,248 @@
+Compiling client sources...
+Microsoft (R) C/C++ Optimizing Compiler Version 19.44.35208 for x64
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+AESWrapper.cpp
+Base64Wrapper.cpp
+cksum.cpp
+client.cpp
+ClientGUI.cpp
+client\src\ClientGUI.cpp(168): error C2660: 'wcscpy_s': function does not take 2 arguments
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.22621.0\ucrt\corecrt_wstring.h(39): note: see declaration of 'wcscpy_s'
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.22621.0\ucrt\corecrt_wstring.h(113): note: could be 'errno_t wcscpy_s(wchar_t (&)[_Size],const wchar_t *) noexcept'
+client\src\ClientGUI.cpp(168): note: 'errno_t wcscpy_s(wchar_t (&)[_Size],const wchar_t *) noexcept': could not deduce template argument for 'wchar_t (&)[_Size]' from 'CHAR [128]'
+client\src\ClientGUI.cpp(168): note: while trying to match the argument list '(CHAR [128], wchar_t [128])'
+client\src\ClientGUI.cpp(171): error C2660: 'wcscpy_s': function does not take 2 arguments
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.22621.0\ucrt\corecrt_wstring.h(39): note: see declaration of 'wcscpy_s'
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.22621.0\ucrt\corecrt_wstring.h(113): note: could be 'errno_t wcscpy_s(wchar_t (&)[_Size],const wchar_t *) noexcept'
+client\src\ClientGUI.cpp(171): note: 'errno_t wcscpy_s(wchar_t (&)[_Size],const wchar_t *) noexcept': could not deduce template argument for 'wchar_t (&)[_Size]' from 'CHAR [256]'
+client\src\ClientGUI.cpp(171): note: while trying to match the argument list '(CHAR [256], wchar_t [256])'
+client\src\ClientGUI.cpp(174): error C2660: 'wcscpy_s': function does not take 2 arguments
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.22621.0\ucrt\corecrt_wstring.h(39): note: see declaration of 'wcscpy_s'
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.22621.0\ucrt\corecrt_wstring.h(113): note: could be 'errno_t wcscpy_s(wchar_t (&)[_Size],const wchar_t *) noexcept'
+client\src\ClientGUI.cpp(174): note: 'errno_t wcscpy_s(wchar_t (&)[_Size],const wchar_t *) noexcept': could not deduce template argument for 'wchar_t (&)[_Size]' from 'CHAR [64]'
+client\src\ClientGUI.cpp(174): note: while trying to match the argument list '(CHAR [64], wchar_t [256])'
+client\src\ClientGUI.cpp(406): error C2660: 'wcsncpy_s': function does not take 3 arguments
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.22621.0\ucrt\corecrt_wstring.h(54): note: see declaration of 'wcsncpy_s'
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.22621.0\ucrt\corecrt_wstring.h(193): note: could be 'errno_t wcsncpy_s(wchar_t (&)[_Size],const wchar_t *,size_t) noexcept'
+client\src\ClientGUI.cpp(406): note: 'errno_t wcsncpy_s(wchar_t (&)[_Size],const wchar_t *,size_t) noexcept': could not deduce template argument for 'wchar_t (&)[_Size]' from 'CHAR [128]'
+client\src\ClientGUI.cpp(406): note: while trying to match the argument list '(CHAR [128], const _Elem *, size_t)'
+        with
+        [
+            _Elem=wchar_t
+        ]
+client\src\ClientGUI.cpp(480): error C2660: 'wcscpy_s': function does not take 2 arguments
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.22621.0\ucrt\corecrt_wstring.h(39): note: see declaration of 'wcscpy_s'
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.22621.0\ucrt\corecrt_wstring.h(113): note: could be 'errno_t wcscpy_s(wchar_t (&)[_Size],const wchar_t *) noexcept'
+client\src\ClientGUI.cpp(480): note: 'errno_t wcscpy_s(wchar_t (&)[_Size],const wchar_t *) noexcept': could not deduce template argument for 'wchar_t (&)[_Size]' from 'CHAR [64]'
+client\src\ClientGUI.cpp(480): note: while trying to match the argument list '(CHAR [64], wchar_t [256])'
+client\src\ClientGUI.cpp(483): error C2660: 'wcscpy_s': function does not take 2 arguments
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.22621.0\ucrt\corecrt_wstring.h(39): note: see declaration of 'wcscpy_s'
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.22621.0\ucrt\corecrt_wstring.h(113): note: could be 'errno_t wcscpy_s(wchar_t (&)[_Size],const wchar_t *) noexcept'
+client\src\ClientGUI.cpp(483): note: 'errno_t wcscpy_s(wchar_t (&)[_Size],const wchar_t *) noexcept': could not deduce template argument for 'wchar_t (&)[_Size]' from 'CHAR [256]'
+client\src\ClientGUI.cpp(483): note: while trying to match the argument list '(CHAR [256], wchar_t [256])'
+protocol.cpp
+RSAWrapper.cpp
+Generating Code...
+Compiling Crypto++ sources...
+Compiling Crypto++ sources...
+Microsoft (R) C/C++ Optimizing Compiler Version 19.44.35208 for x64
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+rijndael.cpp
+base64.cpp
+filters.cpp
+osrng.cpp
+modes.cpp
+rsa.cpp
+files.cpp
+hex.cpp
+sha.cpp
+cryptlib.cpp
+integer.cpp
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\xutility(1341): warning C4996: 'stdext::checked_array_iterator<unsigned char *>': warning STL4043: stdext::checked_array_iterator, stdext::unchecked_array_iterator, and related factory functions are non-Standard extensions and will be removed in the future. std::span (since C++20) and gsl::span can be used instead. You can define _SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING or _SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS to suppress this warning.
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\iterator(1483): note: see declaration of 'stdext::checked_array_iterator'
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\xutility(1341): note: the template instantiation context (the oldest one first) is
+crypto++\integer.cpp(3060): note: see reference to function template instantiation '_OutIt std::reverse_copy<const CryptoPP::byte*,stdext::checked_array_iterator<unsigned char *>>(_BidIt,_BidIt,_OutIt)' being compiled
+        with
+        [
+            _OutIt=stdext::checked_array_iterator<unsigned char *>,
+            _BidIt=const CryptoPP::byte *
+        ]
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\algorithm(5211): note: see reference to function template instantiation 'decltype(auto) std::_Get_unwrapped_n<_OutIt&,__int64>(_Iter,const _Diff)' being compiled
+        with
+        [
+            _OutIt=stdext::checked_array_iterator<unsigned char *>,
+            _Iter=stdext::checked_array_iterator<unsigned char *> &,
+            _Diff=__int64
+        ]
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\xutility(1446): note: see reference to variable template 'const bool _Unwrappable_for_offset_v<stdext::checked_array_iterator<unsigned char *> &>' being compiled
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\xutility(1440): note: see reference to variable template 'const bool _Unwrappable_v<stdext::checked_array_iterator<unsigned char *> &,void>' being compiled
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\xutility(1369): note: see reference to variable template 'const bool _Allow_inheriting_unwrap_v<stdext::checked_array_iterator<unsigned char *>,void>' being compiled
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\xutility(1341): warning C4996: 'stdext::checked_array_iterator<unsigned char *>::_Prevent_inheriting_unwrap': warning STL4043: stdext::checked_array_iterator, stdext::unchecked_array_iterator, and related factory functions are non-Standard extensions and will be removed in the future. std::span (since C++20) and gsl::span can be used instead. You can define _SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING or _SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS to suppress this warning.
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\__msvc_iter_core.hpp(476): warning C4996: 'stdext::checked_array_iterator<unsigned char *>': warning STL4043: stdext::checked_array_iterator, stdext::unchecked_array_iterator, and related factory functions are non-Standard extensions and will be removed in the future. std::span (since C++20) and gsl::span can be used instead. You can define _SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING or _SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS to suppress this warning.
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\iterator(1483): note: see declaration of 'stdext::checked_array_iterator'
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\__msvc_iter_core.hpp(476): note: the template instantiation context (the oldest one first) is
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\xutility(1436): note: see reference to alias template instantiation 'std::_Iter_diff_t<_Iter>' being compiled
+        with
+        [
+            _Iter=stdext::checked_array_iterator<unsigned char *>
+        ]
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\xutility(1245): note: see reference to class template instantiation 'std::iterator_traits<_Iter>' being compiled
+        with
+        [
+            _Iter=stdext::checked_array_iterator<unsigned char *>
+        ]
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\__msvc_iter_core.hpp(496): note: see reference to class template instantiation 'std::_Iterator_traits_base<_Iter,void>' being compiled
+        with
+        [
+            _Iter=stdext::checked_array_iterator<unsigned char *>
+        ]
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\__msvc_iter_core.hpp(476): warning C4996: 'stdext::checked_array_iterator<unsigned char *>::iterator_category': warning STL4043: stdext::checked_array_iterator, stdext::unchecked_array_iterator, and related factory functions are non-Standard extensions and will be removed in the future. std::span (since C++20) and gsl::span can be used instead. You can define _SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING or _SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS to suppress this warning.
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\__msvc_iter_core.hpp(477): warning C4996: 'stdext::checked_array_iterator<unsigned char *>': warning STL4043: stdext::checked_array_iterator, stdext::unchecked_array_iterator, and related factory functions are non-Standard extensions and will be removed in the future. std::span (since C++20) and gsl::span can be used instead. You can define _SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING or _SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS to suppress this warning.
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\iterator(1483): note: see declaration of 'stdext::checked_array_iterator'
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\__msvc_iter_core.hpp(477): warning C4996: 'stdext::checked_array_iterator<unsigned char *>::value_type': warning STL4043: stdext::checked_array_iterator, stdext::unchecked_array_iterator, and related factory functions are non-Standard extensions and will be removed in the future. std::span (since C++20) and gsl::span can be used instead. You can define _SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING or _SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS to suppress this warning.
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\__msvc_iter_core.hpp(478): warning C4996: 'stdext::checked_array_iterator<unsigned char *>': warning STL4043: stdext::checked_array_iterator, stdext::unchecked_array_iterator, and related factory functions are non-Standard extensions and will be removed in the future. std::span (since C++20) and gsl::span can be used instead. You can define _SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING or _SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS to suppress this warning.
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\iterator(1483): note: see declaration of 'stdext::checked_array_iterator'
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\__msvc_iter_core.hpp(478): warning C4996: 'stdext::checked_array_iterator<unsigned char *>::difference_type': warning STL4043: stdext::checked_array_iterator, stdext::unchecked_array_iterator, and related factory functions are non-Standard extensions and will be removed in the future. std::span (since C++20) and gsl::span can be used instead. You can define _SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING or _SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS to suppress this warning.
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\__msvc_iter_core.hpp(479): warning C4996: 'stdext::checked_array_iterator<unsigned char *>': warning STL4043: stdext::checked_array_iterator, stdext::unchecked_array_iterator, and related factory functions are non-Standard extensions and will be removed in the future. std::span (since C++20) and gsl::span can be used instead. You can define _SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING or _SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS to suppress this warning.
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\iterator(1483): note: see declaration of 'stdext::checked_array_iterator'
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\__msvc_iter_core.hpp(479): warning C4996: 'stdext::checked_array_iterator<unsigned char *>::pointer': warning STL4043: stdext::checked_array_iterator, stdext::unchecked_array_iterator, and related factory functions are non-Standard extensions and will be removed in the future. std::span (since C++20) and gsl::span can be used instead. You can define _SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING or _SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS to suppress this warning.
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\__msvc_iter_core.hpp(480): warning C4996: 'stdext::checked_array_iterator<unsigned char *>': warning STL4043: stdext::checked_array_iterator, stdext::unchecked_array_iterator, and related factory functions are non-Standard extensions and will be removed in the future. std::span (since C++20) and gsl::span can be used instead. You can define _SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING or _SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS to suppress this warning.
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\iterator(1483): note: see declaration of 'stdext::checked_array_iterator'
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\__msvc_iter_core.hpp(480): warning C4996: 'stdext::checked_array_iterator<unsigned char *>::reference': warning STL4043: stdext::checked_array_iterator, stdext::unchecked_array_iterator, and related factory functions are non-Standard extensions and will be removed in the future. std::span (since C++20) and gsl::span can be used instead. You can define _SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING or _SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS to suppress this warning.
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\xutility(1457): warning C4996: 'stdext::checked_array_iterator<unsigned char *>::_Verify_offset': warning STL4043: stdext::checked_array_iterator, stdext::unchecked_array_iterator, and related factory functions are non-Standard extensions and will be removed in the future. std::span (since C++20) and gsl::span can be used instead. You can define _SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING or _SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS to suppress this warning.
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\xutility(1458): warning C4996: 'stdext::checked_array_iterator<unsigned char *>::_Unwrapped': warning STL4043: stdext::checked_array_iterator, stdext::unchecked_array_iterator, and related factory functions are non-Standard extensions and will be removed in the future. std::span (since C++20) and gsl::span can be used instead. You can define _SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING or _SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS to suppress this warning.
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\xutility(1479): warning C4996: 'stdext::checked_array_iterator<unsigned char *>::_Seek_to': warning STL4043: stdext::checked_array_iterator, stdext::unchecked_array_iterator, and related factory functions are non-Standard extensions and will be removed in the future. std::span (since C++20) and gsl::span can be used instead. You can define _SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING or _SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS to suppress this warning.
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\xutility(1479): note: the template instantiation context (the oldest one first) is
+crypto++\integer.cpp(3060): note: see reference to function template instantiation '_OutIt std::reverse_copy<const CryptoPP::byte*,stdext::checked_array_iterator<unsigned char *>>(_BidIt,_BidIt,_OutIt)' being compiled
+        with
+        [
+            _OutIt=stdext::checked_array_iterator<unsigned char *>,
+            _BidIt=const CryptoPP::byte *
+        ]
+C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include\algorithm(5229): note: see reference to function template instantiation 'void std::_Seek_wrapped<_OutIt,_Ptr&>(_Iter &,_UIter)' being compiled
+        with
+        [
+            _OutIt=stdext::checked_array_iterator<unsigned char *>,
+            _Ptr=unsigned char *,
+            _Iter=stdext::checked_array_iterator<unsigned char *>,
+            _UIter=unsigned char *&
+        ]
+nbtheory.cpp
+algparam.cpp
+default.cpp
+pubkey.cpp
+misc.cpp
+queue.cpp
+cpu.cpp
+allocate.cpp
+randpool.cpp
+Generating Code...
+Compiling...
+asn.cpp
+gfpcrypt.cpp
+eccrypto.cpp
+ecp.cpp
+ec2n.cpp
+iterhash.cpp
+basecode.cpp
+oaep.cpp
+algebra.cpp
+polynomi.cpp
+gf2n.cpp
+hmac.cpp
+des.cpp
+fips140.cpp
+pkcspad.cpp
+hrtimer.cpp
+mqueue.cpp
+rdtables.cpp
+primetab.cpp
+dessp.cpp
+Generating Code...
+Compiling...
+strciphr.cpp
+rdrand.cpp
+rng.cpp
+darn.cpp
+simple.cpp
+rijndael_simd.cpp
+algebra_instantiations.cpp
+abstract_implementations.cpp
+Generating Code...
+Linking executable...
+Microsoft (R) C/C++ Optimizing Compiler Version 19.44.35208 for x64
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+Microsoft (R) Incremental Linker Version 14.44.35208.0
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+/out:client\EncryptedBackupClient.exe 
+build\client\AESWrapper.obj 
+build\client\Base64Wrapper.obj 
+build\client\cksum.obj 
+build\client\client.obj 
+build\client\protocol.obj 
+build\client\RSAWrapper.obj 
+build\crypto++\abstract_implementations.obj 
+build\crypto++\algebra.obj 
+build\crypto++\algebra_instantiations.obj 
+build\crypto++\algparam.obj 
+build\crypto++\allocate.obj 
+build\crypto++\asn.obj 
+build\crypto++\base64.obj 
+build\crypto++\basecode.obj 
+build\crypto++\cpu.obj 
+build\crypto++\cryptlib.obj 
+build\crypto++\darn.obj 
+build\crypto++\default.obj 
+build\crypto++\des.obj 
+build\crypto++\dessp.obj 
+build\crypto++\ec2n.obj 
+build\crypto++\eccrypto.obj 
+build\crypto++\ecp.obj 
+build\crypto++\files.obj 
+build\crypto++\filters.obj 
+build\crypto++\fips140.obj 
+build\crypto++\gf2n.obj 
+build\crypto++\gfpcrypt.obj 
+build\crypto++\hex.obj 
+build\crypto++\hmac.obj 
+build\crypto++\hrtimer.obj 
+build\crypto++\integer.obj 
+build\crypto++\iterhash.obj 
+build\crypto++\misc.obj 
+build\crypto++\modes.obj 
+build\crypto++\mqueue.obj 
+build\crypto++\nbtheory.obj 
+build\crypto++\oaep.obj 
+build\crypto++\osrng.obj 
+build\crypto++\pkcspad.obj 
+build\crypto++\polynomi.obj 
+build\crypto++\primetab.obj 
+build\crypto++\pubkey.obj 
+build\crypto++\queue.obj 
+build\crypto++\randpool.obj 
+build\crypto++\rdrand.obj 
+build\crypto++\rdtables.obj 
+build\crypto++\rijndael.obj 
+build\crypto++\rijndael_simd.obj 
+build\crypto++\rng.obj 
+build\crypto++\rsa.obj 
+build\crypto++\sha.obj 
+build\crypto++\simple.obj 
+build\crypto++\strciphr.obj 
+ws2_32.lib 
+advapi32.lib 
+user32.lib 
+client.obj : error LNK2019: unresolved external symbol "bool __cdecl ClientGUIHelpers::initializeGUI(void)" (?initializeGUI@ClientGUIHelpers@@YA_NXZ) referenced in function "public: __cdecl Client::Client(void)" (??0Client@@QEAA@XZ)
+client.obj : error LNK2019: unresolved external symbol "void __cdecl ClientGUIHelpers::shutdownGUI(void)" (?shutdownGUI@ClientGUIHelpers@@YAXXZ) referenced in function "public: __cdecl Client::~Client(void)" (??1Client@@QEAA@XZ)
+client.obj : error LNK2019: unresolved external symbol "void __cdecl ClientGUIHelpers::updatePhase(class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> > const &)" (?updatePhase@ClientGUIHelpers@@YAXAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@@Z) referenced in function "private: void __cdecl Client::displayPhase(class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> > const &)" (?displayPhase@Client@@AEAAXAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@@Z)
+client.obj : error LNK2019: unresolved external symbol "void __cdecl ClientGUIHelpers::updateOperation(class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> > const &,bool,class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> > const &)" (?updateOperation@ClientGUIHelpers@@YAXAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@_N0@Z) referenced in function "private: void __cdecl Client::displayStatus(class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> > const &,bool,class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> > const &)" (?displayStatus@Client@@AEAAXAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@_N0@Z)
+client.obj : error LNK2019: unresolved external symbol "void __cdecl ClientGUIHelpers::updateProgress(int,int,class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> > const &,class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> > const &)" (?updateProgress@ClientGUIHelpers@@YAXHHAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@0@Z) referenced in function "private: void __cdecl Client::displayProgress(class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> > const &,unsigned __int64,unsigned __int64)" (?displayProgress@Client@@AEAAXAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@_K1@Z)
+client.obj : error LNK2019: unresolved external symbol "void __cdecl ClientGUIHelpers::updateConnectionStatus(bool)" (?updateConnectionStatus@ClientGUIHelpers@@YAX_N@Z) referenced in function "private: bool __cdecl Client::connectToServer(void)" (?connectToServer@Client@@AEAA_NXZ)
+client.obj : error LNK2019: unresolved external symbol "void __cdecl ClientGUIHelpers::updateError(class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> > const &)" (?updateError@ClientGUIHelpers@@YAXAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@@Z) referenced in function "private: void __cdecl Client::displayError(class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> > const &,enum ErrorType)" (?displayError@Client@@AEAAXAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@W4ErrorType@@@Z)
+client.obj : error LNK2019: unresolved external symbol "void __cdecl ClientGUIHelpers::showNotification(class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> > const &,class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> > const &)" (?showNotification@ClientGUIHelpers@@YAXAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@0@Z) referenced in function "private: void __cdecl Client::displayError(class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> > const &,enum ErrorType)" (?displayError@Client@@AEAAXAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@W4ErrorType@@@Z)
+client\EncryptedBackupClient.exe : fatal error LNK1120: 8 unresolved externals
+Build complete. Executable at client\EncryptedBackupClient.exe
