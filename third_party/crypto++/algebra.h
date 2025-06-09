@@ -65,7 +65,7 @@ public:
 	/// \param a first element
 	/// \param b second element
 	/// \return the difference of <tt>a</tt> and <tt>b</tt>. The element <tt>a</tt> must provide a Subtract member function.
-	virtual const Element& Subtract(const Element &a, const Element &b) const;
+	virtual Element Subtract(const Element &a, const Element &b) const;
 
 	/// \brief TODO
 	/// \param a first element
@@ -150,7 +150,7 @@ public:
 
 	/// \brief Calculate the multiplicative inverse of an element in the group
 	/// \param a the element
-	virtual const Element& MultiplicativeInverse(const Element &a) const =0;
+	virtual Element MultiplicativeInverse(const Element &a) const =0;
 
 	/// \brief Square an element in the group
 	/// \param a the element
@@ -161,7 +161,7 @@ public:
 	/// \param a the dividend
 	/// \param b the divisor
 	/// \return the quotient
-	virtual const Element& Divide(const Element &a, const Element &b) const;
+	virtual Element Divide(const Element &a, const Element &b) const;
 
 	/// \brief Raises a base to an exponent in the group
 	/// \param a the base
@@ -289,13 +289,13 @@ public:
 	/// \param a the element
 	/// \param b the modulus
 	/// \return the result of <tt>a%b</tt>.
-	virtual const Element& Mod(const Element &a, const Element &b) const =0;
+	virtual Element Mod(const Element &a, const Element &b) const =0;
 
 	/// \brief Calculates the greatest common denominator in the ring
 	/// \param a the first element
 	/// \param b the second element
 	/// \return the greatest common denominator of a and b.
-	virtual const Element& Gcd(const Element &a, const Element &b) const;
+	virtual Element Gcd(const Element &a, const Element &b) const;
 
 protected:
 	mutable Element result;

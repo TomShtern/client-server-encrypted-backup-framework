@@ -59,7 +59,7 @@ const Integer& AbstractEuclideanDomain<Integer>::Gcd(const Integer &a, const Int
 
 // AbstractGroup<ECPPoint> implementations - these should be overridden by ECP
 template<>
-const ECPPoint& AbstractGroup<ECPPoint>::Subtract(const ECPPoint &a, const ECPPoint &b) const
+ECPPoint AbstractGroup<ECPPoint>::Subtract(const ECPPoint &a, const ECPPoint &b) const
 {
     throw NotImplemented("AbstractGroup<ECPPoint>::Subtract should be overridden");
 }
@@ -90,7 +90,7 @@ void AbstractGroup<ECPPoint>::SimultaneousMultiply(ECPPoint *results, const ECPP
 
 // AbstractGroup<EC2NPoint> implementations - these should be overridden by EC2N  
 template<>
-const EC2NPoint& AbstractGroup<EC2NPoint>::Subtract(const EC2NPoint &a, const EC2NPoint &b) const
+EC2NPoint AbstractGroup<EC2NPoint>::Subtract(const EC2NPoint &a, const EC2NPoint &b) const
 {
     throw NotImplemented("AbstractGroup<EC2NPoint>::Subtract should be overridden");
 }
