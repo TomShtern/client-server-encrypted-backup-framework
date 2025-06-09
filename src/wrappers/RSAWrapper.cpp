@@ -1,4 +1,4 @@
-#include "RSAWrapper.h"
+#include "../../include/wrappers/RSAWrapper.h"
 #include <windows.h>
 #include <wincrypt.h>
 #include <fstream>
@@ -11,13 +11,13 @@
 #include <algorithm>
 
 // Crypto++ includes for real RSA implementation
-#include "../../crypto++/rsa.h"
-#include "../../crypto++/osrng.h"
-#include "../../crypto++/base64.h"
-#include "../../crypto++/files.h"
-#include "../../crypto++/hex.h"
-#include "../../crypto++/filters.h"
-#include "../../crypto++/pubkey.h"
+#include "../../third_party/crypto++/rsa.h"
+#include "../../third_party/crypto++/osrng.h"
+#include "../../third_party/crypto++/base64.h"
+#include "../../third_party/crypto++/files.h"
+#include "../../third_party/crypto++/hex.h"
+#include "../../third_party/crypto++/filters.h"
+#include "../../third_party/crypto++/pubkey.h"
 
 #pragma comment(lib, "crypt32.lib")
 #pragma comment(lib, "advapi32.lib")

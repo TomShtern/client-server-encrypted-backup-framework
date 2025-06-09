@@ -30,14 +30,14 @@
 #endif
 
 // Required wrapper includes (provided by project)
-#include "cksum.h"
-#include "AESWrapper.h"
-#include "Base64Wrapper.h"
-#include "RSAWrapper.h"
+#include "../../include/client/cksum.h"
+#include "../../include/wrappers/AESWrapper.h"
+#include "../../include/wrappers/Base64Wrapper.h"
+#include "../../include/wrappers/RSAWrapper.h"
 
 // Optional GUI support
 #ifdef _WIN32
-#include "ClientGUI.h"
+#include "../../include/client/ClientGUI.h"
 #endif
 
 // Protocol constants
