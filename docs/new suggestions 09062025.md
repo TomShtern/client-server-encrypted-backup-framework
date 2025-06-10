@@ -1,4 +1,4 @@
-# Realistic Enhancement Suggestions for Client-Server Encrypted Backup Framework
+<UPDATED_CODE># Realistic Enhancement Suggestions for Client-Server Encrypted Backup Framework
 
 ## Table of Contents
 1. [Immediate Practical Improvements](#immediate-practical-improvements)
@@ -1271,4 +1271,406 @@ class TestProtocolHandling(unittest.TestCase):
         parsed = self.protocol_handler.parse_request(request_data)
         
         self.assertEqual(parsed['client_id'], client_id)
-        self.assertEqual(parsed['
+        self.assertEqual(parsed['version'], version)
+        self.assertEqual(parsed['code'], code)
+        self.assertEqual(parsed['payload_size'], len(payload))
+    
+    def test_response_creation(self):
+        """Test binary response creation"""
+        version = 3
+        code = 1600  # Registration successful
+        client_id = b'\x01' * 16
+        
+        response = self.protocol_handler.create_response(code, client_id)
+        
+        # Parse response to verify
+        parsed_version, parsed_code, payload_size = struct.unpack('<BHI', response[:7])
+        parsed_client_id = response[7:23]
+        
+        self.assertEqual(parsed_version, version)
+        self.assertEqual(parsed_code, code)
+        self.assertEqual(parsed_client_id, client_id)
+
+class TestDatabaseOperations(unittest.TestCase):
+    def setUp(self):
+        # Use in-memory database for testing
+        self.db_manager = DatabaseManager(':memory:')
+        self.db_manager.initialize_database()
+    
+    def test_client_registration(self):
+        """Test client registration process"""
+        username = "testuser"
+        client_id = str(uuid.uuid4())
+        
+        # Register client
+        result = self.db_manager.register_client(username, client_id)
+        self.assertTrue(result)
+        
+        # Verify client exists
+        client = self.db_manager.get_client_by_name(username)
+        self.assertIsNotNone(client)
+        self.assertEqual(client['Name'], username)
+        self.assertEqual(client['ID'], client_id)
+    
+    def test_duplicate_username_rejection(self):
+        """Test that duplicate usernames are rejected"""
+        username = "testuser"
+        client_id1 = str(uuid.uuid4())
+        client_id2 = str(uuid.uuid4())
+        
+        # First registration should succeed
+        result1 = self.db_manager.register_client(username, client_id1)
+        self.assertTrue(result1)
+        
+        # Second registration with same username should fail
+        result2 = self.db_manager.register_client(username, client_id2)
+        self.assertFalse(result2)
+
+if __name__ == '__main__':
+    unittest.main()
+```
+
+#### **Integration Testing**
+```python:tests/test_integration.py
+# Integration tests for client-server communication
+import unittest
+import threading
+import time
+import socket
+from unittest.mock import patch
+
+class TestClientServerIntegration(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        """Start test server"""
+        cls.server_thread = threading.Thread(target=cls.start_test_server)
+        cls.server_thread.daemon = True
+        cls.server_thread.start()
+        time.sleep(1)  # Give server time to start
+    
+    @classmethod
+    def start_test_server(cls):
+        """Start a test server instance"""
+        from server.main import create_server
+        server = create_server(port=12560)  # Use different port for testing
+        server.run()
+    
+    def test_full_registration_flow(self):
+        """Test complete client registration flow"""
+        # Create test client
+        client = TestClient('127.0.0.1', 12560)
+        
+        # Test registration
+        result = client.register('testuser_integration')
+        self.assertTrue(result['success'])
+        self.assertIn('client_id', result)
+        
+        # Test public key exchange
+        result = client.send_public_key()
+        self.assertTrue(result['success'])
+        self.assertIn('aes_key', result)
+    
+    def test_file_transfer_flow(self):
+        """Test complete file transfer flow"""
+        client = TestClient('127.0.0.1', 12560)
+        
+        # Register and setup encryption
+        client.register('testuser_file_transfer')
+        client.send_public_key()
+        
+        # Create test file
+        test_data = b"This is test file content for integration testing"
+        test_filename = "integration_test.txt"
+        
+        # Transfer file
+        result = client.transfer_file(test_filename, test_data)
+        self.assertTrue(result['success'])
+        self.assertIn('checksum', result)
+        
+        # Verify CRC
+        expected_crc = calculate_crc32(test_data)
+        self.assertEqual(result['checksum'], expected_crc)
+
+class TestClient:
+    """Test client for integration testing"""
+    def __init__(self, host, port):
+        self.host = host
+        self.port = port
+        self.client_id = None
+        self.aes_key = None
+        self.private_key = None
+        self.public_key = None
+    
+    def connect(self):
+        """Establish connection to server"""
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.connect((self.host, self.port))
+    
+    def register(self, username):
+        """Register with server"""
+        self.connect()
+        
+        # Send registration request
+        request = self.create_registration_request(username)
+        self.socket.send(request)
+        
+        # Receive response
+        response = self.receive_response()
+        
+        if response['code'] == 1600:  # Registration successful
+            self.client_id = response['payload']
+            return {'success': True, 'client_id': self.client_id}
+        else:
+            return {'success': False, 'error': 'Registration failed'}
+```
+
+### 📊 **Performance Monitoring**
+
+#### **Performance Metrics Collection**
+```python:server/performance_monitor.py
+# Collect and analyze performance metrics
+import time
+import psutil
+from collections import defaultdict, deque
+from threading import Lock
+
+class PerformanceMonitor:
+    def __init__(self, max_samples=1000):
+        self.max_samples = max_samples
+        self.metrics = defaultdict(lambda: deque(maxlen=max_samples))
+        self.lock = Lock()
+        self.start_time = time.time()
+    
+    def record_metric(self, metric_name, value, timestamp=None):
+        """Record a performance metric"""
+        if timestamp is None:
+            timestamp = time.time()
+        
+        with self.lock:
+            self.metrics[metric_name].append({
+                'value': value,
+                'timestamp': timestamp
+            })
+    
+    def record_transfer_performance(self, file_size, transfer_time, client_id):
+        """Record file transfer performance"""
+        throughput = file_size / transfer_time if transfer_time > 0 else 0
+        
+        self.record_metric('transfer_throughput', throughput)
+        self.record_metric('transfer_time', transfer_time)
+        self.record_metric('file_size', file_size)
+        
+        # Per-client metrics
+        self.record_metric(f'client_{client_id}_throughput', throughput)
+    
+    def record_system_metrics(self):
+        """Record system resource usage"""
+        # CPU usage
+        cpu_percent = psutil.cpu_percent()
+        self.record_metric('cpu_usage', cpu_percent)
+        
+        # Memory usage
+        memory = psutil.virtual_memory()
+        self.record_metric('memory_usage', memory.percent)
+        self.record_metric('memory_available', memory.available)
+        
+        # Disk usage
+        disk = psutil.disk_usage('/')
+        self.record_metric('disk_usage', disk.percent)
+        self.record_metric('disk_free', disk.free)
+        
+        # Network I/O
+        network = psutil.net_io_counters()
+        self.record_metric('network_bytes_sent', network.bytes_sent)
+        self.record_metric('network_bytes_recv', network.bytes_recv)
+    
+    def get_metric_summary(self, metric_name, time_window=3600):
+        """Get summary statistics for a metric"""
+        with self.lock:
+            if metric_name not in self.metrics:
+                return None
+            
+            current_time = time.time()
+            cutoff_time = current_time - time_window
+            
+            # Filter recent samples
+            recent_samples = [
+                sample for sample in self.metrics[metric_name]
+                if sample['timestamp'] >= cutoff_time
+            ]
+            
+            if not recent_samples:
+                return None
+            
+            values = [sample['value'] for sample in recent_samples]
+            
+            return {
+                'count': len(values),
+                'min': min(values),
+                'max': max(values),
+                'avg': sum(values) / len(values),
+                'latest': values[-1] if values else None
+            }
+    
+    def generate_performance_report(self):
+        """Generate comprehensive performance report"""
+        report = {
+            'uptime': time.time() - self.start_time,
+            'timestamp': time.time(),
+            'metrics': {}
+        }
+        
+        # Key metrics to include in report
+        key_metrics = [
+            'transfer_throughput', 'transfer_time', 'cpu_usage',
+            'memory_usage', 'disk_usage', 'active_connections'
+        ]
+        
+        for metric in key_metrics:
+            summary = self.get_metric_summary(metric)
+            if summary:
+                report['metrics'][metric] = summary
+        
+        return report
+```
+
+#### **Automated Performance Alerts**
+```python:server/performance_alerts.py
+# Automated performance alerting system
+class PerformanceAlerter:
+    def __init__(self, monitor, alert_config):
+        self.monitor = monitor
+        self.alert_config = alert_config
+        self.alert_history = defaultdict(list)
+        self.cooldown_period = 300  # 5 minutes between similar alerts
+    
+    def check_performance_thresholds(self):
+        """Check all configured performance thresholds"""
+        alerts = []
+        
+        for metric_name, config in self.alert_config.items():
+            summary = self.monitor.get_metric_summary(metric_name, config.get('window', 300))
+            
+            if not summary:
+                continue
+            
+            # Check thresholds
+            if 'max_threshold' in config and summary['avg'] > config['max_threshold']:
+                alert = self.create_alert(
+                    'threshold_exceeded',
+                    metric_name,
+                    f"{metric_name} average ({summary['avg']:.2f}) exceeds threshold ({config['max_threshold']})"
+                )
+                alerts.append(alert)
+            
+            if 'min_threshold' in config and summary['avg'] < config['min_threshold']:
+                alert = self.create_alert(
+                    'threshold_below',
+                    metric_name,
+                    f"{metric_name} average ({summary['avg']:.2f}) below threshold ({config['min_threshold']})"
+                )
+                alerts.append(alert)
+        
+        # Send alerts that aren't in cooldown
+        for alert in alerts:
+            if self.should_send_alert(alert):
+                self.send_alert(alert)
+    
+    def create_alert(self, alert_type, metric_name, message):
+        """Create performance alert"""
+        return {
+            'type': alert_type,
+            'metric': metric_name,
+            'message': message,
+            'timestamp': time.time(),
+            'severity': self.get_alert_severity(alert_type, metric_name)
+        }
+    
+    def should_send_alert(self, alert):
+        """Check if alert should be sent (not in cooldown)"""
+        alert_key = f"{alert['type']}_{alert['metric']}"
+        recent_alerts = [
+            a for a in self.alert_history[alert_key]
+            if time.time() - a['timestamp'] < self.cooldown_period
+        ]
+        
+        return len(recent_alerts) == 0
+    
+    def send_alert(self, alert):
+        """Send performance alert"""
+        # Log alert
+        logging.warning(f"PERFORMANCE ALERT: {alert['message']}")
+        
+        # Record in history
+        alert_key = f"{alert['type']}_{alert['metric']}"
+        self.alert_history[alert_key].append(alert)
+        
+        # Could also send email, webhook, etc.
+        if alert['severity'] == 'critical':
+            self.send_critical_alert_notification(alert)
+```
+
+---
+
+## Deployment & Infrastructure
+
+### 🐳 **Containerization**
+
+#### **Docker Configuration**
+```dockerfile:docker/server/Dockerfile
+# Server Docker configuration
+FROM python:3.11-slim
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements and install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY server/ ./server/
+COPY docs/ ./docs/
+
+# Create necessary directories
+RUN mkdir -p /app/data /app/logs /app/uploads
+
+# Set environment variables
+ENV PYTHONPATH=/app
+ENV BACKUP_DATA_DIR=/app/data
+ENV BACKUP_LOG_DIR=/app/logs
+ENV BACKUP_UPLOAD_DIR=/app/uploads
+
+# Expose port
+EXPOSE 1256
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import socket; socket.create_connection(('localhost', 1256), timeout=5)"
+
+# Run application
+CMD ["python", "-m", "server.main"]
+```
+
+```dockerfile:docker/client/Dockerfile
+# Client Docker configuration (for testing/CI)
+FROM ubuntu:22.04
+
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    cmake \
+    libboost-all-dev \
+    libcrypto++-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /app
+
+# Copy source code
