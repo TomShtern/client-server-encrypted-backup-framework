@@ -1,0 +1,127 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Clean Build",
+            "type": "shell",
+            "command": "cmd",
+            "args": [
+                "/c",
+                "del /q client\\EncryptedBackupClient.exe 2>nul & del /q build\\client\\*.obj 2>nul & del /q build\\crypto++\\*.obj 2>nul & echo Cleaned build artifacts"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            }
+        },
+        {
+            "label": "Build with MSVC",
+            "type": "shell",
+            "command": "cmd",
+            "args": [
+                "/c",
+                "build.bat"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": ["$msCompile"],
+            "detail": "Build using our custom build.bat script with MSVC"
+        },
+        {
+            "label": "Run Client",
+            "type": "shell",
+            "command": "cmd",
+            "args": [
+                "/c",
+                "cd client && .\\EncryptedBackupClient.exe"
+            ],
+            "group": "test",
+            "dependsOn": "Build with MSVC",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": ["$msCompile"],
+            "detail": "Run the client application"        },
+        {
+            "label": "Build and Run Client",
+            "type": "shell",
+            "command": "cmd",
+            "args": [
+                "/c",
+                "build.bat && cd client && .\\EncryptedBackupClient.exe"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": ["$msCompile"],            "detail": "Build and run the client application"
+        },
+        {
+            "label": "Test Simple Console",
+            "type": "shell",
+            "command": "cmd",
+            "args": [
+                "/c",
+                "run_simple_test.bat"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "new"
+            },
+            "detail": "Test simple console output"
+        },
+        {
+            "label": "Start Server",
+            "type": "shell",
+            "command": "python",
+            "args": [
+                "server/server.py"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "new"
+            },
+            "isBackground": true,
+            "detail": "Start the Python backup server"
+        },
+        {
+            "label": "Start Test Client",
+            "type": "shell",
+            "command": "python",
+            "args": [
+                "test_client.py"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "new"
+            },
+            "detail": "Run the Python test client"
+        }
+    ]
+}

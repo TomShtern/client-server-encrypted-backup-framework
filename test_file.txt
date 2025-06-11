@@ -1,0 +1,16 @@
+This is a test file for the Encrypted Backup Framework.
+
+It contains some sample text to test the file transfer functionality.
+The system should be able to:
+1. Read this file
+2. Calculate its CRC checksum  
+3. Encrypt it using AES-256-CBC
+4. Transfer it to the server
+5. Decrypt it on the server side
+6. Verify the CRC matches
+
+This tests the complete end-to-end workflow.
+
+Testing special characters: åæø ñ ü ß €
+Testing numbers: 123456789
+Testing symbols: !@#$%^&*()_+-=[]{}|;:,.<>?

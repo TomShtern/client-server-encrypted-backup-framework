@@ -1,0 +1,85 @@
+@echo off
+REM Project root build script (no CMake)
+set "CL_PATH=C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\bin\Hostx64\x64\cl.exe"
+set "LIB_PATH=C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\lib\x64"
+set "INCLUDE_PATH=C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.44.35207\include"
+set "WIN_SDK_LIB=C:\Program Files (x86)\Windows Kits\10\lib\10.0.22621.0\um\x64"
+set "WIN_SDK_UCRT=C:\Program Files (x86)\Windows Kits\10\lib\10.0.22621.0\ucrt\x64"
+set "WIN_SDK_INCLUDE=C:\Program Files (x86)\Windows Kits\10\Include\10.0.22621.0"
+
+REM Set environment variables for the compiler
+set "LIB=%LIB_PATH%;%WIN_SDK_LIB%;%WIN_SDK_UCRT%;%LIB%"
+set "INCLUDE=%INCLUDE_PATH%;%WIN_SDK_INCLUDE%\um;%WIN_SDK_INCLUDE%\shared;%WIN_SDK_INCLUDE%\ucrt;%INCLUDE%"
+
+REM Create build directories if they don't exist
+if not exist "build" mkdir "build"
+if not exist "build\client" mkdir "build\client"
+if not exist "build\crypto++" mkdir "build\crypto++"
+
+REM 1) Compile client sources to build\client\
+echo Compiling client sources...
+"%CL_PATH%" /EHsc /D_WIN32_WINNT=0x0601 /std:c++17 /c /I"include\client" /I"include\wrappers" /I"third_party\crypto++" /Fo:"build\client\\" ^
+src\client\*.cpp
+
+REM 2) Compile required Crypto++ sources to build\crypto++\
+echo Compiling Crypto++ sources...
+REM 2) Compile required Crypto++ sources to build\crypto++\
+echo Compiling Crypto++ sources...
+"%CL_PATH%" /EHsc /D_WIN32_WINNT=0x0601 /std:c++17 /DCRYPTOPP_DISABLE_ASM=1 /c /I"third_party\crypto++" /Fo:"build\crypto++\\" ^
+third_party\crypto++\rijndael.cpp ^
+third_party\crypto++\base64.cpp ^
+third_party\crypto++\filters.cpp ^
+crypto++\osrng.cpp ^
+crypto++\modes.cpp ^
+crypto++\rsa.cpp ^
+crypto++\files.cpp ^
+crypto++\hex.cpp ^
+crypto++\sha.cpp ^
+crypto++\cryptlib.cpp ^
+crypto++\integer.cpp ^
+crypto++\nbtheory.cpp ^
+crypto++\algparam.cpp ^
+crypto++\default.cpp ^
+crypto++\pubkey.cpp ^
+crypto++\misc.cpp ^
+crypto++\queue.cpp ^
+crypto++\cpu.cpp ^
+crypto++\allocate.cpp ^
+crypto++\randpool.cpp ^
+crypto++\asn.cpp ^
+crypto++\gfpcrypt.cpp ^
+crypto++\eccrypto.cpp ^
+crypto++\ecp.cpp ^
+crypto++\ec2n.cpp ^
+crypto++\iterhash.cpp ^
+crypto++\basecode.cpp ^
+crypto++\oaep.cpp ^
+crypto++\algebra.cpp ^
+crypto++\polynomi.cpp ^
+crypto++\gf2n.cpp ^
+crypto++\hmac.cpp ^
+crypto++\des.cpp ^
+crypto++\fips140.cpp ^
+crypto++\pkcspad.cpp ^
+crypto++\hrtimer.cpp ^
+crypto++\mqueue.cpp ^
+crypto++\rdtables.cpp ^
+crypto++\primetab.cpp ^
+crypto++\dessp.cpp ^
+crypto++\strciphr.cpp ^
+crypto++\rdrand.cpp ^
+crypto++\rng.cpp ^
+crypto++\darn.cpp ^
+crypto++\simple.cpp ^
+crypto++\rijndael_simd.cpp ^
+crypto++\algebra_instantiations.cpp ^
+crypto++\abstract_implementations.cpp
+
+REM 3) Link all object files to create the executable
+echo Linking executable...
+"%CL_PATH%" /EHsc /D_WIN32_WINNT=0x0601 /std:c++17 /Fe:"client\EncryptedBackupClient.exe" ^
+build\client\*.obj ^
+build\crypto++\*.obj ^
+ws2_32.lib advapi32.lib user32.lib gdi32.lib shell32.lib
+
+echo Build complete. Executable at client\EncryptedBackupClient.exe

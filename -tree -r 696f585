@@ -1,0 +1,44 @@
+[33m696f585[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32m11_06_2025_branch[m[33m, [m[1;32mtest_push_branch[m[33m, [m[1;32mfeature/secondary-push-test[m[33m)[m HEAD@{0}: commit: br
+[33m20465a0[m HEAD@{1}: commit: comm
+[33mbd04211[m HEAD@{2}: Initial commit on 11_06_2025_branch: push all project files and changes from current state.
+[33m333f05b[m[33m ([m[1;31morigin/09.062025-current-project-after-cleanup[m[33m, [m[1;32m09.062025-current-project-after-cleanup[m[33m)[m HEAD@{3}: checkout: moving from 09.062025-current-project-after-cleanup to 11_06_2025_branch
+[33m333f05b[m[33m ([m[1;31morigin/09.062025-current-project-after-cleanup[m[33m, [m[1;32m09.062025-current-project-after-cleanup[m[33m)[m HEAD@{4}: checkout: moving from step-7-performance-benchmarking-complete to 09.062025-current-project-after-cleanup
+[33mcfa3e21[m[33m ([m[1;31morigin/step-7-performance-benchmarking-complete[m[33m, [m[1;32mstep-7-performance-benchmarking-complete[m[33m)[m HEAD@{5}: checkout: moving from 09.062025-current-project-after-cleanup to step-7-performance-benchmarking-complete
+[33m333f05b[m[33m ([m[1;31morigin/09.062025-current-project-after-cleanup[m[33m, [m[1;32m09.062025-current-project-after-cleanup[m[33m)[m HEAD@{6}: checkout: moving from main to 09.062025-current-project-after-cleanup
+[33m4320a30[m[33m ([m[1;32mmain[m[33m)[m HEAD@{7}: Save recent documentation before switching to implemented branch
+[33me5ac3ca[m HEAD@{8}: commit: after name change
+[33m61e4bf4[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{9}: checkout: moving from 09.062025-current-project-after-cleanup to main
+[33m333f05b[m[33m ([m[1;31morigin/09.062025-current-project-after-cleanup[m[33m, [m[1;32m09.062025-current-project-after-cleanup[m[33m)[m HEAD@{10}: commit: suggestions
+[33m994d7cc[m HEAD@{11}: commit: suggestions
+[33m241fa3e[m HEAD@{12}: commit: new suggestions
+[33m313e031[m HEAD@{13}: commit: fix a bit of functions
+[33mfa4cedc[m HEAD@{14}: Project cleanup and reorganization - June 9, 2025
+[33mcfa3e21[m[33m ([m[1;31morigin/step-7-performance-benchmarking-complete[m[33m, [m[1;32mstep-7-performance-benchmarking-complete[m[33m)[m HEAD@{15}: checkout: moving from step-7-performance-benchmarking-complete to 09.062025-current-project-after-cleanup
+[33mcfa3e21[m[33m ([m[1;31morigin/step-7-performance-benchmarking-complete[m[33m, [m[1;32mstep-7-performance-benchmarking-complete[m[33m)[m HEAD@{16}: commit: a
+[33m7f99089[m HEAD@{17}: commit: Update project status to reflect Step 7 completion - Performance benchmarking and 99.9% system functionality achieved
+[33maa09c60[m HEAD@{18}: commit: Add comprehensive next steps roadmap - ULTRATHINK analysis of future development priorities and impressive features
+[33m21fa25c[m[33m ([m[1;32mrsa-fix-implementation[m[33m)[m HEAD@{19}: checkout: moving from rsa-fix-implementation to step-7-performance-benchmarking-complete
+[33m21fa25c[m[33m ([m[1;32mrsa-fix-implementation[m[33m)[m HEAD@{20}: commit: Step 7 Complete: Performance Benchmarking & 99.9% System Functionality
+[33m67bf83d[m[33m ([m[1;31morigin/rsa-fix-implementation[m[33m)[m HEAD@{21}: commit: docs: Add deployment summary and final documentation
+[33m1b18d23[m HEAD@{22}: commit: feat: Implement RSA fix with simple XOR-based encryption
+[33me268f53[m[33m ([m[1;31morigin/gui-linker-fix[m[33m, [m[1;32mgui-linker-fix[m[33m)[m HEAD@{23}: checkout: moving from gui-linker-fix to rsa-fix-implementation
+[33me268f53[m[33m ([m[1;31morigin/gui-linker-fix[m[33m, [m[1;32mgui-linker-fix[m[33m)[m HEAD@{24}: commit: Fix: Add gdi32.lib and shell32.lib for Windows GUI, update docs, use clientGUIV2
+[33me2a17ba[m[33m ([m[1;31morigin/vscode-sync-2025[m[33m, [m[1;32mvscode-sync-2025[m[33m)[m HEAD@{25}: checkout: moving from vscode-sync-2025 to gui-linker-fix
+[33me2a17ba[m[33m ([m[1;31morigin/vscode-sync-2025[m[33m, [m[1;32mvscode-sync-2025[m[33m)[m HEAD@{26}: commit: Sync local VS Code state to new branch vscode-sync-2025
+[33m3642cb2[m[33m ([m[1;32m08-50_02-06-2025[m[33m)[m HEAD@{27}: checkout: moving from 08-50_02-06-2025 to vscode-sync-2025
+[33m3642cb2[m[33m ([m[1;32m08-50_02-06-2025[m[33m)[m HEAD@{28}: commit: c
+[33m23cde3a[m[33m ([m[1;31morigin/08-50_02-06-2025[m[33m)[m HEAD@{29}: commit: 04.06.2025
+[33m47377d4[m HEAD@{30}: commit: fixed
+[33m7d3f5cf[m HEAD@{31}: commit: workflows
+[33meb35e70[m HEAD@{32}: commit: commit small changes
+[33m35811eb[m HEAD@{33}: commit: Update server log for branch 08-50_02-06-2025
+[33m478e68a[m[33m ([m[1;32mcleanup-project[m[33m)[m HEAD@{34}: checkout: moving from cleanup-project to 08-50_02-06-2025
+[33m478e68a[m[33m ([m[1;32mcleanup-project[m[33m)[m HEAD@{35}: commit: Save current work before creating new branch 08:50 02.06.2025
+[33md83c197[m[33m ([m[1;31morigin/cleanup-project[m[33m)[m HEAD@{36}: commit: chore: import cleaned project structure
+[33me1aea74[m[33m ([m[1;31morigin/branch-2[m[33m, [m[1;32mbranch-2[m[33m)[m HEAD@{37}: checkout: moving from branch-2 to cleanup-project
+[33me1aea74[m[33m ([m[1;31morigin/branch-2[m[33m, [m[1;32mbranch-2[m[33m)[m HEAD@{38}: commit: added stuff, work in progress.....
+[33mc29e601[m HEAD@{39}: commit: client first commit.
+[33m93490af[m HEAD@{40}: commit: commit message? maybe
+[33m61e4bf4[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{41}: checkout: moving from main to branch-2
+[33m61e4bf4[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{42}: Branch: renamed refs/heads/master to refs/heads/main
+[33m61e4bf4[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{44}: commit (initial): Initial commit: project structure and placeholders
