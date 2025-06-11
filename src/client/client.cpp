@@ -31,43 +31,20 @@
 
 // Required wrapper includes (provided by project)
 #include "../../include/client/cksum.h"
-#include "../../include/wrappers/AESWrapper.h"
+#include "../../include/wrappers/AESWrapper.h" // AESWrapper.h now includes MyCrypto namespace
 #include "../../include/wrappers/Base64Wrapper.h"
-#include "../../include/wrappers/RSAWrapper.h"
+#include "../../include/wrappers/RSAWrapper.h" // RSAWrapper.h now includes MyCrypto namespace
+#include "../../include/client/protocol.h" // Include for new protocol definitions
 
 // Optional GUI support
 #ifdef _WIN32
 #include "../../include/client/ClientGUI.h"
 #endif
 
-// Protocol constants
-constexpr uint8_t CLIENT_VERSION = 3;
-constexpr uint8_t SERVER_VERSION = 3;
+// Protocol constants moved to protocol.h
 
-// Request codes
-constexpr uint16_t REQ_REGISTER = 1025;
-constexpr uint16_t REQ_SEND_PUBLIC_KEY = 1026;
-constexpr uint16_t REQ_RECONNECT = 1027;
-constexpr uint16_t REQ_SEND_FILE = 1028;
-constexpr uint16_t REQ_CRC_OK = 1029;
-constexpr uint16_t REQ_CRC_RETRY = 1030;
-constexpr uint16_t REQ_CRC_ABORT = 1031;
-
-// Response codes
-constexpr uint16_t RESP_REGISTER_OK = 1600;
-constexpr uint16_t RESP_REGISTER_FAIL = 1601;
-constexpr uint16_t RESP_PUBKEY_AES_SENT = 1602;
-constexpr uint16_t RESP_FILE_OK = 1603;
-constexpr uint16_t RESP_ACK = 1604;
-constexpr uint16_t RESP_RECONNECT_AES_SENT = 1605;
-constexpr uint16_t RESP_RECONNECT_FAIL = 1606;
-constexpr uint16_t RESP_ERROR = 1607;
-
-// Size constants
-constexpr size_t CLIENT_ID_SIZE = 16;
-constexpr size_t MAX_NAME_SIZE = 255;
-constexpr size_t RSA_KEY_SIZE = 162; // Updated for 1024-bit keys in DER format
-constexpr size_t AES_KEY_SIZE = 32;
+// Size constants not strictly part of protocol structure (e.g. buffer sizes)
+// or client-specific logic can remain if not in protocol.h
 constexpr size_t MAX_PACKET_SIZE = 1024 * 1024;  // 1MB per packet
 constexpr size_t OPTIMAL_BUFFER_SIZE = 64 * 1024; // 64KB for file reading
 
@@ -77,21 +54,7 @@ constexpr int SOCKET_TIMEOUT_MS = 30000; // 30 seconds
 constexpr int RECONNECT_DELAY_MS = 5000; // 5 seconds between reconnect attempts
 constexpr int KEEPALIVE_INTERVAL = 60;   // 60 seconds
 
-// Protocol structures
-#pragma pack(push, 1)
-struct RequestHeader {
-    uint8_t client_id[16];
-    uint8_t version;
-    uint16_t code;
-    uint32_t payload_size;
-};
-
-struct ResponseHeader {
-    uint8_t version;
-    uint16_t code;
-    uint32_t payload_size;
-};
-#pragma pack(pop)
+// Protocol structures moved to protocol.h
 
 // Transfer statistics structure
 struct TransferStats {
@@ -166,12 +129,13 @@ private:
     std::atomic<bool> keepAliveEnabled;
     
     // Client info
-    std::array<uint8_t, CLIENT_ID_SIZE> clientID;
+    std::array<uint8_t, ClientProtocol::CLIENT_ID_SIZE> clientID;
     std::string username;
     std::string filepath;
     
     // Crypto
-    RSAPrivateWrapper* rsaPrivate;
+    MyCrypto::RSAPrivateWrapper* rsaPrivate; // RSAWrapper is in MyCrypto namespace
+    MyCrypto::RSAPrivateWrapper* rsaPrivate; // RSAWrapper is in MyCrypto namespace
     std::string aesKey;
     
     // Retry counters
@@ -214,7 +178,7 @@ private:
     bool connectToServer();
     void closeConnection();
     bool sendRequest(uint16_t code, const std::vector<uint8_t>& payload = {});
-    bool receiveResponse(ResponseHeader& header, std::vector<uint8_t>& payload);
+    bool receiveResponse(ClientProtocol::ResponseHeader& header, std::vector<uint8_t>& payload); // Use ClientProtocol::ResponseHeader
     bool testConnection();
     void enableKeepAlive();
     
@@ -537,7 +501,7 @@ bool Client::loadMeInfo() {
     }
     
     auto bytes = hexToBytes(line);
-    if (bytes.size() != CLIENT_ID_SIZE) {
+    if (bytes.size() != ClientProtocol::CLIENT_ID_SIZE) {
         return false;
     }
     std::copy(bytes.begin(), bytes.end(), clientID.begin());
@@ -557,7 +521,7 @@ bool Client::saveMeInfo() {
     }
     
     file << username << "\n";
-    std::string hexId = bytesToHex(clientID.data(), CLIENT_ID_SIZE);
+    std::string hexId = bytesToHex(clientID.data(), ClientProtocol::CLIENT_ID_SIZE);
     file << hexId << "\n";
     
     if (rsaPrivate) {
@@ -580,7 +544,7 @@ bool Client::loadPrivateKey() {
         
         try {
             // priv.key contains binary DER data, use the char* constructor
-            rsaPrivate = new RSAPrivateWrapper(keyData.c_str(), keyData.length());
+            rsaPrivate = new MyCrypto::RSAPrivateWrapper(keyData.c_str(), keyData.length());
             displayStatus("Private key loaded", true, "From priv.key");
             return true;
         } catch (const std::exception& e) {
@@ -605,7 +569,8 @@ bool Client::loadPrivateKey() {
     }
       try {
         std::string decoded = Base64Wrapper::decode(line);
-        rsaPrivate = new RSAPrivateWrapper(decoded);
+        // Use the constructor that takes (const char* key, size_t keylen)
+        rsaPrivate = new MyCrypto::RSAPrivateWrapper(decoded.data(), decoded.length());
         
         // Save to priv.key
         std::ofstream privKey("priv.key", std::ios::binary);
@@ -758,29 +723,36 @@ bool Client::sendRequest(uint16_t code, const std::vector<uint8_t>& payload) {
     try {
         // CRITICAL FIX: Manually construct header bytes in little-endian format
         // The Python server expects little-endian format explicitly
-        std::vector<uint8_t> headerBytes(23);  // RequestHeader is 23 bytes total
+        std::vector<uint8_t> headerBytes(sizeof(ClientProtocol::RequestHeader)); // Use sizeof struct
 
         // Client ID (16 bytes) - copy as-is
-        std::copy(clientID.begin(), clientID.end(), headerBytes.begin());
+        std::copy(clientID.begin(), clientID.end(), headerBytes.begin()); // clientID is already sized with ClientProtocol::CLIENT_ID_SIZE
 
         // Version (1 byte) - byte 16
-        headerBytes[16] = CLIENT_VERSION;
+        headerBytes[ClientProtocol::CLIENT_ID_SIZE] = ClientProtocol::CLIENT_VERSION; // Use constants
 
         // Code (2 bytes, little-endian) - bytes 17-18
-        headerBytes[17] = code & 0xFF;        // Low byte
-        headerBytes[18] = (code >> 8) & 0xFF; // High byte
+        // Assuming RequestHeader struct layout is known for manual packing:
+        // offsetof(RequestHeader, code) would be ideal if RequestHeader could be used directly for this.
+        // For now, using offsets based on fixed sizes.
+        headerBytes[ClientProtocol::CLIENT_ID_SIZE + 1] = code & 0xFF;        // Low byte
+        // Assuming RequestHeader struct layout is known for manual packing:
+        // offsetof(RequestHeader, code) would be ideal if RequestHeader could be used directly for this.
+        // For now, using offsets based on fixed sizes.
+        headerBytes[ClientProtocol::CLIENT_ID_SIZE + 1] = code & 0xFF;        // Low byte
+        headerBytes[ClientProtocol::CLIENT_ID_SIZE + 2] = (code >> 8) & 0xFF; // High byte
 
         // Payload size (4 bytes, little-endian) - bytes 19-22
         uint32_t payload_size_val = static_cast<uint32_t>(payload.size());
-        headerBytes[19] = payload_size_val & 0xFF;         // Byte 0
-        headerBytes[20] = (payload_size_val >> 8) & 0xFF;  // Byte 1
-        headerBytes[21] = (payload_size_val >> 16) & 0xFF; // Byte 2
-        headerBytes[22] = (payload_size_val >> 24) & 0xFF; // Byte 3
+        headerBytes[ClientProtocol::CLIENT_ID_SIZE + 3] = payload_size_val & 0xFF;         // Byte 0
+        headerBytes[ClientProtocol::CLIENT_ID_SIZE + 4] = (payload_size_val >> 8) & 0xFF;  // Byte 1
+        headerBytes[ClientProtocol::CLIENT_ID_SIZE + 5] = (payload_size_val >> 16) & 0xFF; // Byte 2
+        headerBytes[ClientProtocol::CLIENT_ID_SIZE + 6] = (payload_size_val >> 24) & 0xFF; // Byte 3
         
         // Debug: show header values for important requests
-        if (code == REQ_REGISTER || code == REQ_RECONNECT || code == REQ_SEND_PUBLIC_KEY) {
+        if (code == ClientProtocol::REQ_REGISTER || code == ClientProtocol::REQ_RECONNECT || code == ClientProtocol::REQ_SEND_PUBLIC_KEY) {
             displayStatus("Debug: Request header", true,
-                         "Version=" + std::to_string(CLIENT_VERSION) +
+                         "Version=" + std::to_string(ClientProtocol::CLIENT_VERSION) +
                          ", Code=" + std::to_string(code) +
                          ", PayloadSize=" + std::to_string(payload_size_val));
 
@@ -813,7 +785,7 @@ bool Client::sendRequest(uint16_t code, const std::vector<uint8_t>& payload) {
         ioContext.poll();
 
         // Debug: confirm data was sent for important requests
-        if (code == REQ_REGISTER || code == REQ_RECONNECT || code == REQ_SEND_PUBLIC_KEY) {
+        if (code == ClientProtocol::REQ_REGISTER || code == ClientProtocol::REQ_RECONNECT || code == ClientProtocol::REQ_SEND_PUBLIC_KEY) {
             displayStatus("Debug: Data sent", true,
                          "Header: " + std::to_string(headerBytesSent) + " bytes, " +
                          "Payload: " + std::to_string(payload.size()) + " bytes");
@@ -828,7 +800,7 @@ bool Client::sendRequest(uint16_t code, const std::vector<uint8_t>& payload) {
 }
 
 // Receive response from server
-bool Client::receiveResponse(ResponseHeader& header, std::vector<uint8_t>& payload) {
+bool Client::receiveResponse(ClientProtocol::ResponseHeader& header, std::vector<uint8_t>& payload) { // Use ClientProtocol::ResponseHeader
     if (!connected || !socket || !socket->is_open()) {
         displayError("Not connected to server", ErrorType::NETWORK);
         return false;
@@ -836,16 +808,16 @@ bool Client::receiveResponse(ResponseHeader& header, std::vector<uint8_t>& paylo
     
     try {
         // Receive header
-        boost::asio::read(*socket, boost::asio::buffer(&header, sizeof(header)));
+        boost::asio::read(*socket, boost::asio::buffer(&header, sizeof(ClientProtocol::ResponseHeader))); // Use sizeof struct
         
         // Check version
-        if (header.version != SERVER_VERSION) {
+        if (header.version != ClientProtocol::SERVER_VERSION) {
             displayError("Invalid server version: " + std::to_string(header.version), ErrorType::PROTOCOL);
             return false;
         }
         
         // Check for error response
-        if (header.code == RESP_ERROR) {
+        if (header.code == ClientProtocol::RESP_ERROR) {
             displayError("Server returned general error", ErrorType::SERVER_ERROR);
             return false;
         }
@@ -876,7 +848,7 @@ bool Client::performRegistration() {
     }
     
     // Prepare registration payload
-    std::vector<uint8_t> payload(MAX_NAME_SIZE, 0);
+    std::vector<uint8_t> payload(ClientProtocol::MAX_NAME_SIZE, 0);
     std::copy(username.begin(), username.end(), payload.begin());
       displayStatus("Sending registration", true, "Username: " + username);
     
@@ -886,23 +858,23 @@ bool Client::performRegistration() {
                  " bytes, Username='" + username + "'");
     
     // Send registration request
-    if (!sendRequest(REQ_REGISTER, payload)) {
+    if (!sendRequest(ClientProtocol::REQ_REGISTER, payload)) {
         return false;
     }
     
     // Receive response
-    ResponseHeader header;
+    ClientProtocol::ResponseHeader header; // Use ClientProtocol::ResponseHeader
     std::vector<uint8_t> responsePayload;
     if (!receiveResponse(header, responsePayload)) {
         return false;
     }
     
-    if (header.code == RESP_REGISTER_FAIL) {
+    if (header.code == ClientProtocol::RESP_REGISTER_FAIL) {
         displayError("Registration failed: Username already exists", ErrorType::AUTHENTICATION);
         return false;
     }
     
-    if (header.code != RESP_REGISTER_OK || responsePayload.size() != CLIENT_ID_SIZE) {
+    if (header.code != ClientProtocol::RESP_REGISTER_OK || responsePayload.size() != ClientProtocol::CLIENT_ID_SIZE) {
         displayError("Invalid registration response", ErrorType::PROTOCOL);
         return false;
     }
@@ -923,34 +895,34 @@ bool Client::performRegistration() {
 // Perform reconnection
 bool Client::performReconnection() {
     // Prepare reconnection payload
-    std::vector<uint8_t> payload(MAX_NAME_SIZE, 0);
+    std::vector<uint8_t> payload(ClientProtocol::MAX_NAME_SIZE, 0);
     std::copy(username.begin(), username.end(), payload.begin());
     
     displayStatus("Sending reconnection", true, "Client ID: " + bytesToHex(clientID.data(), 8) + "...");
     
     // Send reconnection request
-    if (!sendRequest(REQ_RECONNECT, payload)) {
+    if (!sendRequest(ClientProtocol::REQ_RECONNECT, payload)) {
         return false;
     }
     
     // Receive response
-    ResponseHeader header;
+    ClientProtocol::ResponseHeader header; // Use ClientProtocol::ResponseHeader
     std::vector<uint8_t> responsePayload;
     if (!receiveResponse(header, responsePayload)) {
         return false;
     }
     
-    if (header.code == RESP_RECONNECT_FAIL) {
+    if (header.code == ClientProtocol::RESP_RECONNECT_FAIL) {
         return false;
     }
     
-    if (header.code != RESP_RECONNECT_AES_SENT || responsePayload.size() <= CLIENT_ID_SIZE) {
+    if (header.code != ClientProtocol::RESP_RECONNECT_AES_SENT || responsePayload.size() <= ClientProtocol::CLIENT_ID_SIZE) {
         displayError("Invalid reconnection response", ErrorType::PROTOCOL);
         return false;
     }
     
     // Extract encrypted AES key
-    std::vector<uint8_t> encryptedKey(responsePayload.begin() + CLIENT_ID_SIZE, responsePayload.end());
+    std::vector<uint8_t> encryptedKey(responsePayload.begin() + ClientProtocol::CLIENT_ID_SIZE, responsePayload.end());
     
     displayStatus("Decrypting AES key", true, "Using stored RSA private key");
     
@@ -971,37 +943,37 @@ bool Client::sendPublicKey() {
     }
     
     // Prepare payload
-    std::vector<uint8_t> payload(MAX_NAME_SIZE + RSA_KEY_SIZE, 0);
+    std::vector<uint8_t> payload(ClientProtocol::MAX_NAME_SIZE + ClientProtocol::RSA_PUBLIC_KEY_DER_SIZE, 0);
     
     // Add username
     std::copy(username.begin(), username.end(), payload.begin());
     
     // Add public key
-    char publicKeyBuffer[RSAPublicWrapper::KEYSIZE];
-    rsaPrivate->getPublicKey(publicKeyBuffer, RSAPublicWrapper::KEYSIZE);
-    std::copy(publicKeyBuffer, publicKeyBuffer + RSAPublicWrapper::KEYSIZE, payload.begin() + MAX_NAME_SIZE);
+    char publicKeyBuffer[MyCrypto::RSAPublicWrapper::KEYSIZE]; // RSAPublicWrapper is in MyCrypto
+    rsaPrivate->getPublicKey(publicKeyBuffer, MyCrypto::RSAPublicWrapper::KEYSIZE); // RSAPublicWrapper is in MyCrypto
+    std::copy(publicKeyBuffer, publicKeyBuffer + MyCrypto::RSAPublicWrapper::KEYSIZE, payload.begin() + ClientProtocol::MAX_NAME_SIZE);
     
     displayStatus("Sending public key", true, "RSA 1024-bit public key");
     
     // Send request
-    if (!sendRequest(REQ_SEND_PUBLIC_KEY, payload)) {
+    if (!sendRequest(ClientProtocol::REQ_SEND_PUBLIC_KEY, payload)) {
         return false;
     }
     
     // Receive response
-    ResponseHeader header;
+    ClientProtocol::ResponseHeader header; // Use ClientProtocol::ResponseHeader
     std::vector<uint8_t> responsePayload;
     if (!receiveResponse(header, responsePayload)) {
         return false;
     }
     
-    if (header.code != RESP_PUBKEY_AES_SENT || responsePayload.size() <= CLIENT_ID_SIZE) {
+    if (header.code != ClientProtocol::RESP_PUBKEY_AES_SENT || responsePayload.size() <= ClientProtocol::CLIENT_ID_SIZE) {
         displayError("Invalid public key response", ErrorType::PROTOCOL);
         return false;
     }
     
     // Extract encrypted AES key
-    std::vector<uint8_t> encryptedKey(responsePayload.begin() + CLIENT_ID_SIZE, responsePayload.end());
+    std::vector<uint8_t> encryptedKey(responsePayload.begin() + ClientProtocol::CLIENT_ID_SIZE, responsePayload.end());
     
     displayStatus("Received AES key", true, "Encrypted with RSA");
     
@@ -1076,13 +1048,24 @@ bool Client::transferFile() {
     displayStatus("Waiting for server", true, "Server calculating CRC...");
     
     // Receive CRC response
-    ResponseHeader header;
+    ClientProtocol::ResponseHeader header; // Use ClientProtocol::ResponseHeader
     std::vector<uint8_t> responsePayload;
     if (!receiveResponse(header, responsePayload)) {
         return false;
     }
     
-    if (header.code != RESP_FILE_OK || responsePayload.size() < 279) {
+    if (header.code != ClientProtocol::RESP_FILE_OK || responsePayload.size() < (ClientProtocol::CLIENT_ID_SIZE + 4 + ClientProtocol::MAX_NAME_SIZE + 4)) { // clientID + contentSize + OrigFileSize + name + cksum
+        // Original check was responsePayload.size() < 279 which is CLIENT_ID_SIZE(16) + contentSize(4) + filename(255) + CRC(4) = 279.
+        // This logic is a bit fragile if struct changes. A better way would be to check specific offset for CRC.
+        // For now, use a calculation based on known struct parts before CRC:
+        // ClientID (16) + ContentSize (4) + OrigFileSize (4) + FileName (255) + Cksum (4) = 283.
+        // The previous calculation was ContentSize (4) + FileName (255) + ClientID (16) + Cksum (4) = 279
+        // The server sends: clientID, content_size, filename, cksum. Total size is 16+4+255+4 = 279.
+        // Let's verify the order in server for payload of RESP_FILE_OK.
+        // Assuming the server sends ClientID, ContentSize, FileName, Checksum.
+        // The file info payload starts after client_id, so we need at least CLIENT_ID_SIZE + size_of_rest
+        // The problem description indicates the CRC is at offset 275 relative to start of payload.
+        // So payload_size should be at least 275+4 = 279.
         displayError("Invalid file transfer response", ErrorType::PROTOCOL);
         return false;
     }
@@ -1116,14 +1099,14 @@ bool Client::sendFilePacket(const std::string& filename, const std::string& encr
                    reinterpret_cast<uint8_t*>(&totalPackets) + 2);
     
     // Add filename (255 bytes)
-    std::vector<uint8_t> filenameBytes(255, 0);
+    std::vector<uint8_t> filenameBytes(ClientProtocol::MAX_NAME_SIZE, 0);
     std::copy(filename.begin(), filename.end(), filenameBytes.begin());
     payload.insert(payload.end(), filenameBytes.begin(), filenameBytes.end());
     
     // Add encrypted data
     payload.insert(payload.end(), encryptedData.begin(), encryptedData.end());
     
-    return sendRequest(REQ_SEND_FILE, payload);
+    return sendRequest(ClientProtocol::REQ_SEND_FILE, payload);
 }
 
 // Verify CRC
@@ -1136,15 +1119,15 @@ bool Client::verifyCRC(uint32_t serverCRC, const std::vector<uint8_t>& originalD
                   ", Client: " + std::to_string(clientCRC));
     
     // Prepare filename payload
-    std::vector<uint8_t> payload(255, 0);
+    std::vector<uint8_t> payload(ClientProtocol::MAX_NAME_SIZE, 0);
     std::copy(filename.begin(), filename.end(), payload.begin());
     
     if (serverCRC == clientCRC) {
         displayStatus("CRC verification", true, "✓ Checksums match - file integrity confirmed");
-        sendRequest(REQ_CRC_OK, payload);
+        sendRequest(ClientProtocol::REQ_CRC_OK, payload);
         
         // Wait for ACK
-        ResponseHeader header;
+        ClientProtocol::ResponseHeader header; // Use ClientProtocol::ResponseHeader
         std::vector<uint8_t> responsePayload;
         receiveResponse(header, responsePayload);
         
@@ -1153,7 +1136,7 @@ bool Client::verifyCRC(uint32_t serverCRC, const std::vector<uint8_t>& originalD
         crcRetries++;
         if (crcRetries < MAX_RETRIES) {
             displayStatus("CRC verification", false, "Mismatch - Retry " + std::to_string(crcRetries) + " of " + std::to_string(MAX_RETRIES));
-            sendRequest(REQ_CRC_RETRY, payload);
+            sendRequest(ClientProtocol::REQ_CRC_RETRY, payload);
             
             // Reset CRC retries for next attempt
             int savedRetries = crcRetries;
@@ -1170,7 +1153,7 @@ bool Client::verifyCRC(uint32_t serverCRC, const std::vector<uint8_t>& originalD
             return result;
         } else {
             displayStatus("CRC verification", false, "Maximum retries exceeded - aborting");
-            sendRequest(REQ_CRC_ABORT, payload);
+            sendRequest(ClientProtocol::REQ_CRC_ABORT, payload);
             return false;
         }
     }
@@ -1180,11 +1163,11 @@ bool Client::verifyCRC(uint32_t serverCRC, const std::vector<uint8_t>& originalD
 bool Client::generateRSAKeys() {
     try {
         auto start = std::chrono::steady_clock::now();
-        rsaPrivate = new RSAPrivateWrapper();
+        rsaPrivate = new MyCrypto::RSAPrivateWrapper(); // Use MyCrypto namespace
         auto end = std::chrono::steady_clock::now();
 
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-        displayStatus("RSA key generation", true, "512-bit keys generated in " + std::to_string(duration) + "ms");
+        displayStatus("RSA key generation", true, "1024-bit keys generated in " + std::to_string(duration) + "ms");
         return true;
     } catch (const std::exception& e) {
         displayError("Failed to generate RSA keys: " + std::string(e.what()), ErrorType::CRYPTO);
@@ -1206,8 +1189,8 @@ bool Client::decryptAESKey(const std::vector<uint8_t>& encryptedKey) {
         std::string encrypted(reinterpret_cast<const char*>(encryptedKey.data()), encryptedKey.size());
         aesKey = rsaPrivate->decrypt(encrypted);
         
-        if (aesKey.size() != AES_KEY_SIZE) {
-            displayError("Invalid AES key size: " + std::to_string(aesKey.size()) + " bytes (expected 32)", ErrorType::CRYPTO);
+        if (aesKey.size() != ClientProtocol::AES_KEY_SPEC_SIZE) { // Use new constant name
+            displayError("Invalid AES key size: " + std::to_string(aesKey.size()) + " bytes (expected " + std::to_string(ClientProtocol::AES_KEY_SPEC_SIZE) + ")", ErrorType::CRYPTO);
             return false;
         }
         
@@ -1230,13 +1213,13 @@ std::string Client::encryptFile(const std::vector<uint8_t>& data) {
         // Debug: Check actual AES key size
         displayStatus("AES key debug", true, "Key size: " + std::to_string(aesKey.size()) + " bytes");
         
-        if (aesKey.size() != 32) {
-            displayError("Invalid AES key size: " + std::to_string(aesKey.size()) + " bytes (expected 32)", ErrorType::CRYPTO);
+        if (aesKey.size() != ClientProtocol::AES_KEY_SPEC_SIZE) { // Use new constant name
+            displayError("Invalid AES key size: " + std::to_string(aesKey.size()) + " bytes (expected " + std::to_string(ClientProtocol::AES_KEY_SPEC_SIZE) + ")", ErrorType::CRYPTO);
             return "";
         }
         
         // Use 32-byte key and static IV of all zeros for protocol compliance
-        AESWrapper aes(reinterpret_cast<const unsigned char*>(aesKey.c_str()), 32, true);
+        MyCrypto::AESWrapper aes(reinterpret_cast<const unsigned char*>(aesKey.c_str()), ClientProtocol::AES_KEY_SPEC_SIZE, true); // Use MyCrypto namespace and new constant
         std::string result = aes.encrypt(reinterpret_cast<const char*>(data.data()), data.size());
         auto end = std::chrono::steady_clock::now();
         
@@ -1462,14 +1445,14 @@ void Client::displaySplashScreen() {
     
     SetConsoleTextAttribute(hConsole, savedAttributes);
     std::cout << "  Build Date: " << __DATE__ << " " << __TIME__ << "\n";
-    std::cout << "  Protocol Version: " << static_cast<int>(CLIENT_VERSION) << "\n";
+    std::cout << "  Protocol Version: " << static_cast<int>(ClientProtocol::CLIENT_VERSION) << "\n";
     std::cout << "  Encryption: RSA-1024 + AES-256-CBC\n\n";
 #else
     std::cout << "\n============================================\n";
     std::cout << "     ENCRYPTED FILE BACKUP CLIENT v1.0      \n";
     std::cout << "============================================\n";
     std::cout << "  Build Date: " << __DATE__ << " " << __TIME__ << "\n";
-    std::cout << "  Protocol Version: " << static_cast<int>(CLIENT_VERSION) << "\n";
+    std::cout << "  Protocol Version: " << static_cast<int>(ClientProtocol::CLIENT_VERSION) << "\n";
     std::cout << "  Encryption: RSA-1024 + AES-256-CBC\n\n";
 #endif
 }
@@ -1497,14 +1480,44 @@ void Client::displayConnectionInfo() {
 void Client::displayError(const std::string& message, ErrorType type) {
     lastError = type;
     lastErrorDetails = message;
-    
-    // Temporarily show actual error message for debugging
-    // Check if this is a server error response
-    // if (message.find("server") != std::string::npos || 
-    //     message.find("response") != std::string::npos ||
-    //     type == ErrorType::SERVER_ERROR) {
-    //     std::cerr << "server responded with an error" << std::endl;
-    // } else {
+
+    bool genericServerError = false;
+    // Explicit server-side error code
+    if (type == ErrorType::SERVER_ERROR) {
+        genericServerError = true;
+    }
+    // Network or protocol errors that imply a generic server issue
+    // rather than a specific, well-defined client-side or authentication problem.
+    else if (type == ErrorType::NETWORK || type == ErrorType::PROTOCOL) {
+        if (// Connection lost or reset during an operation after initial connect
+            message.find("Failed to send request:") != std::string::npos ||
+            message.find("Failed to receive response:") != std::string::npos ||
+            message.find("Socket failed to open") != std::string::npos || // though connectToServer has its own retries
+            message.find("Failed to send complete header") != std::string::npos ||
+            message.find("Failed to send complete payload") != std::string::npos ||
+            // Protocol errors indicating server is not behaving as expected
+            message.find("Invalid server version:") != std::string::npos ||
+            message.find("Invalid registration response") != std::string::npos || // If not RESP_REGISTER_FAIL
+            message.find("Invalid reconnection response") != std::string::npos || // If not RESP_RECONNECT_FAIL
+            message.find("Invalid public key response") != std::string::npos ||
+            message.find("Invalid file transfer response") != std::string::npos
+            // Explicit message "Server returned general error" is already ErrorType::SERVER_ERROR
+            ) {
+            // Check if it's a specific known failure that should NOT be generic
+            // Example: "Registration failed: Username already exists" is ErrorType::AUTHENTICATION
+            // "Server rejected - will register as new client" (for reconnection) is a specific flow.
+            // The conditions above are chosen to be more about unexpected communication/protocol breaks.
+            genericServerError = true;
+        }
+    }
+    // Specific message for RESP_ERROR (1607) is handled by type == ErrorType::SERVER_ERROR
+    // which is set in receiveResponse when header.code == RESP_ERROR
+
+
+    if (genericServerError) {
+        std::cerr << "server responded with an error" << std::endl;
+    } else {
+        // Existing detailed error printing logic
 #ifdef _WIN32
         SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_INTENSITY);
         std::cerr << "[ERROR] ";
@@ -1514,36 +1527,26 @@ void Client::displayError(const std::string& message, ErrorType type) {
 #endif
         
         switch (type) {
-            case ErrorType::NETWORK:
-                std::cerr << "[NETWORK] ";
-                break;
-            case ErrorType::FILE_IO:
-                std::cerr << "[FILE] ";
-                break;
-            case ErrorType::PROTOCOL:
-                std::cerr << "[PROTOCOL] ";
-                break;
-            case ErrorType::CRYPTO:
-                std::cerr << "[CRYPTO] ";
-                break;
-            case ErrorType::CONFIG:
-                std::cerr << "[CONFIG] ";
-                break;            case ErrorType::AUTHENTICATION:
-                std::cerr << "[AUTH] ";
-                break;
-            default:
-                break;
+            case ErrorType::NETWORK: std::cerr << "[NETWORK] "; break;
+            case ErrorType::FILE_IO: std::cerr << "[FILE] "; break;
+            case ErrorType::PROTOCOL: std::cerr << "[PROTOCOL] "; break;
+            case ErrorType::CRYPTO: std::cerr << "[CRYPTO] "; break;
+            case ErrorType::CONFIG: std::cerr << "[CONFIG] "; break;
+            case ErrorType::AUTHENTICATION: std::cerr << "[AUTH] "; break;
+            // ErrorType::SERVER_ERROR is handled by genericServerError path
+            default: break;
         }
-          std::cerr << message << std::endl;
+        std::cerr << message << std::endl;
+    }
     
     // Update GUI error status and show notification (optional)
     try {
-        ClientGUIHelpers::updateError(message);
-        ClientGUIHelpers::showNotification("Backup Error", message);
+        std::string guiMessage = genericServerError ? "Server communication error. Please check logs." : message;
+        ClientGUIHelpers::updateError(guiMessage);
+        ClientGUIHelpers::showNotification("Backup Error", guiMessage);
     } catch (...) {
         // GUI update failed - continue without GUI
     }
-    // }
 }
 
 void Client::displaySeparator() {

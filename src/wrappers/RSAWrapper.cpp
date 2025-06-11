@@ -1,14 +1,14 @@
 #include "../../include/wrappers/RSAWrapper.h"
-#include <windows.h>
-#include <wincrypt.h>
+// #include <windows.h> // Removed
+// #include <wincrypt.h> // Removed
 #include <fstream>
 #include <stdexcept>
-#include <iostream>
+// #include <iostream> // Removed as debug logs are removed
 #include <vector>
 #include <string>
 #include <cstring>
-#include <chrono>
-#include <algorithm>
+// #include <chrono> // Removed as debug logs and old fallbacks are removed
+#include <algorithm> // May still be needed for std::copy or other utilities, review later
 
 // Crypto++ includes for real RSA implementation
 #include "../../third_party/crypto++/rsa.h"
@@ -18,359 +18,268 @@
 #include "../../third_party/crypto++/hex.h"
 #include "../../third_party/crypto++/filters.h"
 #include "../../third_party/crypto++/pubkey.h"
+#include "../../third_party/crypto++/sha.h" // For SHA1 with OAEP
 
-#pragma comment(lib, "crypt32.lib")
-#pragma comment(lib, "advapi32.lib")
+// #pragma comment(lib, "crypt32.lib") // Removed
+// #pragma comment(lib, "advapi32.lib") // Removed
 
 // Real RSA implementation using Crypto++ library
 // This provides actual RSA encryption with fallback to enhanced XOR
 
 using namespace CryptoPP;
 
+namespace MyCrypto { // Added namespace
+
 // RSAPublicWrapper implementation
 RSAPublicWrapper::RSAPublicWrapper(const char* key, size_t keylen) {
     if (!key || keylen == 0) {
-        throw std::invalid_argument("Invalid key data");
+        throw std::invalid_argument("Public key data is invalid or empty.");
     }
-    
-    // Store the key data for later use
-    keyData.assign(key, key + keylen);
-    std::cout << "[DEBUG] RSAPublicWrapper created with key size: " << keylen << std::endl;
+    try {
+        StringSource ss(reinterpret_cast<const byte*>(key), keylen, true);
+        this->publicKey.BERDecode(ss);
+        // this->keyData.assign(key, key + keylen); // Keep if direct access to raw keyData is needed, else remove
+    } catch (const CryptoPP::Exception& e) {
+        throw std::runtime_error("Failed to decode public key: " + std::string(e.what()));
+    }
 }
 
 RSAPublicWrapper::RSAPublicWrapper(const std::string& filename) {
-    std::ifstream file(filename, std::ios::binary);
+    std::ifstream file(filename, std::ios::binary | std::ios::ate);
     if (!file.is_open()) {
-        throw std::runtime_error("Cannot open file: " + filename);
+        throw std::runtime_error("Cannot open public key file: " + filename);
     }
     
-    // Read file content
-    std::string fileData((std::istreambuf_iterator<char>(file)),
-                        std::istreambuf_iterator<char>());
+    std::streamsize size = file.tellg();
+    file.seekg(0, std::ios::beg);
+    
+    std::vector<char> buffer(size);
+    if (!file.read(buffer.data(), size)) {
+        file.close();
+        throw std::runtime_error("Failed to read public key file: " + filename);
+    }
     file.close();
     
-    if (fileData.empty()) {
-        throw std::runtime_error("Empty key file: " + filename);
-    }
-    
-    keyData.assign(fileData.begin(), fileData.end());
-    std::cout << "[DEBUG] RSAPublicWrapper loaded from file: " << filename << std::endl;
-}
-
-RSAPublicWrapper::~RSAPublicWrapper() = default;
-
-std::string RSAPublicWrapper::encrypt(const std::string& plain) {
-    if (plain.empty()) {
-        throw std::invalid_argument("Cannot encrypt empty data");
-    }
-
-    // For 1024-bit RSA, max plaintext is about 117 bytes with PKCS1 padding
-    if (plain.size() > 117) {
-        throw std::invalid_argument("Plaintext too large for RSA key size");
+    if (buffer.empty()) {
+        throw std::runtime_error("Empty public key file: " + filename);
     }
 
     try {
-        // Try to use Crypto++ RSA encryption if keyData looks like a DER-encoded key
-        if (keyData.size() >= 70) { // Real DER key would be this size or larger
-            try {
-                // Reconstruct public key from DER
-                RSA::PublicKey publicKey;
-                StringSource ss(reinterpret_cast<const byte*>(keyData.data()), keyData.size(), true, nullptr);
-                publicKey.BERDecode(ss);
+        StringSource ss(reinterpret_cast<const byte*>(buffer.data()), buffer.size(), true);
+        this->publicKey.BERDecode(ss);
+        // this->keyData.assign(buffer.begin(), buffer.end()); // Keep if direct access to raw keyData is needed
+    } catch (const CryptoPP::Exception& e) {
+        throw std::runtime_error("Failed to decode public key from file: " + std::string(e.what()));
+    }
+}
 
-                // Encrypt using Crypto++
-                AutoSeededRandomPool rng;
-                RSAES_PKCS1v15_Encryptor encryptor(publicKey);
+RSAPublicWrapper::~RSAPublicWrapper() = default; // CryptoPP objects handle their own memory
 
-                std::string result;
-                StringSource(plain, true,
-                    new PK_EncryptorFilter(rng, encryptor,
-                        new StringSink(result)
-                    )
-                );
+std::string RSAPublicWrapper::encrypt(const std::string& plain) {
+    // Max plaintext size for RSA-OAEP (1024-bit key, SHA1 hash)
+    // Key size in bytes: 1024 / 8 = 128 bytes
+    // OAEP padding with SHA1 uses: 2 * hash_len + 2 = 2 * 20 + 2 = 42 bytes
+    // Max plaintext size = 128 - 42 = 86 bytes
+    size_t maxPlaintextSize = (BITS / 8) - (2 * SHA1::DIGESTSIZE) - 2;
+    if (plain.size() > maxPlaintextSize) {
+        throw std::invalid_argument("Plaintext too large for RSA-OAEP encryption. Max: " +
+            std::to_string(maxPlaintextSize) + " bytes, Got: " + std::to_string(plain.size()) + " bytes.");
+    }
 
-                std::cout << "[DEBUG] RSA encrypt (Crypto++): " << plain.size() << " bytes -> " << result.size() << " bytes" << std::endl;
-                return result;
+    try {
+        RSAES_OAEP_SHA1_Encryptor e(this->publicKey); // Use member publicKey
+        std::string encrypted_text;
 
-            } catch (const Exception& e) {
-                std::cout << "[DEBUG] Crypto++ RSA encrypt failed: " << e.what() << ", using fallback" << std::endl;
-            }
-        }
-
-        // Fallback to enhanced XOR that's deterministic and reversible
-        std::string result = plain;
-
-        // Create a key derived from the stored keyData for consistency
-        uint32_t keyHash = 0x42424242; // Base key
-        for (size_t i = 0; i < keyData.size() && i < 32; ++i) {
-            keyHash ^= (static_cast<uint32_t>(keyData[i]) << ((i % 4) * 8));
-        }
-
-        // Apply XOR encryption with the derived key
-        for (size_t i = 0; i < result.size(); ++i) {
-            uint8_t keyByte = static_cast<uint8_t>((keyHash >> ((i % 4) * 8)) ^ (i * 73));
-            result[i] ^= keyByte;
-        }
-
-        std::cout << "[DEBUG] RSA encrypt (enhanced fallback): " << plain.size() << " bytes -> " << result.size() << " bytes" << std::endl;
-        return result;
-
-    } catch (const Exception& e) {
+        // Use member rng
+        StringSource(plain, true,
+            new PK_EncryptorFilter(this->rng, e,
+                new StringSink(encrypted_text)
+            )
+        );
+        return encrypted_text;
+    } catch (const CryptoPP::Exception& e) {
         throw std::runtime_error("RSA encryption failed: " + std::string(e.what()));
     }
 }
 
 std::string RSAPublicWrapper::encrypt(const char* plain, size_t length) {
-    if (!plain || length == 0) {
-        throw std::invalid_argument("Cannot encrypt empty data");
+    if (!plain && length > 0) {
+        throw std::invalid_argument("Plaintext pointer is null but length is non-zero.");
     }
-    
-    return encrypt(std::string(plain, length));
+    // Treat (nullptr, 0) as an empty string for encryption
+    return encrypt(std::string(plain ? plain : "", length));
 }
 
+// Returns DER encoded public key
 void RSAPublicWrapper::getPublicKey(char* keyout, size_t keylen) {
     if (!keyout || keylen == 0) {
-        throw std::invalid_argument("Invalid output buffer");
+        throw std::invalid_argument("Invalid output buffer for public key.");
     }
     
-    if (keyData.size() > keylen) {
-        throw std::runtime_error("Output buffer too small");
+    std::string derKey;
+    StringSink ss(derKey);
+    this->publicKey.DEREncode(ss); // Use member publicKey
+
+    if (derKey.size() > keylen) {
+        throw std::runtime_error("Output buffer too small for public key. Needed: " + std::to_string(derKey.size()) + ", Provided: " + std::to_string(keylen));
     }
     
-    std::memcpy(keyout, keyData.data(), keyData.size());
-    if (keyData.size() < keylen) {
-        keyout[keyData.size()] = '\0';
-    }
+    std::memcpy(keyout, derKey.data(), derKey.size());
+    // No null termination for binary DER data.
 }
 
+// Returns DER encoded public key
 std::string RSAPublicWrapper::getPublicKey() {
-    return std::string(keyData.begin(), keyData.end());
+    std::string derKey;
+    StringSink ss(derKey);
+    this->publicKey.DEREncode(ss); // Use member publicKey
+    return derKey;
 }
 
 // RSAPrivateWrapper implementation
 RSAPrivateWrapper::RSAPrivateWrapper() {
-    std::cout << "[DEBUG] RSAPrivateWrapper constructor started" << std::endl;
-
-    // Initialize handles
-    hProv = 0;
-    hKey = 0;
-
     try {
-        // Use a working RSA key generation approach
-        // Since Crypto++ RSA generation is hanging, use a deterministic approach
-        // that generates valid DER-formatted keys that the server can import
-
-        std::cout << "[DEBUG] Using deterministic RSA key generation for compatibility" << std::endl;
-
-        // Create a proper DER-encoded RSA public key that PyCryptodome can import
-        // This uses a real working 1024-bit RSA public key in DER format generated by PyCryptodome
-
-        // Mathematically valid 1024-bit RSA public key in DER format (162 bytes)
-        // Generated by PyCryptodome and verified to work with PKCS1_OAEP encryption
-        std::vector<uint8_t> derKey = {
-            0x30, 0x81, 0x9f, 0x30, 0x0d, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86,
-            0xf7, 0x0d, 0x01, 0x01, 0x01, 0x05, 0x00, 0x03, 0x81, 0x8d, 0x00, 0x30,
-            0x81, 0x89, 0x02, 0x81, 0x81, 0x00, 0xe5, 0x70, 0x4e, 0x68, 0xe0, 0x4f,
-            0xc9, 0x76, 0x32, 0xe2, 0x01, 0xdc, 0xe9, 0x49, 0x7b, 0x58, 0x28, 0x2f,
-            0xa5, 0xe5, 0x71, 0xbe, 0x15, 0x4b, 0xe6, 0xf6, 0x3e, 0x46, 0x87, 0xc9,
-            0xb7, 0x0a, 0x42, 0x19, 0xb3, 0x69, 0x07, 0x1c, 0x8f, 0xc2, 0x19, 0xc8,
-            0x32, 0x47, 0x5c, 0x75, 0x56, 0xb3, 0xf7, 0x44, 0x59, 0x07, 0x44, 0x72,
-            0xb7, 0x29, 0x46, 0x59, 0xd1, 0xab, 0xd5, 0xba, 0xb9, 0x0a, 0x4c, 0x35,
-            0x74, 0x7b, 0xe0, 0x74, 0xf7, 0x8e, 0x06, 0x04, 0x93, 0x97, 0x7a, 0x5e,
-            0x5c, 0x98, 0x1c, 0xe7, 0xc3, 0x85, 0x81, 0x62, 0x2d, 0xaa, 0xb5, 0xbf,
-            0x30, 0xca, 0x21, 0x6f, 0x44, 0x09, 0x8b, 0x09, 0x51, 0xc6, 0x1c, 0x1d,
-            0xc9, 0x76, 0x47, 0xd7, 0x2c, 0x8b, 0xb5, 0x5a, 0x7e, 0x65, 0x92, 0xe6,
-            0x59, 0x29, 0x38, 0xf0, 0x60, 0x9e, 0x0b, 0x12, 0x84, 0x1c, 0xd6, 0xe6,
-            0xd5, 0x61, 0x02, 0x03, 0x01, 0x00, 0x01
-        };
-
-        // This is exactly 162 bytes - no padding needed
-
-        // Store the DER-formatted key
-        publicKeyData.assign(derKey.begin(), derKey.end());
-
-        // Create a corresponding private key (also deterministic)
-        privateKeyData.assign(162, 'K');
-        for (size_t i = 0; i < privateKeyData.size(); ++i) {
-            privateKeyData[i] ^= static_cast<char>((i * 97) ^ 0xCD);
-        }
-
-        std::cout << "[DEBUG] Deterministic DER-formatted RSA key pair generated successfully! Public: "
-                  << publicKeyData.size() << " bytes, Private: " << privateKeyData.size() << " bytes" << std::endl;
-
-    } catch (const Exception& e) {
-        std::cout << "[DEBUG] Crypto++ RSA generation failed: " << e.what() << ", using working fallback" << std::endl;
-
-        // Use enhanced working fallback that's still deterministic
-        publicKeyData.assign(162, 'P');
-        privateKeyData.assign(162, 'K');
-
-        // Add some variability based on current time for uniqueness
-        auto now = std::chrono::high_resolution_clock::now();
-        auto timeValue = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count();
-
-        for (size_t i = 0; i < publicKeyData.size(); i += 4) {
-            publicKeyData[i] ^= static_cast<char>((timeValue >> (i % 32)) & 0xFF);
-        }
-
-        std::cout << "[DEBUG] Enhanced fallback RSA implementation initialized successfully!" << std::endl;
-
-    } catch (const std::exception& e) {
-        std::cout << "[DEBUG] Standard exception during RSA generation: " << e.what() << ", using fallback" << std::endl;
-
-        // Simple fallback
-        publicKeyData.assign(162, 'P');
-        privateKeyData.assign(162, 'K');
-
-        std::cout << "[DEBUG] Basic fallback RSA implementation initialized successfully!" << std::endl;
+        // member rng is already initialized by its default constructor
+        this->privateKey.Initialize(this->rng, BITS);
+        this->publicKey.Initialize(this->privateKey); // Generate corresponding public key
+    } catch (const CryptoPP::Exception& e) {
+        throw std::runtime_error("RSA key generation failed: " + std::string(e.what()));
     }
 }
 
 RSAPrivateWrapper::RSAPrivateWrapper(const char* key, size_t keylen) {
     if (!key || keylen == 0) {
-        throw std::invalid_argument("Invalid key data");
+        throw std::invalid_argument("Private key data is invalid or empty.");
     }
-    
-    hProv = 0;
-    hKey = 0;
-    privateKeyData.assign(key, key + keylen);
-    publicKeyData.assign(162, 'P');   // Dummy public key derived from private (matches KEYSIZE)
-    
-    std::cout << "[DEBUG] RSAPrivateWrapper loaded from buffer" << std::endl;
+    try {
+        StringSource ss(reinterpret_cast<const byte*>(key), keylen, true);
+        this->privateKey.BERDecode(ss);
+        // Regenerate public key from the loaded private key
+        this->publicKey.Initialize(this->privateKey);
+    } catch (const CryptoPP::Exception& e) {
+        throw std::runtime_error("Failed to decode private key: " + std::string(e.what()));
+    }
 }
 
 RSAPrivateWrapper::RSAPrivateWrapper(const std::string& filename) {
-    std::ifstream file(filename, std::ios::binary);
+    std::ifstream file(filename, std::ios::binary | std::ios::ate);
     if (!file.is_open()) {
-        throw std::runtime_error("Cannot open file: " + filename);
+        throw std::runtime_error("Cannot open private key file: " + filename);
     }
     
-    // Read file content
-    std::string fileData((std::istreambuf_iterator<char>(file)),
-                        std::istreambuf_iterator<char>());
+    std::streamsize size = file.tellg();
+    file.seekg(0, std::ios::beg);
+    
+    std::vector<char> buffer(size);
+    if (!file.read(buffer.data(), size)) {
+        file.close();
+        throw std::runtime_error("Failed to read private key file: " + filename);
+    }
     file.close();
-    
-    if (fileData.empty()) {
-        throw std::runtime_error("Empty key file: " + filename);
+
+    if (buffer.empty()) {
+        throw std::runtime_error("Empty private key file: " + filename);
     }
-    
-    hProv = 0;
-    hKey = 0;
-    privateKeyData.assign(fileData.begin(), fileData.end());
-    publicKeyData.assign(162, 'P');   // Dummy public key derived from private (matches KEYSIZE)
-    
-    std::cout << "[DEBUG] RSAPrivateWrapper loaded from file: " << filename << std::endl;
+
+    try {
+        StringSource ss(reinterpret_cast<const byte*>(buffer.data()), buffer.size(), true);
+        this->privateKey.BERDecode(ss);
+        this->publicKey.Initialize(this->privateKey);
+    } catch (const CryptoPP::Exception& e) {
+        throw std::runtime_error("Failed to decode private key from file: " + std::string(e.what()));
+    }
 }
 
 RSAPrivateWrapper::~RSAPrivateWrapper() {
-    if (hKey) {
-        CryptDestroyKey(hKey);
-    }
-    if (hProv) {
-        CryptReleaseContext(hProv, 0);
-    }
+    // CryptoPP objects clean up themselves. No explicit CAPI cleanup needed.
+    // Old CAPI cleanup:
+    // if (hKey) {
+    //     CryptDestroyKey(hKey);
+    // }
+    // if (hProv) {
+    //     CryptReleaseContext(hProv, 0);
+    // }
 }
 
 std::string RSAPrivateWrapper::decrypt(const std::string& cipher) {
     if (cipher.empty()) {
-        throw std::invalid_argument("Cannot decrypt empty data");
+        // Allowing empty ciphertext, OAEP would typically fail to decrypt this
+        // if it's not a valid OAEP structure. Let Crypto++ handle it.
     }
-    
+
     try {
-        // Try to use Crypto++ RSA decryption if we have real keys
-        if (privateKeyData.size() > 162) { // Real DER-encoded key is larger than dummy key
-            try {
-                // Reconstruct private key from DER
-                RSA::PrivateKey privateKey;
-                StringSource ss(reinterpret_cast<const byte*>(privateKeyData.data()), privateKeyData.size(), true, nullptr);
-                privateKey.BERDecode(ss);
-                
-                // Decrypt using Crypto++
-                AutoSeededRandomPool rng;
-                RSAES_PKCS1v15_Decryptor decryptor(privateKey);
-                
-                std::string result;
-                StringSource(cipher, true,
-                    new PK_DecryptorFilter(rng, decryptor,
-                        new StringSink(result)
-                    )
-                );
-                
-                std::cout << "[DEBUG] RSA decrypt (Crypto++): " << cipher.size() << " bytes -> " << result.size() << " bytes" << std::endl;
-                return result;
-                
-            } catch (const Exception& e) {
-                std::cout << "[DEBUG] Crypto++ RSA decrypt failed: " << e.what() << ", using fallback" << std::endl;
-            }
-        }
-        
-        // Fallback to enhanced XOR decryption (matching the encrypt pattern)
-        std::string result = cipher;
-        
-        // Create the same key hash as in encrypt
-        uint32_t keyHash = 0x42424242;
-        for (size_t i = 0; i < publicKeyData.size() && i < 32; ++i) {
-            keyHash ^= (static_cast<uint32_t>(publicKeyData[i]) << ((i % 4) * 8));
-        }
-        
-        // Apply the same XOR pattern as encrypt
-        for (size_t i = 0; i < result.size(); ++i) {
-            uint8_t keyByte = static_cast<uint8_t>((keyHash >> ((i % 4) * 8)) ^ (i * 73));
-            result[i] ^= keyByte;
-        }
-        
-        std::cout << "[DEBUG] RSA decrypt (enhanced fallback): " << cipher.size() << " bytes -> " << result.size() << " bytes" << std::endl;
-        return result;
-        
-    } catch (const Exception& e) {
+        RSAES_OAEP_SHA1_Decryptor d(this->privateKey); // Use member privateKey
+        std::string decrypted_text;
+
+        // Use member rng
+        StringSource(cipher, true,
+            new PK_DecryptorFilter(this->rng, d,
+                new StringSink(decrypted_text)
+            )
+        );
+        return decrypted_text;
+    } catch (const CryptoPP::Exception& e) {
+        // Decryption can fail due to bad padding, incorrect key, corrupted ciphertext etc.
         throw std::runtime_error("RSA decryption failed: " + std::string(e.what()));
     }
 }
 
 std::string RSAPrivateWrapper::decrypt(const char* cipher, size_t length) {
-    if (!cipher || length == 0) {
-        throw std::invalid_argument("Cannot decrypt empty data");
+   if (!cipher && length > 0) {
+        throw std::invalid_argument("Ciphertext pointer is null but length is non-zero.");
     }
-    
-    return decrypt(std::string(cipher, length));
+    // Treat (nullptr, 0) as an empty string for decryption
+    return decrypt(std::string(cipher ? cipher : "", length));
 }
 
+// Returns DER encoded private key
 void RSAPrivateWrapper::getPrivateKey(char* keyout, size_t keylen) {
     if (!keyout || keylen == 0) {
-        throw std::invalid_argument("Invalid output buffer");
+        throw std::invalid_argument("Invalid output buffer for private key.");
+    }
+
+    std::string derKey;
+    StringSink ss(derKey);
+    this->privateKey.DEREncode(ss); // Use member privateKey
+
+    if (derKey.size() > keylen) {
+        throw std::runtime_error("Output buffer too small for private key. Needed: " + std::to_string(derKey.size()) + ", Provided: " + std::to_string(keylen));
     }
     
-    if (privateKeyData.size() > keylen) {
-        throw std::runtime_error("Output buffer too small");
-    }
-    
-    std::memcpy(keyout, privateKeyData.data(), privateKeyData.size());
-    if (privateKeyData.size() < keylen) {
-        keyout[privateKeyData.size()] = '\0';
-    }
+    std::memcpy(keyout, derKey.data(), derKey.size());
 }
 
+// Returns DER encoded private key
 std::string RSAPrivateWrapper::getPrivateKey() {
-    std::cout << "[DEBUG] getPrivateKey() called - returning consistent private key data" << std::endl;
-    return std::string(privateKeyData.begin(), privateKeyData.end());
+    std::string derKey;
+    StringSink ss(derKey);
+    this->privateKey.DEREncode(ss); // Use member privateKey
+    return derKey;
 }
 
+// Returns DER encoded public key
 void RSAPrivateWrapper::getPublicKey(char* keyout, size_t keylen) {
     if (!keyout || keylen == 0) {
-        throw std::invalid_argument("Invalid output buffer");
+        throw std::invalid_argument("Invalid output buffer for public key.");
+    }
+
+    std::string derKey;
+    StringSink ss(derKey);
+    this->publicKey.DEREncode(ss); // Use member publicKey (from RSAPrivateWrapper)
+
+    if (derKey.size() > keylen) {
+        throw std::runtime_error("Output buffer too small for public key. Needed: " + std::to_string(derKey.size()) + ", Provided: " + std::to_string(keylen));
     }
     
-    if (publicKeyData.size() > keylen) {
-        throw std::runtime_error("Output buffer too small");
-    }
-    
-    std::memcpy(keyout, publicKeyData.data(), publicKeyData.size());
-    if (publicKeyData.size() < keylen) {
-        keyout[publicKeyData.size()] = '\0';
-    }
+    std::memcpy(keyout, derKey.data(), derKey.size());
 }
 
+// Returns DER encoded public key
 std::string RSAPrivateWrapper::getPublicKey() {
-    std::cout << "[DEBUG] getPublicKey() called - returning consistent public key data" << std::endl;
-    return std::string(publicKeyData.begin(), publicKeyData.end());
+    std::string derKey;
+    StringSink ss(derKey);
+    this->publicKey.DEREncode(ss); // Use member publicKey (from RSAPrivateWrapper)
+    return derKey;
 }
+
+} // namespace MyCrypto

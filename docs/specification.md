@@ -63,10 +63,10 @@ This specification describes a client-server system for secure file backup with 
 
 1. **Protocol Version**: Both client and server MUST report version `3`
 2. **Byte Order**: ALL multi-byte integers MUST be little-endian
-3. **RSA Public Key**: MUST be exactly 160 bytes in Crypto++ X.509 format
+3. **RSA Public Key**: MUST be exactly 162 bytes in X.509 DER format (as typically produced by Crypto++ or PyCryptodome for a 1024-bit key)
 4. **AES Key Size**: MUST be 256 bits (32 bytes) - override wrapper default
 5. **Checksum**: MUST match Linux `cksum` exactly (see algorithm below)
-6. **File Transfer**: MUST set packet_number=1, total_packets=1 (no chunking)
+6. **File Transfer**: Supports file chunking. Client sends file in one or more packets. `packet_number` indicates the current chunk (1-based) and `total_packets` indicates the total number of chunks for the file.
 7. **String Fields**: MUST be null-terminated and padded to full field size with zeros
 8. **Client ID**: Server MUST ignore this field in registration request (1025)
 9. **UUID Format**: MUST be stored as 32 lowercase hex characters in me.info
@@ -80,7 +80,7 @@ This specification describes a client-server system for secure file backup with 
 - **Incomplete string padding**: Not padding to full 255 bytes
 - **Re-registration**: Client attempting to register when me.info exists
 - **Wrong RSA padding**: Using PKCS1 instead of OAEP-SHA256
-- **Chunking files**: Attempting to split files into multiple packets
+- **Chunking files**: This was previously listed as a mistake; it is now the correct behavior. Ensure server handles chunked files.
 
 ## Architecture and Core Components
 
@@ -386,9 +386,9 @@ For any server error response or communication failure:
 | Field | Size | Description |
 |-------|------|-------------|
 | Name | 255 bytes | Username (null-terminated ASCII) |
-| Public Key | 160 bytes | RSA 1024-bit key in X.509 format |
+| Public Key | 162 bytes | RSA 1024-bit key in X.509 DER format |
 
-**Critical**: The 160-byte format is specific to Crypto++ X.509 encoding for 1024-bit RSA keys
+**Note**: The 162-byte size is typical for a 1024-bit RSA key in X.509 DER format.
 
 #### 1027: Reconnection Request
 
@@ -400,14 +400,14 @@ For any server error response or communication failure:
 
 | Field | Size | Description |
 |-------|------|-------------|
-| Content Size | 4 bytes | Encrypted file size |
-| Orig File Size | 4 bytes | Original file size |
-| Packet Number | 2 bytes | Current packet (always 1) |
-| Total Packets | 2 bytes | Total packets (always 1) |
-| File Name | 255 bytes | Filename (null-terminated ASCII) |
-| Message Content | Variable | Encrypted file data |
+| Content Size | 4 bytes | Encrypted file size (size of this chunk's data) |
+| Orig File Size | 4 bytes | Original unencrypted file size (same for all chunks of a file) |
+| Packet Number | 2 bytes | Current packet number for this file chunk (1-based) |
+| Total Packets | 2 bytes | Total number of packets for this file |
+| File Name | 255 bytes | Filename (null-terminated ASCII) (same for all chunks of a file) |
+| Message Content | Variable | Encrypted file data for this chunk |
 
-**Important**: No file chunking - entire file sent as single packet
+**Important**: File may be split into multiple packets (chunks). Server must reassemble them in order using `Packet Number` and `Total Packets`.
 
 #### 1029: CRC Valid
 
@@ -493,7 +493,7 @@ No payload
 - **Algorithm**: RSA
 - **Key Size**: 1024 bits
 - **Padding**: RSA-OAEP with SHA-256
-- **Public Key Format**: X.509 (160 bytes for 1024-bit key)
+- **Public Key Format**: X.509 DER (162 bytes for a 1024-bit key)
 - **Usage**: AES key encryption only
 
 ### Important Implementation Notes
@@ -532,8 +532,13 @@ Client                                      Server
   |← Calculate file CRC                       |
   |← Encrypt file with AES                    |
   |                                           |
-  |--[1028: Encrypted file]------------------>|
-  |                                           |← Decrypt file
+  The file is sent in one or more chunks using multiple 1028 requests if its encrypted size exceeds a defined maximum packet payload size.
+  |                                           |
+  |--[1028: Encrypted file (chunk 1/N)]----->|
+  |--[1028: Encrypted file (chunk 2/N)]----->|
+  |                   ...                     |
+  |--[1028: Encrypted file (chunk N/N)]----->|
+  |                                           |← Decrypt reassembled file
   |                                           |← Calculate CRC
   |<---------[1603: CRC + file info]----------|
   |← Compare CRCs                             |
@@ -840,7 +845,7 @@ Provides RSA key generation and encryption/decryption.
 - `RSAPrivateWrapper`: Handle private key operations
 
 **Key Constants**:
-- `KEYSIZE = 160`: Public key size in X.509 format
+- `KEYSIZE = 162`: Public key size in X.509 DER format for a 1024-bit key
 - `BITS = 1024`: RSA key size
 
 ### Base64Wrapper
@@ -864,7 +869,7 @@ Encoding/decoding for key storage in text files.
 
 // Generate RSA keys
 RSAPrivateWrapper rsaPrivate;
-std::string publicKey = rsaPrivate.getPublicKey();  // 160 bytes
+std::string publicKey = rsaPrivate.getPublicKey();  // 162 bytes (DER encoded)
 
 // AES encryption with correct key size
 unsigned char aesKey[32];  // 256 bits - NOT the default 16!
@@ -892,7 +897,7 @@ std::string privateKeyBase64 = Base64Wrapper::encode(rsaPrivate.getPrivateKey())
 1. **NEVER** re-register if `me.info` exists
 2. **ALWAYS** generate new AES key on reconnection
 3. **ALWAYS** use 32-byte AES keys (not wrapper default)
-4. **ALWAYS** send files as single packet (no chunking)
+4. Send files in one or more packets (file chunking is supported and implemented).
 5. **ALWAYS** pad strings to 255 bytes with null termination
 6. **ALWAYS** use little-endian for ALL numeric fields
 7. **ALWAYS** calculate CRC on decrypted (original) file data
@@ -901,13 +906,13 @@ std::string privateKeyBase64 = Base64Wrapper::encode(rsaPrivate.getPrivateKey())
 10. **ALWAYS** bind server to 0.0.0.0 for all interfaces
 
 ### Message Flow Summary
-1. New client: 1025→1600→1026→1602→1028→1603→(1029/1030/1031)→1604
-2. Returning client: 1027→(1605/1606)→[if 1605: continue with file transfer]
-3. File retry: Can send 1028 up to 3 times total before giving up
+1. New client: 1025→1600→1026→1602→(one or more 1028 messages for chunks)→1603→(1029/1030/1031)→1604
+2. Returning client: 1027→(1605/1606)→[if 1605: continue with file transfer, i.e., (one or more 1028s for chunks)→1603...]
+3. File retry: Can resend all chunks for a file (starting with 1028 chunk 1/N) up to 3 times total before giving up
 
 ### Key Data Formats
 - **UUID**: 16 bytes binary in protocol, 32 hex chars in files
-- **RSA Public Key**: Exactly 160 bytes in Crypto++ X.509 format
+- **RSA Public Key**: Exactly 162 bytes in X.509 DER format
 - **Strings**: 255 bytes, ASCII, null-terminated, zero-padded
 - **Port**: Read from `port.info` or default to 1256
 - **Config Files**: Exactly 3 lines each, no empty lines
