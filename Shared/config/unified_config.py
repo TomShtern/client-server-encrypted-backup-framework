@@ -273,8 +273,32 @@ class UnifiedConfigurationManager:
             environment: Current environment (development/production/testing)
             base_path: Base path for finding legacy configuration files
         """
-        # Initialize the base configuration manager
-        self.base_config = ConfigurationManager(config_dir, environment)
+        # Store configuration directory and environment
+        self.config_dir = Path(config_dir)
+        self.environment = environment
+
+        # Initialize configuration data with defaults
+        self.config_data: dict[str, Any] = {
+            "server": {
+                "host": "127.0.0.1",
+                "port": 1256,
+                "database_name": "defensive.db",
+                "file_storage_dir": "data/storage",
+                "max_clients": 10,
+                "timeout": 30.0
+            },
+            "api": {
+                "host": "127.0.0.1",
+                "port": 9090
+            },
+            "logging": {
+                "level": "INFO"
+            },
+            "client": {}
+        }
+
+        # Load from JSON configuration files if they exist
+        self._load_json_config()
 
         # Initialize legacy adapter
         self.legacy_adapter = LegacyConfigurationAdapter(base_path)
@@ -289,11 +313,37 @@ class UnifiedConfigurationManager:
 
         logger.info(f"UnifiedConfigurationManager initialized for environment: {environment}")
 
+    def _load_json_config(self):
+        """Load configuration from JSON files."""
+        if not self.config_dir.exists():
+            logger.info(f"Config directory {self.config_dir} does not exist, using defaults")
+            return
+
+        # Load environment-specific config file
+        config_file = self.config_dir / f"{self.environment}.json"
+        if config_file.exists():
+            try:
+                with open(config_file, 'r', encoding='utf-8') as f:
+                    loaded_config = json.load(f)
+                # Deep merge the loaded config into config_data
+                self._deep_merge(self.config_data, loaded_config)
+                logger.info(f"Loaded configuration from {config_file}")
+            except Exception as e:
+                logger.error(f"Failed to load config from {config_file}: {e}")
+
+    def _deep_merge(self, base: dict, updates: dict):
+        """Deep merge updates into base dictionary."""
+        for key, value in updates.items():
+            if key in base and isinstance(base[key], dict) and isinstance(value, dict):
+                self._deep_merge(base[key], value)
+            else:
+                base[key] = value
+
     def _load_unified_configuration(self):
         """Load configuration from all sources with proper precedence."""
         with self.lock:
             # Start with base JSON configuration
-            self.config_cache = dict(self.base_config.config_data)
+            self.config_cache = dict(self.config_data)
 
             # Apply legacy configurations (lower precedence)
             self._apply_legacy_configurations()
@@ -403,9 +453,15 @@ class UnifiedConfigurationManager:
             self._safe_set(key, value)
 
             if persist:
-                # Update the base configuration and save
-                self.base_config.set(key, value)
-                self.base_config.save_configuration()
+                # Update the config_data and save to file
+                keys = key.split(".")
+                target = self.config_data
+                for k in keys[:-1]:
+                    if k not in target:
+                        target[k] = {}
+                    target = target[k]
+                target[keys[-1]] = value
+                self._save_configuration()
 
     def add_watcher(self, callback: Callable[[str, Any, Any], None]):
         """
@@ -503,9 +559,12 @@ class UnifiedConfigurationManager:
             "overall": [],
         }
 
-        # Validate JSON configuration
-        json_errors = self.base_config.validate_configuration()
-        results["json_config"] = json_errors
+        # Validate JSON configuration (basic validation)
+        # Check for required fields
+        if "server" not in self.config_data:
+            results["json_config"].append("Missing 'server' configuration section")
+        if "api" not in self.config_data:
+            results["json_config"].append("Missing 'api' configuration section")
 
         # Validate legacy configurations
         transfer_config = self.legacy_adapter.read_transfer_info()
@@ -525,7 +584,7 @@ class UnifiedConfigurationManager:
                 results["legacy_config"].append("Empty username in transfer.info")
 
         # Check for configuration conflicts
-        json_port = self.base_config.get("server.port")
+        json_port = self.get("server.port")
         legacy_port = self.legacy_adapter.read_port_info()
         if json_port and legacy_port and json_port != legacy_port:
             results["overall"].append(
@@ -539,12 +598,25 @@ class UnifiedConfigurationManager:
 
         return results
 
+    def _save_configuration(self):
+        """Save current configuration to JSON file."""
+        if not self.config_dir.exists():
+            self.config_dir.mkdir(parents=True, exist_ok=True)
+
+        config_file = self.config_dir / f"{self.environment}.json"
+        try:
+            with open(config_file, 'w', encoding='utf-8') as f:
+                json.dump(self.config_data, f, indent=2)
+            logger.info(f"Saved configuration to {config_file}")
+        except Exception as e:
+            logger.error(f"Failed to save configuration to {config_file}: {e}")
+
     def get_configuration_summary(self) -> dict[str, Any]:
         """Get a comprehensive summary of current configuration."""
         return {
-            "environment": self.base_config.environment,
+            "environment": self.environment,
             "config_sources": {
-                "json_files": list(self.base_config.config_dir.glob("*.json")),
+                "json_files": list(self.config_dir.glob("*.json")),
                 "legacy_files": {
                     "transfer_info": self.legacy_adapter.read_transfer_info() is not None,
                     "port_info": self.legacy_adapter.read_port_info() is not None,

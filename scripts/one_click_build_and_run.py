@@ -53,7 +53,7 @@ from pathlib import Path
 from typing import Any
 import shutil
 
-from Shared.utils.unified_config import get_config
+from Shared.config.unified_config import get_config
 
 try:
     import psutil
