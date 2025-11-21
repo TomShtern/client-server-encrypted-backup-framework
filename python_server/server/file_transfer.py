@@ -41,7 +41,7 @@ from datetime import datetime
 from typing import Any
 
 # Import observability components
-from Shared.observability import get_metrics_collector
+from Shared.monitoring.observability import get_metrics_collector
 
 # Import validation utilities
 from Shared.validation.validation_utils import is_valid_filename_for_storage

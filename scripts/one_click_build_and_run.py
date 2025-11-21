@@ -941,15 +941,17 @@ def main():
     # Check if RSA keys exist
     data_dir = Path("data")
     data_dir.mkdir(exist_ok=True)
+    keys_dir = data_dir / "keys"
+    keys_dir.mkdir(exist_ok=True)
 
-    private_key = data_dir / "valid_private_key.der"
+    private_key = keys_dir / "valid_private_key.der"
     if private_key.exists():
         print("[OK] RSA private key found")
     else:
         print("[WARNING] RSA private key missing - generating keys...")
         run_command("python scripts\\security\\key-generation\\create_working_keys.py", check_exit=False, timeout=60)
 
-    public_key = data_dir / "valid_public_key.der"
+    public_key = keys_dir / "valid_public_key.der"
     if public_key.exists():
         print("[OK] RSA public key found")
     else:
@@ -997,16 +999,16 @@ def main():
     print()
 
     # Validate FletV2 launcher exists
-    fletv2_launcher = Path("FletV2/start_with_server.py")
+    fletv2_launcher = Path("FletV2/scripts/start_with_server.py")
     fletv2_running = False
     fletv2_process = None
 
     if not fletv2_launcher.exists():
-        print_server_not_found_help(fletv2_launcher, "FletV2/start_with_server.py")
+        print_server_not_found_help(fletv2_launcher, "FletV2/scripts/start_with_server.py")
         handle_error_and_exit("[ERROR] FletV2 launcher not found - cannot start GUI", wait_for_input=True)
 
     print(f"Launching: {fletv2_launcher}")
-    print(f"Command: python FletV2/start_with_server.py")
+    print(f"Command: python FletV2/scripts/start_with_server.py")
     print()
 
     # Prepare environment for FletV2
@@ -1014,7 +1016,7 @@ def main():
     fletv2_env['PYTHONPATH'] = os.getcwd()  # Ensure module imports work
     fletv2_env['CYBERBACKUP_DISABLE_INTEGRATED_GUI'] = '1'  # Prevent dual GUI managers
     fletv2_env['CYBERBACKUP_DISABLE_GUI'] = '1'  # Force console mode for server
-    fletv2_env['BACKUP_DATABASE_PATH'] = str(Path(os.getcwd()) / "defensive.db")  # Database location
+    fletv2_env['BACKUP_DATABASE_PATH'] = str(Path(os.getcwd()) / "data" / "database" / "defensive.db")  # Database location
 
     # Launch FletV2 in new console window
     try:
@@ -1053,9 +1055,9 @@ def main():
         print(f"[ERROR] Failed to launch FletV2: {launch_err}")
         print()
         print("Troubleshooting:")
-        print("1. Verify FletV2/start_with_server.py exists")
+        print("1. Verify FletV2/scripts/start_with_server.py exists")
         print("2. Check flet_venv is installed: cd FletV2 && ../flet_venv/Scripts/python --version")
-        print("3. Try manual launch: python FletV2/start_with_server.py")
+        print("3. Try manual launch: python FletV2/scripts/start_with_server.py")
         print("4. Check logs in logs/build_script.log")
         fletv2_running = False
 
@@ -1256,7 +1258,7 @@ def main():
     print("  Purpose:   Accept encrypted file backups from C++ clients")
     print("  Protocol:  Binary protocol with AES-256-CBC encryption")
     print("  Network:   Port 1256 (TCP listener)")
-    print("  Database:  defensive.db (SQLite)")
+    print("  Database:  data/database/defensive.db (SQLite)")
     print("  Status:    " + ("✅ Listening" if backup_server_running else "❌ Not listening"))
     print()
 
@@ -1322,7 +1324,7 @@ def main():
         print("To fix BackupServer:")
         print("  1. Check FletV2 console window for BackupServer errors")
         print("  2. Verify port 1256 available: netstat -an | findstr 1256")
-        print("  3. Check database exists: defensive.db in project root")
+        print("  3. Check database exists: data/database/defensive.db")
         print()
 
     else:
@@ -1337,10 +1339,10 @@ def main():
         print("Troubleshooting Steps:")
         print("  1. Check FletV2 console window for error messages")
         print("  2. Verify virtual environment: cd FletV2 && ../flet_venv/Scripts/python --version")
-        print("  3. Check database exists: defensive.db in project root")
+        print("  3. Check database exists: data/database/defensive.db")
         print("  4. Verify Flet installed: cd FletV2 && ../flet_venv/Scripts/pip list | grep flet")
         print("  5. Review build script logs: logs/build_script.log")
-        print("  6. Try manual FletV2 launch: python FletV2/start_with_server.py")
+        print("  6. Try manual FletV2 launch: python FletV2/scripts/start_with_server.py")
         print()
 
     print("=" * 70)

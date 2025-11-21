@@ -19,7 +19,7 @@ from typing import Any
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 
 # Setup standardized import paths BEFORE importing any other Shared modules
-from Shared.path_utils import setup_imports
+from Shared.filesystem.path_utils import setup_imports
 
 setup_imports()
 

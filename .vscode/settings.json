@@ -1,14 +1,15 @@
 {
-  "python.venvPath": "${workspaceFolder}",
-  "python.terminal.activateEnvironment": false,
-
-  "python.defaultInterpreterPath": "${workspaceFolder}/flet_venv/Scripts/python.exe",
-
+  "python.terminal.activateEnvironment": true,
+  "python.defaultInterpreterPath": "c:/Users/tom7s/Desktopp/Claude_Folder_2/Client_Server_Encrypted_Backup_Framework/flet_venv/Scripts/python.exe",
   "terminal.integrated.defaultProfile.windows": "PowerShell",
   "terminal.integrated.profiles.windows": {
     "FletVenv PowerShell": {
       "source": "PowerShell",
-      "args": ["-NoExit", "-Command", "& '${workspaceFolder}\\flet_venv\\Scripts\\Activate.ps1'"],
+      "args": [
+        "-NoExit",
+        "-Command",
+        "& '${workspaceFolder}\\flet_venv\\Scripts\\Activate.ps1'"
+      ],
       "icon": "terminal-powershell"
     }
   },
@@ -19,7 +20,6 @@
   "python.linting.isortEnabled": false,
   "python.formatting.blackEnabled": false,
   "python.terminal.activateEnvInCurrentTerminal": true,
-  "python.envFile": "${workspaceFolder}/FletV2/.env",
   "[python]": {
     "editor.codeActionsOnSave": {
       "source.fixAll.ruff": "explicit",
@@ -27,16 +27,13 @@
     },
     "editor.formatOnSave": true
   },
-
   "terminal.integrated.env.windows": {
     "PYTHONIOENCODING": "utf-8",
     "FLET_V2_DEBUG": "true"
   },
-
   "files.exclude": {
     "**/__pycache__": true,
     "**/*.pyc": true,
-    "**/node_modules": true,
     "logs": true,
     // Markdown files visible for documentation editing
     // Note: CLAUDE.md is gitignored but visible in explorer
@@ -44,9 +41,29 @@
     "archive": false,
     "**/archive/**": false,
     "_legacy": false,
-    "**/_legacy/**": false
+    "**/_legacy/**": false,
+    "**/vcpkg": true,
+    "**/build": true,
+    "**/node_modules": true
   },
-
+  "search.exclude": {
+    "**/vcpkg": true,
+    "**/build": true,
+    "**/node_modules": true
+  },
+  "files.watcherExclude": {
+    "**/vcpkg/**": true,
+    "**/build/**": true,
+    "**/node_modules/**": true,
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true
+  },
+  "python.analysis.exclude": [
+    "**/vcpkg/**",
+    "**/build/**",
+    "**/node_modules/**",
+    "**/dist/**"
+  ],
   "problems.exclude": {
     "**/scripts/cmake/vcpkg_buildpath_length_warning.cmake": true,
     "**/archive/**": true,
@@ -57,15 +74,7 @@
     "_legacy/**": true
   },
   "github.copilot.nextEditSuggestions.enabled": true,
-  "python-envs.pythonProjects": [
-    {
-      "path": "",
-      "envManager": "ms-python.python:venv",
-      "packageManager": "ms-python.python:pip"
-    }
-  ],
   "editor.experimentalGpuAcceleration": "on",
-
   "editor.bracketPairColorization.independentColorPoolPerBracketType": true,
   "editor.guides.bracketPairs": "active",
   "sonarlint.pathToCompileCommands": "${workspaceFolder}\\vcpkg\\buildtrees\\pkgconf\\x64-windows-dbg\\compile_commands.json",
@@ -92,5 +101,11 @@
   },
   "[css]": {
     "editor.semanticHighlighting.enabled": false
-  }
+  },
+  "cmake.configureSettings": {
+    "CMAKE_TOOLCHAIN_FILE": "${workspaceFolder}/vcpkg/scripts/buildsystems/vcpkg.cmake",
+    "VCPKG_TARGET_TRIPLET": "x64-windows"
+  },
+  "cmake.generator": "Visual Studio 17 2022",
+  "cmake.platform": "x64"
 }

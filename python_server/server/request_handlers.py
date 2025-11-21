@@ -38,7 +38,7 @@ from Crypto.Hash import SHA256
 from Crypto.Random import get_random_bytes
 
 # Import observability components
-from Shared.observability import get_metrics_collector
+from Shared.monitoring.observability import get_metrics_collector
 
 # Import error handling utilities
 from Shared.logging.error_handling import handle_request_errors_detailed, handle_specific_request_errors
