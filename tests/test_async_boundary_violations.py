@@ -12,7 +12,6 @@ Based on the dashboard deadlock fix (24 Oct 2025).
 """
 
 import ast
-import re
 from pathlib import Path
 
 

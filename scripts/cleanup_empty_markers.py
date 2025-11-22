@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 """Clean up empty marker files that are safe to delete."""
-import os
 from pathlib import Path
 
 BASE = Path(r"C:\Users\tom7s\Desktopp\Claude_Folder_2\Client_Server_Encrypted_Backup_Framework")

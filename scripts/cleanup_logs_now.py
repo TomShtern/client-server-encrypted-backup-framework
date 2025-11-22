@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 """One-time log cleanup script - keeps only the last 2 log files."""
-import os
 from pathlib import Path
 
 logs_dir = Path(__file__).parent.parent / "logs"

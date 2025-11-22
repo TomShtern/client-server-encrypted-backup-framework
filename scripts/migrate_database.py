@@ -19,7 +19,7 @@ import sqlite3
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Dict, Optional, Any
 
 # Add project root to Python path
 project_root = Path(__file__).resolve().parents[1]
@@ -381,7 +381,7 @@ class DatabaseMigration:
                     'status': 'success',
                     'timestamp': datetime.now()
                 })
-                logger.info(f"  ✓ Success")
+                logger.info("  ✓ Success")
 
             except Exception as e:
                 logger.error(f"  ✗ Failed: {e}")

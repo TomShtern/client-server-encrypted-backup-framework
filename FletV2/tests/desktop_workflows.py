@@ -7,14 +7,11 @@ including keyboard-heavy usage, long-running sessions, and real-world desktop us
 Compatible with Flet 0.28.3 and Windows 11 desktop applications.
 """
 
-import asyncio
 import time
-import threading
 import logging
-from typing import Dict, List, Any, Callable, Optional, Tuple
+from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
 from contextlib import contextmanager
-import random
 
 logger = logging.getLogger(__name__)
 
@@ -444,7 +441,7 @@ class DesktopWorkflowTester:
         print(f"Success Rate: {(passed_tests / total_tests * 100):.1f}%")
 
         if failed_tests > 0:
-            print(f"\n❌ Failed Workflows:")
+            print("\n❌ Failed Workflows:")
             for result in results:
                 if not result.passed:
                     print(f"   - {result.workflow_name}: {result.error_message}")

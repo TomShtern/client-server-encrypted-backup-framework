@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 """Measure actual folder sizes for PROJECT_STRUCTURE_AND_DUPLICATION_REPORT.md verification."""
-import os
 from pathlib import Path
 import json
 

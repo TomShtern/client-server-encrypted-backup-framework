@@ -1,0 +1,73 @@
+============================= test session starts =============================
+platform win32 -- Python 3.14.0, pytest-8.4.2, pluggy-1.6.0 -- C:\Python314\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\tom7s\Desktopp\Claude_Folder_2\Client_Server_Encrypted_Backup_Framework
+configfile: pyproject.toml
+plugins: anyio-4.11.0
+collecting ... collected 1 item
+
+tests/integration/test_server_features.py::test_settings_management FAILED [100%]
+
+================================== FAILURES ===================================
+__________________________ test_settings_management ___________________________
+
+server = <python_server.server.server.BackupServer object at 0x000001BCD614AF90>
+
+    def test_settings_management(server):
+        """Test loading, validating, and saving settings."""
+    
+        # 1. Test _validate_settings
+        valid_settings = {
+            "server_port": 1234,
+            "max_concurrent_clients": 10,
+            "theme": "dark",
+            "enable_monitoring": True,
+        }
+        result = server._validate_settings(valid_settings)
+        assert result[0] is True, f"Validation failed: {result[1]}"
+    
+        invalid_settings = {
+            "server_port": "not_an_int",  # Invalid type
+            "max_concurrent_clients": 10,
+        }
+        assert server._validate_settings(invalid_settings)[0] is False
+    
+        # 2. Test load_settings
+        mock_settings_json = json.dumps(valid_settings)
+        with (
+            patch("builtins.open", mock_open(read_data=mock_settings_json)),
+            patch("os.path.exists", return_value=True),
+        ):
+            loaded = server.load_settings()
+            assert loaded["success"] is True
+            assert loaded["data"]["server_port"] == 1234
+            assert loaded["data"]["theme"] == "dark"
+    
+        # 3. Test save_settings (Atomic Write)
+        new_settings = {"server_port": 5555}
+    
+        # Mock os.replace to simulate atomic move
+        with (
+            patch("builtins.open", mock_open()) as mock_file,
+            patch("os.replace") as mock_replace,
+            patch("json.dump"),
+        ):
+            success = server.save_settings(new_settings)
+    
+>           assert success["success"] is True
+E           assert False is True
+
+tests\integration\test_server_features.py:63: AssertionError
+---------------------------- Captured stdout setup ----------------------------
+2025-11-22 20:47:07,996 - MainThread - INFO - [GUI] Legacy Tkinter GUI integration removed - FletV2 GUI is now used instead
+----------------------------- Captured log setup ------------------------------
+INFO     python_server.server.server:server.py:468 [GUI] Legacy Tkinter GUI integration removed - FletV2 GUI is now used instead
+---------------------------- Captured stdout call -----------------------------
+2025-11-22 20:47:08,003 - MainThread - INFO - Settings loaded successfully from server_settings.json
+2025-11-22 20:47:08,006 - MainThread - ERROR - Failed to save settings: [WinError 2] The system cannot find the file specified: 'server_settings.json.tmp' -> 'server_settings.json'
+------------------------------ Captured log call ------------------------------
+INFO     python_server.server.server:server.py:3284 Settings loaded successfully from server_settings.json
+ERROR    python_server.server.server:server.py:3216 Failed to save settings: [WinError 2] The system cannot find the file specified: 'server_settings.json.tmp' -> 'server_settings.json'
+=========================== short test summary info ===========================
+FAILED tests/integration/test_server_features.py::test_settings_management - assert False is True
+============================== 1 failed in 0.35s ==============================

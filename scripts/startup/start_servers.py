@@ -45,11 +45,8 @@ sys.path.insert(0, project_root)
 # UTF-8 support for subprocess operations
 # Enhanced output with emojis and colors
 from Shared.logging.enhanced_output import (
-    EmojiLogger,
     Emojis,
-    Colors,
     success_print,
-    safe_print,
     startup_print,
     error_print,
     info_print,

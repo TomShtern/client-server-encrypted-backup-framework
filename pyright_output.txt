@@ -1,0 +1,6 @@
+c:\Users\tom7s\Desktopp\Claude_Folder_2\Client_Server_Encrypted_Backup_Framework\python_server\server\database.py
+  c:\Users\tom7s\Desktopp\Claude_Folder_2\Client_Server_Encrypted_Backup_Framework\python_server\server\database.py:37:10 - warning: Import "observability" could not be resolved (reportMissingImports)
+c:\Users\tom7s\Desktopp\Claude_Folder_2\Client_Server_Encrypted_Backup_Framework\python_server\server\server.py
+  c:\Users\tom7s\Desktopp\Claude_Folder_2\Client_Server_Encrypted_Backup_Framework\python_server\server\server.py:2795:87 - error: "log_files" is possibly unbound (reportPossiblyUnboundVariable)
+  c:\Users\tom7s\Desktopp\Claude_Folder_2\Client_Server_Encrypted_Backup_Framework\python_server\server\server.py:3254:16 - error: "json" is possibly unbound (reportPossiblyUnboundVariable)
+2 errors, 1 warning, 0 informations

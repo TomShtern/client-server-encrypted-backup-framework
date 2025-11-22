@@ -1039,7 +1039,7 @@ def main():
         handle_error_and_exit("[ERROR] FletV2 launcher not found - cannot start GUI", wait_for_input=True)
 
     print(f"Launching: {fletv2_launcher}")
-    print(f"Command: python FletV2/scripts/start_with_server.py")
+    print("Command: python FletV2/scripts/start_with_server.py")
     print()
 
     # Prepare environment for FletV2

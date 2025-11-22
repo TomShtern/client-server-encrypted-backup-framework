@@ -7,7 +7,6 @@ including memory usage monitoring, CPU usage benchmarks, response time validatio
 Compatible with Flet 0.28.3 and Windows 11 desktop applications.
 """
 
-import asyncio
 import time
 import psutil
 import threading
@@ -604,13 +603,13 @@ def run_desktop_performance_tests() -> Dict[str, Any]:
     print(f"Failed: {report['summary']['failed_tests']}")
     print(f"Success Rate: {report['summary']['success_rate']:.1f}%")
 
-    print(f"\nPerformance Statistics:")
+    print("\nPerformance Statistics:")
     print(f"Average Duration: {report['performance_stats']['avg_duration']:.3f}s")
     print(f"Average Memory: {report['performance_stats']['avg_memory_mb']:.1f}MB")
     print(f"Average CPU: {report['performance_stats']['avg_cpu_percent']:.1f}%")
 
     if report['failed_tests']:
-        print(f"\n❌ Failed Tests:")
+        print("\n❌ Failed Tests:")
         for failed in report['failed_tests']:
             print(f"   - {failed['test_name']}: {failed['error']}")
 

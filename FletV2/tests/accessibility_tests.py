@@ -9,10 +9,8 @@ Compatible with Flet 0.28.3 and Windows 11 desktop applications.
 
 import flet as ft
 import logging
-from typing import Dict, List, Any, Optional, Callable, Tuple
-from dataclasses import dataclass
+from typing import Dict, List, Any, Optional, Tuple
 from enum import Enum
-import inspect
 
 logger = logging.getLogger(__name__)
 
@@ -363,14 +361,14 @@ class AccessibilityTester:
         level_aa_issues = [issue for issue in all_issues if issue.level == AccessibilityLevel.AA]
         level_aaa_issues = [issue for issue in all_issues if issue.level == AccessibilityLevel.AAA]
 
-        print(f"\n📊 Accessibility Test Results")
+        print("\n📊 Accessibility Test Results")
         print(f"Total Issues Found: {len(all_issues)}")
         print(f"Level A (Critical): {len(level_a_issues)}")
         print(f"Level AA (Major): {len(level_aa_issues)}")
         print(f"Level AAA (Minor): {len(level_aaa_issues)}")
 
         if all_issues:
-            print(f"\n🔍 Issues by Category:")
+            print("\n🔍 Issues by Category:")
             categories = {
                 "Keyboard Navigation": keyboard_issues,
                 "Color Contrast": color_issues,
@@ -388,7 +386,7 @@ class AccessibilityTester:
                             print(f"        💡 {issue.suggestion}")
 
         # Generate compliance assessment
-        print(f"\n✅ WCAG 2.1 Compliance Assessment:")
+        print("\n✅ WCAG 2.1 Compliance Assessment:")
         if len(level_a_issues) == 0:
             print("   ✅ Level A: COMPLIANT")
         else:

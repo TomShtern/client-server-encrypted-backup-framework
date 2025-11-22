@@ -1,5 +1,4 @@
 """Check page height and capture stats grid."""
-import sys
 from playwright.sync_api import sync_playwright
 
 
@@ -25,7 +24,7 @@ def main():
         # Check if stats grid exists
         stats_grid = page.locator("#statsGrid")
         if stats_grid.count() > 0:
-            print(f"\n✅ Stats grid found!")
+            print("\n✅ Stats grid found!")
             # Scroll to stats grid
             page.evaluate("document.getElementById('statsGrid').scrollIntoView({behavior: 'smooth', block: 'center'})")
             page.wait_for_timeout(1000)

@@ -90,7 +90,7 @@ def validate_unified_database():
             results['checks']['database_operations'] = test_results
 
             if test_results['status'] == 'success':
-                logger.info(f"✓ Database operations test passed")
+                logger.info("✓ Database operations test passed")
                 logger.info(f"  Clients table: {test_results['clients_count']} records")
                 logger.info(f"  Files table: {test_results['files_count']} records")
                 logger.info(f"  Tables found: {test_results['tables']}")
@@ -124,7 +124,7 @@ def validate_unified_database():
         results['errors'].append(f"Configuration import failed: {e}")
 
     except Exception as e:
-        logger.exception(f"Validation failed with unexpected error")
+        logger.exception("Validation failed with unexpected error")
         results['status'] = 'error'
         results['errors'].append(f"Unexpected error: {e}")
 

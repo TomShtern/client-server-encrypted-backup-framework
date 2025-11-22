@@ -1,0 +1,508 @@
+F811 [*] Redefinition of unused `sys` from line 10
+  --> python_server\scripts\database_manager.py:14:8
+   |
+13 | # Setup standardized import paths
+14 | import sys
+   |        ^^^ `sys` redefined here
+15 | import os
+16 | # Add project root to sys.path
+   |
+  ::: python_server\scripts\database_manager.py:10:8
+   |
+ 8 | import json
+ 9 | import os
+10 | import sys
+   |        --- previous definition of `sys` here
+11 | from datetime import datetime
+   |
+help: Remove definition: `sys`
+
+F811 [*] Redefinition of unused `os` from line 9
+  --> python_server\scripts\database_manager.py:15:8
+   |
+13 | # Setup standardized import paths
+14 | import sys
+15 | import os
+   |        ^^ `os` redefined here
+16 | # Add project root to sys.path
+17 | sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
+   |
+  ::: python_server\scripts\database_manager.py:9:8
+   |
+ 7 | import argparse
+ 8 | import json
+ 9 | import os
+   |        -- previous definition of `os` here
+10 | import sys
+11 | from datetime import datetime
+   |
+help: Remove definition: `os`
+
+F401 [*] `datetime.UTC` imported but unused
+  --> python_server\server\client_manager.py:21:22
+   |
+19 | import threading
+20 | import time
+21 | from datetime import UTC, datetime
+   |                      ^^^
+22 | from typing import Any
+   |
+help: Remove unused import
+
+F401 [*] `datetime.datetime` imported but unused
+  --> python_server\server\client_manager.py:21:27
+   |
+19 | import threading
+20 | import time
+21 | from datetime import UTC, datetime
+   |                           ^^^^^^^^
+22 | from typing import Any
+   |
+help: Remove unused import
+
+F401 [*] `.exceptions.ClientError` imported but unused
+  --> python_server\server\client_manager.py:35:25
+   |
+34 | # Import custom exceptions and configuration
+35 | from .exceptions import ClientError, ProtocolError
+   |                         ^^^^^^^^^^^
+36 |
+37 | logger = logging.getLogger(__name__)
+   |
+help: Remove unused import: `.exceptions.ClientError`
+
+F401 [*] `struct` imported but unused
+  --> python_server\server\crc_utils.py:17:8
+   |
+15 | """
+16 |
+17 | import struct
+   |        ^^^^^^
+18 | import logging
+19 | from typing import Final
+   |
+help: Remove unused import: `struct`
+
+E402 Module level import not at top of file
+  --> python_server\server\server.py:27:1
+   |
+26 |   # Now import ALL Shared modules after path setup - consolidate all imports here
+27 | / from Shared.logging.logging_utils import (
+28 | |     create_enhanced_logger,
+29 | |     create_log_monitor_info,
+30 | |     setup_dual_logging,
+31 | | )
+   | |_^
+32 |   from Shared.monitoring.observability import get_metrics_collector, get_system_monitor
+   |
+
+E402 Module level import not at top of file
+  --> python_server\server\server.py:32:1
+   |
+30 |     setup_dual_logging,
+31 | )
+32 | from Shared.monitoring.observability import get_metrics_collector, get_system_monitor
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+33 |
+34 | # Try to import Sentry config - handle gracefully if not available
+   |
+
+E402 Module level import not at top of file
+  --> python_server\server\server.py:47:1
+   |
+46 | # Import crypto components directly from PyCryptodome
+47 | from Crypto.Cipher import AES
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+48 | from Crypto.PublicKey import RSA
+49 | from Crypto.Random import get_random_bytes
+   |
+
+E402 Module level import not at top of file
+  --> python_server\server\server.py:48:1
+   |
+46 | # Import crypto components directly from PyCryptodome
+47 | from Crypto.Cipher import AES
+48 | from Crypto.PublicKey import RSA
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+49 | from Crypto.Random import get_random_bytes
+   |
+
+E402 Module level import not at top of file
+  --> python_server\server\server.py:49:1
+   |
+47 | from Crypto.Cipher import AES
+48 | from Crypto.PublicKey import RSA
+49 | from Crypto.Random import get_random_bytes
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+50 |
+51 | from .config import (
+   |
+
+E402 Module level import not at top of file
+  --> python_server\server\server.py:51:1
+   |
+49 |   from Crypto.Random import get_random_bytes
+50 |
+51 | / from .config import (
+52 | |     AES_KEY_SIZE_BYTES,
+53 | |     CLIENT_SESSION_TIMEOUT,
+54 | |     CLIENT_SOCKET_TIMEOUT,
+55 | |     DEFAULT_PORT,
+56 | |     FILE_STORAGE_DIR,
+57 | |     MAINTENANCE_INTERVAL,
+58 | |     MAX_ACTUAL_FILENAME_LENGTH,
+59 | |     MAX_CLIENT_NAME_LENGTH,
+60 | |     MAX_CONCURRENT_CLIENTS,
+61 | |     MAX_FILENAME_FIELD_SIZE,
+62 | |     MAX_ORIGINAL_FILE_SIZE,
+63 | |     MAX_PAYLOAD_READ_LIMIT,
+64 | |     PARTIAL_FILE_TIMEOUT,
+65 | |     RSA_PUBLIC_KEY_SIZE,
+66 | |     SERVER_VERSION,
+67 | |     SETTINGS_FILE,
+68 | | )
+   | |_^
+69 |
+70 |   # Import protocol constants and configuration (refactored for modularity)
+   |
+
+E402 Module level import not at top of file
+  --> python_server\server\server.py:71:1
+   |
+70 | # Import protocol constants and configuration (refactored for modularity)
+71 | from .crc_utils import calculate_crc32  # Centralized CRC calculation
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+72 |
+73 | # Import database module
+   |
+
+E402 Module level import not at top of file
+  --> python_server\server\server.py:74:1
+   |
+73 | # Import database module
+74 | from .database import DatabaseManager
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+75 |
+76 | # Import custom exceptions
+   |
+
+E402 Module level import not at top of file
+  --> python_server\server\server.py:77:1
+   |
+76 | # Import custom exceptions
+77 | from .exceptions import ProtocolError, ServerError
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+78 |
+79 | # Import network server module
+   |
+
+E402 Module level import not at top of file
+  --> python_server\server\server.py:80:1
+   |
+79 | # Import network server module
+80 | from .network_server import NetworkServer
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+81 |
+82 | # Import request handler module
+   |
+
+E402 Module level import not at top of file
+  --> python_server\server\server.py:83:1
+   |
+82 | # Import request handler module
+83 | from .request_handlers import RequestHandler
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+84 | from .server_singleton import ensure_single_server_instance
+   |
+
+E402 Module level import not at top of file
+  --> python_server\server\server.py:84:1
+   |
+82 | # Import request handler module
+83 | from .request_handlers import RequestHandler
+84 | from .server_singleton import ensure_single_server_instance
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+85 |
+86 | # Configuration constants now imported from config.py module
+   |
+
+F811 Redefinition of unused `CLIENT_SOCKET_TIMEOUT` from line 54
+  --> python_server\server\server.py:90:1
+   |
+89 | # Behavior Configuration
+90 | CLIENT_SOCKET_TIMEOUT = 60.0  # Timeout for individual socket operations with a client
+   | ^^^^^^^^^^^^^^^^^^^^^ `CLIENT_SOCKET_TIMEOUT` redefined here
+91 | CLIENT_SESSION_TIMEOUT = (
+92 |     10 * 60
+   |
+  ::: python_server\server\server.py:54:5
+   |
+52 |     AES_KEY_SIZE_BYTES,
+53 |     CLIENT_SESSION_TIMEOUT,
+54 |     CLIENT_SOCKET_TIMEOUT,
+   |     --------------------- previous definition of `CLIENT_SOCKET_TIMEOUT` here
+55 |     DEFAULT_PORT,
+56 |     FILE_STORAGE_DIR,
+   |
+help: Remove definition: `CLIENT_SOCKET_TIMEOUT`
+
+F811 Redefinition of unused `CLIENT_SESSION_TIMEOUT` from line 53
+  --> python_server\server\server.py:91:1
+   |
+89 | # Behavior Configuration
+90 | CLIENT_SOCKET_TIMEOUT = 60.0  # Timeout for individual socket operations with a client
+91 | CLIENT_SESSION_TIMEOUT = (
+   | ^^^^^^^^^^^^^^^^^^^^^^ `CLIENT_SESSION_TIMEOUT` redefined here
+92 |     10 * 60
+93 | )  # Overall inactivity timeout for a client session (10 minutes)
+   |
+  ::: python_server\server\server.py:53:5
+   |
+51 | from .config import (
+52 |     AES_KEY_SIZE_BYTES,
+53 |     CLIENT_SESSION_TIMEOUT,
+   |     ---------------------- previous definition of `CLIENT_SESSION_TIMEOUT` here
+54 |     CLIENT_SOCKET_TIMEOUT,
+55 |     DEFAULT_PORT,
+   |
+help: Remove definition: `CLIENT_SESSION_TIMEOUT`
+
+F811 Redefinition of unused `PARTIAL_FILE_TIMEOUT` from line 64
+  --> python_server\server\server.py:94:1
+   |
+92 |     10 * 60
+93 | )  # Overall inactivity timeout for a client session (10 minutes)
+94 | PARTIAL_FILE_TIMEOUT = (
+   | ^^^^^^^^^^^^^^^^^^^^ `PARTIAL_FILE_TIMEOUT` redefined here
+95 |     15 * 60
+96 | )  # Timeout for incomplete multi-packet file transfers (15 minutes)
+   |
+  ::: python_server\server\server.py:64:5
+   |
+62 |     MAX_ORIGINAL_FILE_SIZE,
+63 |     MAX_PAYLOAD_READ_LIMIT,
+64 |     PARTIAL_FILE_TIMEOUT,
+   |     -------------------- previous definition of `PARTIAL_FILE_TIMEOUT` here
+65 |     RSA_PUBLIC_KEY_SIZE,
+66 |     SERVER_VERSION,
+   |
+help: Remove definition: `PARTIAL_FILE_TIMEOUT`
+
+F811 Redefinition of unused `MAINTENANCE_INTERVAL` from line 57
+  --> python_server\server\server.py:97:1
+   |
+95 |     15 * 60
+96 | )  # Timeout for incomplete multi-packet file transfers (15 minutes)
+97 | MAINTENANCE_INTERVAL = 20.0  # How often to run maintenance tasks (seconds)
+   | ^^^^^^^^^^^^^^^^^^^^ `MAINTENANCE_INTERVAL` redefined here
+98 | MAX_PAYLOAD_READ_LIMIT = (
+99 |     16 * 1024 * 1024
+   |
+  ::: python_server\server\server.py:57:5
+   |
+55 |     DEFAULT_PORT,
+56 |     FILE_STORAGE_DIR,
+57 |     MAINTENANCE_INTERVAL,
+   |     -------------------- previous definition of `MAINTENANCE_INTERVAL` here
+58 |     MAX_ACTUAL_FILENAME_LENGTH,
+59 |     MAX_CLIENT_NAME_LENGTH,
+   |
+help: Remove definition: `MAINTENANCE_INTERVAL`
+
+F811 Redefinition of unused `MAX_PAYLOAD_READ_LIMIT` from line 63
+   --> python_server\server\server.py:98:1
+    |
+ 96 | )  # Timeout for incomplete multi-packet file transfers (15 minutes)
+ 97 | MAINTENANCE_INTERVAL = 20.0  # How often to run maintenance tasks (seconds)
+ 98 | MAX_PAYLOAD_READ_LIMIT = (
+    | ^^^^^^^^^^^^^^^^^^^^^^ `MAX_PAYLOAD_READ_LIMIT` redefined here
+ 99 |     16 * 1024 * 1024
+100 | ) + 1024  # Max size for a single payload read (16MB chunk + headers)
+    |
+   ::: python_server\server\server.py:63:5
+    |
+ 61 |     MAX_FILENAME_FIELD_SIZE,
+ 62 |     MAX_ORIGINAL_FILE_SIZE,
+ 63 |     MAX_PAYLOAD_READ_LIMIT,
+    |     ---------------------- previous definition of `MAX_PAYLOAD_READ_LIMIT` here
+ 64 |     PARTIAL_FILE_TIMEOUT,
+ 65 |     RSA_PUBLIC_KEY_SIZE,
+    |
+help: Remove definition: `MAX_PAYLOAD_READ_LIMIT`
+
+F811 Redefinition of unused `MAX_ORIGINAL_FILE_SIZE` from line 62
+   --> python_server\server\server.py:101:1
+    |
+ 99 |     16 * 1024 * 1024
+100 | ) + 1024  # Max size for a single payload read (16MB chunk + headers)
+101 | MAX_ORIGINAL_FILE_SIZE = (
+    | ^^^^^^^^^^^^^^^^^^^^^^ `MAX_ORIGINAL_FILE_SIZE` redefined here
+102 |     4 * 1024 * 1024 * 1024
+103 | )  # Max original file size (e.g., 4GB) - for sanity checking
+    |
+   ::: python_server\server\server.py:62:5
+    |
+ 60 |     MAX_CONCURRENT_CLIENTS,
+ 61 |     MAX_FILENAME_FIELD_SIZE,
+ 62 |     MAX_ORIGINAL_FILE_SIZE,
+    |     ---------------------- previous definition of `MAX_ORIGINAL_FILE_SIZE` here
+ 63 |     MAX_PAYLOAD_READ_LIMIT,
+ 64 |     PARTIAL_FILE_TIMEOUT,
+    |
+help: Remove definition: `MAX_ORIGINAL_FILE_SIZE`
+
+F811 Redefinition of unused `MAX_CONCURRENT_CLIENTS` from line 60
+   --> python_server\server\server.py:104:1
+    |
+102 |     4 * 1024 * 1024 * 1024
+103 | )  # Max original file size (e.g., 4GB) - for sanity checking
+104 | MAX_CONCURRENT_CLIENTS = 50  # Max number of concurrent client connections
+    | ^^^^^^^^^^^^^^^^^^^^^^ `MAX_CONCURRENT_CLIENTS` redefined here
+105 |
+106 | # MAX_CLIENT_NAME_LENGTH imported from config.py (line 39)
+    |
+   ::: python_server\server\server.py:60:5
+    |
+ 58 |     MAX_ACTUAL_FILENAME_LENGTH,
+ 59 |     MAX_CLIENT_NAME_LENGTH,
+ 60 |     MAX_CONCURRENT_CLIENTS,
+    |     ---------------------- previous definition of `MAX_CONCURRENT_CLIENTS` here
+ 61 |     MAX_FILENAME_FIELD_SIZE,
+ 62 |     MAX_ORIGINAL_FILE_SIZE,
+    |
+help: Remove definition: `MAX_CONCURRENT_CLIENTS`
+
+F811 Redefinition of unused `MAX_FILENAME_FIELD_SIZE` from line 61
+   --> python_server\server\server.py:107:1
+    |
+106 | # MAX_CLIENT_NAME_LENGTH imported from config.py (line 39)
+107 | MAX_FILENAME_FIELD_SIZE = 255  # Size of the filename field in protocol
+    | ^^^^^^^^^^^^^^^^^^^^^^^ `MAX_FILENAME_FIELD_SIZE` redefined here
+108 | MAX_ACTUAL_FILENAME_LENGTH = 250  # Practical limit for actual filename within the field
+109 | RSA_PUBLIC_KEY_SIZE = (
+    |
+   ::: python_server\server\server.py:61:5
+    |
+ 59 |     MAX_CLIENT_NAME_LENGTH,
+ 60 |     MAX_CONCURRENT_CLIENTS,
+ 61 |     MAX_FILENAME_FIELD_SIZE,
+    |     ----------------------- previous definition of `MAX_FILENAME_FIELD_SIZE` here
+ 62 |     MAX_ORIGINAL_FILE_SIZE,
+ 63 |     MAX_PAYLOAD_READ_LIMIT,
+    |
+help: Remove definition: `MAX_FILENAME_FIELD_SIZE`
+
+F811 Redefinition of unused `MAX_ACTUAL_FILENAME_LENGTH` from line 58
+   --> python_server\server\server.py:108:1
+    |
+106 | # MAX_CLIENT_NAME_LENGTH imported from config.py (line 39)
+107 | MAX_FILENAME_FIELD_SIZE = 255  # Size of the filename field in protocol
+108 | MAX_ACTUAL_FILENAME_LENGTH = 250  # Practical limit for actual filename within the field
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^ `MAX_ACTUAL_FILENAME_LENGTH` redefined here
+109 | RSA_PUBLIC_KEY_SIZE = (
+110 |     160  # Bytes, X.509 format (for 1024-bit RSA - per protocol specification)
+    |
+   ::: python_server\server\server.py:58:5
+    |
+ 56 |     FILE_STORAGE_DIR,
+ 57 |     MAINTENANCE_INTERVAL,
+ 58 |     MAX_ACTUAL_FILENAME_LENGTH,
+    |     -------------------------- previous definition of `MAX_ACTUAL_FILENAME_LENGTH` here
+ 59 |     MAX_CLIENT_NAME_LENGTH,
+ 60 |     MAX_CONCURRENT_CLIENTS,
+    |
+help: Remove definition: `MAX_ACTUAL_FILENAME_LENGTH`
+
+F811 Redefinition of unused `RSA_PUBLIC_KEY_SIZE` from line 65
+   --> python_server\server\server.py:109:1
+    |
+107 | MAX_FILENAME_FIELD_SIZE = 255  # Size of the filename field in protocol
+108 | MAX_ACTUAL_FILENAME_LENGTH = 250  # Practical limit for actual filename within the field
+109 | RSA_PUBLIC_KEY_SIZE = (
+    | ^^^^^^^^^^^^^^^^^^^ `RSA_PUBLIC_KEY_SIZE` redefined here
+110 |     160  # Bytes, X.509 format (for 1024-bit RSA - per protocol specification)
+111 | )
+    |
+   ::: python_server\server\server.py:65:5
+    |
+ 63 |     MAX_PAYLOAD_READ_LIMIT,
+ 64 |     PARTIAL_FILE_TIMEOUT,
+ 65 |     RSA_PUBLIC_KEY_SIZE,
+    |     ------------------- previous definition of `RSA_PUBLIC_KEY_SIZE` here
+ 66 |     SERVER_VERSION,
+ 67 |     SETTINGS_FILE,
+    |
+help: Remove definition: `RSA_PUBLIC_KEY_SIZE`
+
+F811 Redefinition of unused `AES_KEY_SIZE_BYTES` from line 52
+   --> python_server\server\server.py:112:1
+    |
+110 |     160  # Bytes, X.509 format (for 1024-bit RSA - per protocol specification)
+111 | )
+112 | AES_KEY_SIZE_BYTES = 32  # 256-bit AES
+    | ^^^^^^^^^^^^^^^^^^ `AES_KEY_SIZE_BYTES` redefined here
+113 |
+114 | # Logging Configuration
+    |
+   ::: python_server\server\server.py:52:5
+    |
+ 51 | from .config import (
+ 52 |     AES_KEY_SIZE_BYTES,
+    |     ------------------ previous definition of `AES_KEY_SIZE_BYTES` here
+ 53 |     CLIENT_SESSION_TIMEOUT,
+ 54 |     CLIENT_SOCKET_TIMEOUT,
+    |
+help: Remove definition: `AES_KEY_SIZE_BYTES`
+
+F811 Redefinition of unused `SETTINGS_FILE` from line 67
+   --> python_server\server\server.py:130:1
+    |
+129 | # Settings Configuration
+130 | SETTINGS_FILE = "server_settings.json"  # Settings persistence file
+    | ^^^^^^^^^^^^^ `SETTINGS_FILE` redefined here
+131 |
+132 | # String constants for error messages and metrics
+    |
+   ::: python_server\server\server.py:67:5
+    |
+ 65 |     RSA_PUBLIC_KEY_SIZE,
+ 66 |     SERVER_VERSION,
+ 67 |     SETTINGS_FILE,
+    |     ------------- previous definition of `SETTINGS_FILE` here
+ 68 | )
+    |
+help: Remove definition: `SETTINGS_FILE`
+
+E721 Use `is` and `is not` for type comparisons, or `isinstance()` for isinstance checks
+    --> python_server\server\server.py:3106:16
+     |
+3105 |             # Range/enum validation
+3106 |             if expected_type == int and len(schema) == 3:
+     |                ^^^^^^^^^^^^^^^^^^^^
+3107 |                 min_val, max_val = schema[1], schema[2]
+3108 |                 if not (min_val <= value <= max_val):
+     |
+
+E721 Use `is` and `is not` for type comparisons, or `isinstance()` for isinstance checks
+    --> python_server\server\server.py:3114:18
+     |
+3112 |                     )
+3113 |
+3114 |             elif expected_type == str and len(schema) == 2:
+     |                  ^^^^^^^^^^^^^^^^^^^^
+3115 |                 allowed_values = schema[1]
+3116 |                 if value not in allowed_values:
+     |
+
+E721 Use `is` and `is not` for type comparisons, or `isinstance()` for isinstance checks
+    --> python_server\server\server.py:3123:17
+     |
+3122 |             elif (
+3123 |                 expected_type == int
+     |                 ^^^^^^^^^^^^^^^^^^^^
+3124 |                 and len(schema) == 2
+3125 |                 and isinstance(schema[1], list)
+     |
+
+Found 33 errors.
+[*] 6 fixable with the `--fix` option.

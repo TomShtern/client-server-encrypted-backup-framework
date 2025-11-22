@@ -16,10 +16,8 @@ This test suite ensures that:
 import os
 import sys
 import tempfile
-import threading
 import time
 import unittest
-from unittest.mock import Mock, patch
 from pathlib import Path
 
 # Add project root to path for imports
@@ -29,14 +27,11 @@ from Shared.utils.streaming_file_utils import (
     calculate_file_hash_streaming,
     read_file_chunks,
     StreamingFileReader,
-    MemoryUsageTracker,
-    log_memory_efficiency
+    MemoryUsageTracker
 )
 from Shared.utils.memory_efficient_file_transfer import (
     MemoryEfficientTransferManager,
-    TransferConfig,
-    get_transfer_manager,
-    shutdown_transfer_manager
+    TransferConfig
 )
 
 
@@ -362,7 +357,7 @@ def run_memory_efficiency_test():
         end_time = time.time()
         memory_delta = tracker.get_memory_delta()
 
-        print(f"Hash calculation completed:")
+        print("Hash calculation completed:")
         print(f"  File size: {file_size_mb}MB")
         print(f"  Time: {end_time - start_time:.2f}s")
         print(f"  Memory delta: {memory_delta / (1024*1024):.2f}MB")
@@ -381,13 +376,13 @@ def run_memory_efficiency_test():
         end_time = time.time()
         memory_delta2 = tracker2.get_memory_delta()
 
-        print(f"Traditional method:")
+        print("Traditional method:")
         print(f"  Time: {end_time - start_time:.2f}s")
         print(f"  Memory delta: {memory_delta2 / (1024*1024):.2f}MB")
         if memory_delta2 > 0:
             print(f"  Memory efficiency: {file_size_mb / (memory_delta2 / (1024*1024)):.1f}x")
         else:
-            print(f"  Memory efficiency: N/A (memory delta too small to measure)")
+            print("  Memory efficiency: N/A (memory delta too small to measure)")
 
         # Verify results match
         assert hash_result == traditional_hash, "Hash results don't match!"

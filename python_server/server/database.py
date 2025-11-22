@@ -33,22 +33,32 @@ from .exceptions import ServerError
 # Import observability framework if available
 try:
     import sys
-    sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'Shared'))
-    from observability import MetricsCollector as _MetricsCollector
-    from observability import StructuredLogger as _StructuredLogger  # type: ignore
+
+    sys.path.append(
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..")
+    )
+    from Shared.monitoring.observability import MetricsCollector as _MetricsCollector
+    from Shared.monitoring.observability import (
+        StructuredLogger as _StructuredLogger,  # type: ignore
+    )
+
     OBSERVABILITY_AVAILABLE = True
     StructuredLogger = _StructuredLogger  # type: ignore
     MetricsCollector = _MetricsCollector  # type: ignore
 except ImportError:
     OBSERVABILITY_AVAILABLE = False
+
     # Create stub classes when observability is not available
     class StructuredLogger:
         def __init__(self, name: str, logger: logging.Logger) -> None:
             self.logger = logger
+
         def info(self, msg: str, **kwargs: Any) -> None:
             self.logger.info(msg)
+
         def error(self, msg: str, **kwargs: Any) -> None:
             self.logger.error(msg)
+
         def debug(self, msg: str, **kwargs: Any) -> None:
             self.logger.debug(msg)
 
@@ -64,7 +74,7 @@ logger = logging.getLogger(__name__)
 # Initialize observability components if available
 if OBSERVABILITY_AVAILABLE:
     try:
-        structured_logger = StructuredLogger('database', logger)
+        structured_logger = StructuredLogger("database", logger)
         metrics = MetricsCollector()
     except Exception as e:
         logger.warning(f"Failed to initialize observability components: {e}")
@@ -83,6 +93,7 @@ class ConnectionInfo:
     Note: Uses time.monotonic() for all timestamps to avoid issues with
     system clock changes. Do not mix with time.time() values.
     """
+
     connection_id: str
     created_time: float  # time.monotonic() timestamp
     last_used_time: float  # time.monotonic() timestamp
@@ -94,6 +105,7 @@ class ConnectionInfo:
 @dataclass
 class PoolMetrics:
     """Database connection pool metrics."""
+
     total_connections: int = 0
     active_connections: int = 0
     available_connections: int = 0
@@ -112,19 +124,33 @@ class DatabaseConnectionPool:
     Enhanced connection pool for SQLite database with comprehensive monitoring and cleanup capabilities.
     """
 
-    def __init__(self, db_name: str, pool_size: int = 5, timeout: float = 30.0,
-                 max_connection_age: float = 3600.0, cleanup_interval: float = 300.0):
+    def __init__(
+        self,
+        db_name: str,
+        pool_size: int = 5,
+        timeout: float = 30.0,
+        max_connection_age: float = 3600.0,
+        cleanup_interval: float = 300.0,
+    ):
         self.db_name = db_name
         self.pool_size = pool_size
         self.timeout = timeout
-        self.max_connection_age = max_connection_age  # Max age in seconds (default: 1 hour)
-        self.cleanup_interval = cleanup_interval  # Cleanup interval in seconds (default: 5 minutes)
+        self.max_connection_age = (
+            max_connection_age  # Max age in seconds (default: 1 hour)
+        )
+        self.cleanup_interval = (
+            cleanup_interval  # Cleanup interval in seconds (default: 5 minutes)
+        )
 
         # Connection pool and monitoring
         self.pool: queue.Queue[sqlite3.Connection] = queue.Queue(maxsize=pool_size)
         self.lock = threading.Lock()
-        self.connection_info: dict[int, ConnectionInfo] = {}  # connection_id -> ConnectionInfo
-        self.emergency_connections: dict[int, sqlite3.Connection] = {}  # Track emergency connections separately
+        self.connection_info: dict[
+            int, ConnectionInfo
+        ] = {}  # connection_id -> ConnectionInfo
+        self.emergency_connections: dict[
+            int, sqlite3.Connection
+        ] = {}  # Track emergency connections separately
         self.metrics = PoolMetrics()
 
         # Monitoring flags
@@ -144,22 +170,26 @@ class DatabaseConnectionPool:
                 self.metrics.total_connections += 1
                 self.metrics.connections_created += 1
 
-    def _create_monitored_connection(self, connection_id: str) -> sqlite3.Connection | None:
+    def _create_monitored_connection(
+        self, connection_id: str
+    ) -> sqlite3.Connection | None:
         """Create a new database connection with monitoring."""
         try:
             conn = sqlite3.connect(
                 self.db_name,
                 timeout=10.0,
-                check_same_thread=False  # Allow connection sharing across threads
+                check_same_thread=False,  # Allow connection sharing across threads
             )
 
             # Configure database for better performance while maintaining compatibility
             try:
                 result = conn.execute("PRAGMA journal_mode=WAL").fetchone()
-                if result and result[0].upper() == 'WAL':
+                if result and result[0].upper() == "WAL":
                     logger.debug(f"WAL mode enabled for connection {connection_id}")
                 else:
-                    logger.warning(f"WAL mode not available (got {result[0] if result else 'None'}), using default journaling")
+                    logger.warning(
+                        f"WAL mode not available (got {result[0] if result else 'None'}), using default journaling"
+                    )
             except sqlite3.OperationalError as e:
                 logger.warning(f"WAL mode failed: {e}, using default journaling")
             conn.execute("PRAGMA synchronous=NORMAL")  # Balance safety vs performance
@@ -173,7 +203,7 @@ class DatabaseConnectionPool:
                 connection_id=connection_id,
                 created_time=current_time,
                 last_used_time=current_time,
-                thread_id=threading.get_ident()
+                thread_id=threading.get_ident(),
             )
 
             logger.debug(f"Created new database connection: {connection_id}")
@@ -192,7 +222,14 @@ class DatabaseConnectionPool:
             # Try to use managed thread system
             import os
             import sys
-            shared_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'Shared', 'utils')
+
+            shared_path = os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "..",
+                "..",
+                "Shared",
+                "utils",
+            )
             sys.path.append(shared_path)
             try:
                 from Shared.monitoring.thread_manager import create_managed_thread
@@ -209,11 +246,13 @@ class DatabaseConnectionPool:
                     component="database_manager",
                     daemon=True,
                     cleanup_callback=cleanup_database_resources,
-                    auto_start=True
+                    auto_start=True,
                 )
 
                 if thread_name:
-                    logger.info(f"Database monitoring thread registered as: {thread_name}")
+                    logger.info(
+                        f"Database monitoring thread registered as: {thread_name}"
+                    )
                     # Store reference for compatibility
                     self._cleanup_thread = threading.current_thread()  # Placeholder
                 else:
@@ -221,22 +260,24 @@ class DatabaseConnectionPool:
 
             except ImportError:
                 # Fallback to standard threading
-                logger.debug("Thread manager not available, falling back to basic threading")
+                logger.debug(
+                    "Thread manager not available, falling back to basic threading"
+                )
 
                 self._cleanup_thread = threading.Thread(
                     target=self._monitoring_loop,
                     name=f"database_pool_monitor_{id(self)}",
-                    daemon=True
+                    daemon=True,
                 )
                 self._cleanup_thread.start()
-                logger.info(f"Database monitoring thread started: {self._cleanup_thread.name}")
+                logger.info(
+                    f"Database monitoring thread started: {self._cleanup_thread.name}"
+                )
 
         except ImportError:
             logger.debug("Thread manager not available, using basic thread management")
             self._cleanup_thread = threading.Thread(
-                target=self._monitoring_loop,
-                daemon=True,
-                name="DatabasePoolMonitor"
+                target=self._monitoring_loop, daemon=True, name="DatabasePoolMonitor"
             )
             self._cleanup_thread.start()
             logger.info("Database connection pool monitoring thread started")
@@ -259,7 +300,9 @@ class DatabaseConnectionPool:
                 # Sleep with shutdown awareness
                 if stop_event:
                     if stop_event.wait(self.cleanup_interval):
-                        logger.info("Database monitoring stopping due to shutdown signal")
+                        logger.info(
+                            "Database monitoring stopping due to shutdown signal"
+                        )
                         break
                 else:
                     time.sleep(self.cleanup_interval)
@@ -270,7 +313,9 @@ class DatabaseConnectionPool:
                 # Wait before retrying, with shutdown awareness
                 if stop_event:
                     if stop_event.wait(30):
-                        logger.info("Database monitoring stopping after error due to shutdown signal")
+                        logger.info(
+                            "Database monitoring stopping after error due to shutdown signal"
+                        )
                         break
                 else:
                     time.sleep(30)
@@ -288,12 +333,18 @@ class DatabaseConnectionPool:
             try:
                 conn.execute("SELECT 1").fetchone()
             except (sqlite3.OperationalError, sqlite3.DatabaseError) as e:
-                logger.warning(f"Connection {id(conn)} is stale or invalid ({e}), recreating")
+                logger.warning(
+                    f"Connection {id(conn)} is stale or invalid ({e}), recreating"
+                )
                 self._close_connection_with_tracking(conn, f"Stale connection: {e}")
                 # Create a new connection to replace the stale one
-                new_conn = self._create_monitored_connection(f"replacement_{int(time.monotonic())}")
+                new_conn = self._create_monitored_connection(
+                    f"replacement_{int(time.monotonic())}"
+                )
                 if not new_conn:
-                    raise ServerError("Failed to create replacement database connection") from None
+                    raise ServerError(
+                        "Failed to create replacement database connection"
+                    ) from None
                 conn = new_conn
 
             # Update connection tracking
@@ -306,8 +357,13 @@ class DatabaseConnectionPool:
                     self.metrics.active_connections += 1
 
                     # Update peak usage
-                    if self.metrics.active_connections > self.metrics.peak_active_connections:
-                        self.metrics.peak_active_connections = self.metrics.active_connections
+                    if (
+                        self.metrics.active_connections
+                        > self.metrics.peak_active_connections
+                    ):
+                        self.metrics.peak_active_connections = (
+                            self.metrics.active_connections
+                        )
 
             # Log structured information
             if structured_logger:
@@ -316,7 +372,7 @@ class DatabaseConnectionPool:
                     connection_id=conn_id,
                     wait_time_ms=(time.monotonic() - start_time) * 1000,
                     active_connections=self.metrics.active_connections,
-                    pool_size=self.pool_size
+                    pool_size=self.pool_size,
                 )
 
             return conn
@@ -327,10 +383,14 @@ class DatabaseConnectionPool:
             self._handle_pool_exhaustion()
 
             logger.warning("Connection pool exhausted, creating emergency connection")
-            emergency_conn = self._create_monitored_connection(f"emergency_{int(time.monotonic())}")
+            emergency_conn = self._create_monitored_connection(
+                f"emergency_{int(time.monotonic())}"
+            )
 
             if not emergency_conn:
-                raise ServerError("Failed to create emergency database connection") from None
+                raise ServerError(
+                    "Failed to create emergency database connection"
+                ) from None
 
             # Track emergency connection separately for proper cleanup
             conn_id = id(emergency_conn)
@@ -362,7 +422,7 @@ class DatabaseConnectionPool:
                     available_connections=self.pool.qsize(),
                     exhaustion_events=self.metrics.pool_exhaustion_events,
                     peak_active=self.metrics.peak_active_connections,
-                    connection_ages=self._get_connection_ages_summary()
+                    connection_ages=self._get_connection_ages_summary(),
                 )
 
             # Force cleanup of stale connections
@@ -377,8 +437,12 @@ class DatabaseConnectionPool:
         # Check if this is an emergency connection - close instead of returning to pool
         with self.lock:
             if conn_id in self.emergency_connections:
-                logger.info(f"Closing emergency connection {conn_id} instead of returning to pool")
-                self._close_connection_with_tracking(conn, "Emergency connection cleanup")
+                logger.info(
+                    f"Closing emergency connection {conn_id} instead of returning to pool"
+                )
+                self._close_connection_with_tracking(
+                    conn, "Emergency connection cleanup"
+                )
                 del self.emergency_connections[conn_id]
                 return
 
@@ -389,26 +453,38 @@ class DatabaseConnectionPool:
             except sqlite3.OperationalError as op_err:
                 # Handle database locked or busy scenarios
                 if "locked" in str(op_err).lower() or "busy" in str(op_err).lower():
-                    logger.warning(f"Connection {conn_id} is locked/busy, closing instead of returning")
-                    self._close_connection_with_tracking(conn, f"Database locked/busy: {op_err}")
+                    logger.warning(
+                        f"Connection {conn_id} is locked/busy, closing instead of returning"
+                    )
+                    self._close_connection_with_tracking(
+                        conn, f"Database locked/busy: {op_err}"
+                    )
                     return
                 raise
 
             # Check if connection is stale based on age
             if conn_id in self.connection_info:
                 current_time = time.monotonic()
-                connection_age = current_time - self.connection_info[conn_id].created_time
+                connection_age = (
+                    current_time - self.connection_info[conn_id].created_time
+                )
 
                 # Close connections older than max age
                 if connection_age > self.max_connection_age:
-                    logger.debug(f"Connection {conn_id} exceeded max age ({connection_age:.0f}s), closing")
-                    self._close_connection_with_tracking(conn, f"Exceeded max age: {connection_age:.0f}s")
+                    logger.debug(
+                        f"Connection {conn_id} exceeded max age ({connection_age:.0f}s), closing"
+                    )
+                    self._close_connection_with_tracking(
+                        conn, f"Exceeded max age: {connection_age:.0f}s"
+                    )
                     return
 
                 # Update tracking
                 with self.lock:
                     self.connection_info[conn_id].last_used_time = current_time
-                    self.metrics.active_connections = max(0, self.metrics.active_connections - 1)
+                    self.metrics.active_connections = max(
+                        0, self.metrics.active_connections - 1
+                    )
 
             # Return to pool
             self.pool.put_nowait(conn)
@@ -418,14 +494,16 @@ class DatabaseConnectionPool:
                     "Database connection returned to pool",
                     connection_id=conn_id,
                     active_connections=self.metrics.active_connections,
-                    available_connections=self.pool.qsize()
+                    available_connections=self.pool.qsize(),
                 )
 
         except (sqlite3.Error, queue.Full) as e:
             # Connection is invalid or pool is full, close it
             self._close_connection_with_tracking(conn, f"Invalid or pool full: {e}")
 
-    def _close_connection_with_tracking(self, conn: sqlite3.Connection, reason: str = "Unknown"):
+    def _close_connection_with_tracking(
+        self, conn: sqlite3.Connection, reason: str = "Unknown"
+    ):
         """Close a connection with proper tracking and logging."""
         conn_id = id(conn)
 
@@ -437,8 +515,12 @@ class DatabaseConnectionPool:
                 with self.lock:
                     del self.connection_info[conn_id]
                     self.metrics.connections_closed += 1
-                    self.metrics.active_connections = max(0, self.metrics.active_connections - 1)
-                    self.metrics.total_connections = max(0, self.metrics.total_connections - 1)
+                    self.metrics.active_connections = max(
+                        0, self.metrics.active_connections - 1
+                    )
+                    self.metrics.total_connections = max(
+                        0, self.metrics.total_connections - 1
+                    )
 
             logger.debug(f"Closed database connection {conn_id}: {reason}")
 
@@ -456,11 +538,19 @@ class DatabaseConnectionPool:
                 idle_time = current_time - info.last_used_time
 
                 # Mark connections as stale if they're too old or idle too long
-                if connection_age > self.max_connection_age or idle_time > (self.max_connection_age / 2):
+                if connection_age > self.max_connection_age or idle_time > (
+                    self.max_connection_age / 2
+                ):
                     stale_connections.append(conn_id)
 
         # Clean up stale connections
-        cleaned_count = len([conn_id for conn_id in stale_connections if self._cleanup_stale_connection(conn_id)])
+        cleaned_count = len(
+            [
+                conn_id
+                for conn_id in stale_connections
+                if self._cleanup_stale_connection(conn_id)
+            ]
+        )
 
         if cleaned_count > 0:
             self.metrics.cleanup_operations += 1
@@ -481,7 +571,9 @@ class DatabaseConnectionPool:
                     conn = self.pool.get_nowait()
                     if id(conn) == conn_id:
                         # Found the stale connection, close it
-                        self._close_connection_with_tracking(conn, "Stale connection cleanup")
+                        self._close_connection_with_tracking(
+                            conn, "Stale connection cleanup"
+                        )
                         found = True
                     else:
                         temp_connections.append(conn)
@@ -511,7 +603,13 @@ class DatabaseConnectionPool:
                 if idle_time > 1800:  # 30 minutes
                     stale_connections.append(conn_id)
 
-        return len([conn_id for conn_id in stale_connections if self._cleanup_stale_connection(conn_id)])
+        return len(
+            [
+                conn_id
+                for conn_id in stale_connections
+                if self._cleanup_stale_connection(conn_id)
+            ]
+        )
 
     def _update_metrics(self):
         """Update pool metrics."""
@@ -525,7 +623,9 @@ class DatabaseConnectionPool:
                     current_time - info.created_time
                     for info in self.connection_info.values()
                 )
-                self.metrics.average_connection_age = total_age / len(self.connection_info)
+                self.metrics.average_connection_age = total_age / len(
+                    self.connection_info
+                )
             else:
                 self.metrics.average_connection_age = 0.0
 
@@ -538,7 +638,9 @@ class DatabaseConnectionPool:
 
         # Check pool utilization
         if self.metrics.active_connections > (self.pool_size * 0.8):
-            issues.append(f"High pool utilization: {self.metrics.active_connections}/{self.pool_size}")
+            issues.append(
+                f"High pool utilization: {self.metrics.active_connections}/{self.pool_size}"
+            )
 
         # Check for long-running connections
         long_running_connections = 0
@@ -548,11 +650,15 @@ class DatabaseConnectionPool:
                     long_running_connections += 1
 
         if long_running_connections > 0:
-            issues.append(f"Long-running connections detected: {long_running_connections}")
+            issues.append(
+                f"Long-running connections detected: {long_running_connections}"
+            )
 
         # Check for frequent pool exhaustion
         if self.metrics.pool_exhaustion_events > 10:
-            issues.append(f"Frequent pool exhaustion: {self.metrics.pool_exhaustion_events} events")
+            issues.append(
+                f"Frequent pool exhaustion: {self.metrics.pool_exhaustion_events} events"
+            )
 
         # Log issues if found
         if issues:
@@ -574,7 +680,7 @@ class DatabaseConnectionPool:
             "avg_age_seconds": sum(ages) / len(ages) if ages else 0,
             "max_age_seconds": max(ages, default=0),
             "avg_idle_seconds": sum(idle_times) / len(idle_times) if idle_times else 0,
-            "max_idle_seconds": max(idle_times, default=0)
+            "max_idle_seconds": max(idle_times, default=0),
         }
 
     def get_pool_status(self) -> dict[str, Any]:
@@ -592,10 +698,16 @@ class DatabaseConnectionPool:
                 "peak_active_connections": self.metrics.peak_active_connections,
                 "average_connection_age_seconds": self.metrics.average_connection_age,
                 "stale_connections_cleaned": self.metrics.stale_connections_cleaned,
-                "last_cleanup_time": datetime.fromtimestamp(self.metrics.last_cleanup_time).isoformat() if self.metrics.last_cleanup_time > 0 else None,
+                "last_cleanup_time": datetime.fromtimestamp(
+                    self.metrics.last_cleanup_time
+                ).isoformat()
+                if self.metrics.last_cleanup_time > 0
+                else None,
                 "connection_details": self._get_connection_ages_summary(),
                 "monitoring_enabled": self._monitoring_enabled,
-                "cleanup_thread_alive": self._cleanup_thread.is_alive() if self._cleanup_thread else False
+                "cleanup_thread_alive": self._cleanup_thread.is_alive()
+                if self._cleanup_thread
+                else False,
             }
 
     def force_cleanup(self) -> dict[str, Any]:
@@ -620,7 +732,9 @@ class DatabaseConnectionPool:
             "connections_before": {"total": before_total, "active": before_active},
             "connections_after": {"total": after_total, "active": after_active},
             "connections_cleaned": cleaned,
-            "cleanup_time": datetime.fromtimestamp(self.metrics.last_cleanup_time).isoformat()
+            "cleanup_time": datetime.fromtimestamp(
+                self.metrics.last_cleanup_time
+            ).isoformat(),
         }
 
         logger.info(f"Force cleanup completed: removed {cleaned} connections")
@@ -640,7 +754,9 @@ class DatabaseConnectionPool:
                     closed_count += 1
                     logger.debug(f"Closed emergency connection {conn_id}")
                 except Exception as e:
-                    logger.warning(f"Failed to close emergency connection {conn_id}: {e}")
+                    logger.warning(
+                        f"Failed to close emergency connection {conn_id}: {e}"
+                    )
 
             self.emergency_connections.clear()
 
@@ -673,7 +789,9 @@ class DatabaseConnectionPool:
         with self.lock:
             self.connection_info.clear()
 
-        logger.info(f"Database connection pool closed: {closed_count} regular + {emergency_closed} emergency connections closed")
+        logger.info(
+            f"Database connection pool closed: {closed_count} regular + {emergency_closed} emergency connections closed"
+        )
 
 
 class DatabaseManager:
@@ -697,16 +815,28 @@ class DatabaseManager:
         if use_pool:
             try:
                 self.connection_pool = DatabaseConnectionPool(self.db_name)
-                logger.info(f"DatabaseManager initialized with connection pool: {self.db_name}")
+                logger.info(
+                    f"DatabaseManager initialized with connection pool: {self.db_name}"
+                )
             except Exception as e:
-                logger.warning(f"Failed to initialize connection pool: {e}, falling back to direct connections")
+                logger.warning(
+                    f"Failed to initialize connection pool: {e}, falling back to direct connections"
+                )
                 self.use_pool = False
 
         if not self.use_pool:
-            logger.info(f"DatabaseManager initialized with direct connections: {self.db_name}")
+            logger.info(
+                f"DatabaseManager initialized with direct connections: {self.db_name}"
+            )
 
-    def execute(self, query: str, params: tuple[Any, ...] = (), commit: bool = False,
-                fetchone: bool = False, fetchall: bool = False) -> Any:
+    def execute(
+        self,
+        query: str,
+        params: tuple[Any, ...] = (),
+        commit: bool = False,
+        fetchone: bool = False,
+        fetchall: bool = False,
+    ) -> Any:
         """
         Helper function for executing SQLite database operations.
         Manages connection, cursor, commit, and error handling
@@ -742,7 +872,7 @@ class DatabaseManager:
                         return result
                     # For cursor operations, we need to keep connection until cursor is used
                     # This is a design limitation - cursor operations should be avoided with pooling
-                    result = cursor.lastrowid if hasattr(cursor, 'lastrowid') else None
+                    result = cursor.lastrowid if hasattr(cursor, "lastrowid") else None
                     return result
                 except Exception:
                     # Don't return potentially corrupted connection to pool
@@ -762,18 +892,32 @@ class DatabaseManager:
                     cursor.execute(query, params)
                     if commit:
                         conn.commit()
-                    return cursor.fetchone() if fetchone else cursor.fetchall() if fetchall else cursor
-        except sqlite3.OperationalError as e:  # Specific error for "database is locked", "no such table" etc.
-            logger.error(f"Database operational error: {e} | Query: {query[:150]}... | Params: {params}")
+                    return (
+                        cursor.fetchone()
+                        if fetchone
+                        else cursor.fetchall()
+                        if fetchall
+                        else cursor
+                    )
+        except (
+            sqlite3.OperationalError
+        ) as e:  # Specific error for "database is locked", "no such table" etc.
+            logger.error(
+                f"Database operational error: {e} | Query: {query[:150]}... | Params: {params}"
+            )
             # Depending on severity, re-raise or return specific error indicator
             if "locked" in str(e).lower():
-                logger.warning("Database was locked during operation. This might indicate contention or a long-running transaction.")
+                logger.warning(
+                    "Database was locked during operation. This might indicate contention or a long-running transaction."
+                )
             # If it's a critical read operation (e.g., loading clients), we might need to halt.
             if not commit and (fetchone or fetchall):  # This was a read operation
                 raise ServerError(f"Critical database read error: {e}") from e
             return None  # Indicate failure for write operations
         except sqlite3.Error as e:  # Catch other, more general SQLite errors
-            logger.error(f"General database error: {e} | Query: {query[:150]}... | Params: {params}")
+            logger.error(
+                f"General database error: {e} | Query: {query[:150]}... | Params: {params}"
+            )
             if not commit and (fetchone or fetchall):
                 raise ServerError(f"General database read error: {e}") from e
             return None
@@ -805,15 +949,21 @@ class DatabaseManager:
             fk_violations = self.execute("PRAGMA foreign_key_check", fetchall=True)
 
             if fk_violations:
-                logger.warning(f"Foreign key violations detected: {len(fk_violations)} issues found")
+                logger.warning(
+                    f"Foreign key violations detected: {len(fk_violations)} issues found"
+                )
                 for violation in fk_violations[:10]:  # Log first 10 violations
-                    logger.warning(f"FK violation: table={violation[0]}, rowid={violation[1]}, "
-                                 f"parent={violation[2]}, fkid={violation[3]}")
+                    logger.warning(
+                        f"FK violation: table={violation[0]}, rowid={violation[1]}, "
+                        f"parent={violation[2]}, fkid={violation[3]}"
+                    )
 
                 # Check for orphaned files without valid client references
                 orphaned_count = self._check_orphaned_files()
                 if orphaned_count > 0:
-                    logger.warning(f"Found {orphaned_count} orphaned file records without valid client references")
+                    logger.warning(
+                        f"Found {orphaned_count} orphaned file records without valid client references"
+                    )
 
             else:
                 logger.debug("Foreign key integrity check passed - no violations found")
@@ -829,11 +979,14 @@ class DatabaseManager:
             int: Number of orphaned file records found
         """
         try:
-            result = self.execute("""
+            result = self.execute(
+                """
                 SELECT COUNT(*) FROM files f
                 LEFT JOIN clients c ON f.ClientID = c.ID
                 WHERE c.ID IS NULL
-            """, fetchone=True)
+            """,
+                fetchone=True,
+            )
 
             return result[0] if result else 0
 
@@ -854,29 +1007,45 @@ class DatabaseManager:
         orphaned_count = self._check_orphaned_files()
 
         if orphaned_count == 0:
-            return {'orphaned_count': 0, 'cleaned': 0, 'action': 'none'}
+            return {"orphaned_count": 0, "cleaned": 0, "action": "none"}
 
         if auto_fix:
             try:
                 self.execute(
                     "DELETE FROM files WHERE ClientID NOT IN (SELECT ID FROM clients)",
-                    commit=True
+                    commit=True,
                 )
                 logger.info(f"Cleaned up {orphaned_count} orphaned file records")
-                return {'orphaned_count': orphaned_count, 'cleaned': orphaned_count, 'action': 'cleaned'}
+                return {
+                    "orphaned_count": orphaned_count,
+                    "cleaned": orphaned_count,
+                    "action": "cleaned",
+                }
             except Exception as e:
                 logger.error(f"Failed to clean orphaned files: {e}")
-                return {'orphaned_count': orphaned_count, 'cleaned': 0, 'action': 'error', 'error': str(e)}
+                return {
+                    "orphaned_count": orphaned_count,
+                    "cleaned": 0,
+                    "action": "error",
+                    "error": str(e),
+                }
         else:
-            logger.warning(f"Found {orphaned_count} orphaned files (auto_fix=False, not cleaning)")
-            return {'orphaned_count': orphaned_count, 'cleaned': 0, 'action': 'detected'}
+            logger.warning(
+                f"Found {orphaned_count} orphaned files (auto_fix=False, not cleaning)"
+            )
+            return {
+                "orphaned_count": orphaned_count,
+                "cleaned": 0,
+                "action": "detected",
+            }
 
     def _create_basic_schema(self):
         """Create the basic schema tables if they don't exist."""
         # Client Table: Stores information about registered clients.
         # LastSeen is stored as ISO8601 UTC text for portability and readability.
         # AESKey is per spec, though session-based keys are usually not persisted this way.
-        self.execute('''
+        self.execute(
+            """
             CREATE TABLE IF NOT EXISTS clients (
                 ID BLOB(16) PRIMARY KEY,
                 Name VARCHAR(255) UNIQUE NOT NULL,
@@ -884,11 +1053,14 @@ class DatabaseManager:
                 LastSeen TEXT NOT NULL,
                 AESKey BLOB(32)
             )
-        ''', commit=True)
+        """,
+            commit=True,
+        )
 
         # Files Table: Stores information about files backed up by clients.
         # ON DELETE CASCADE ensures that if a client is deleted, their file records are also removed.
-        self.execute('''
+        self.execute(
+            """
             CREATE TABLE IF NOT EXISTS files (
                 ID BLOB(16) PRIMARY KEY,
                 FileName VARCHAR(255) NOT NULL,
@@ -900,19 +1072,24 @@ class DatabaseManager:
                 ClientID BLOB(16) NOT NULL,
                 FOREIGN KEY (ClientID) REFERENCES clients(ID) ON DELETE CASCADE
             )
-        ''', commit=True)
+        """,
+            commit=True,
+        )
 
         # Metrics History Table: Stores time-series metrics for analytics and monitoring.
         # Simple design: timestamp + metric_name + value for flexible querying.
         # Automatic cleanup keeps only last 7 days of data.
-        self.execute('''
+        self.execute(
+            """
             CREATE TABLE IF NOT EXISTS metrics_history (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 timestamp TEXT NOT NULL,
                 metric_name VARCHAR(100) NOT NULL,
                 value REAL NOT NULL
             )
-        ''', commit=True)
+        """,
+            commit=True,
+        )
 
         # Add missing columns to existing tables
         self._add_missing_columns()
@@ -924,58 +1101,87 @@ class DatabaseManager:
         """Create indexes on frequently queried columns for better performance."""
         try:
             # Index on clients.Name for faster lookups by client name
-            self.execute('''
+            self.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_clients_name ON clients(Name)
-            ''', commit=True)
+            """,
+                commit=True,
+            )
             logger.debug("Created index on clients.Name")
 
             # Index on clients.LastSeen for sorting and filtering by last seen time
-            self.execute('''
+            self.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_clients_lastseen ON clients(LastSeen)
-            ''', commit=True)
+            """,
+                commit=True,
+            )
             logger.debug("Created index on clients.LastSeen")
 
             # Index on files.ClientID for faster file lookups by client (most common query)
-            self.execute('''
+            self.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_files_clientid ON files(ClientID)
-            ''', commit=True)
+            """,
+                commit=True,
+            )
             logger.debug("Created index on files.ClientID")
 
             # Index on files.FileName for faster file lookups by name
-            self.execute('''
+            self.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_files_filename ON files(FileName)
-            ''', commit=True)
+            """,
+                commit=True,
+            )
             logger.debug("Created index on files.FileName")
 
             # Composite index on files(ClientID, FileName) for the common query pattern
-            self.execute('''
+            self.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_files_client_filename ON files(ClientID, FileName)
-            ''', commit=True)
+            """,
+                commit=True,
+            )
             logger.debug("Created composite index on files(ClientID, FileName)")
 
             # Index on files.Verified for filtering verified files
-            self.execute('''
+            self.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_files_verified ON files(Verified)
-            ''', commit=True)
+            """,
+                commit=True,
+            )
             logger.debug("Created index on files.Verified")
 
             # Index on files.ModificationDate for sorting and filtering by date
-            self.execute('''
+            self.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_files_moddate ON files(ModificationDate)
-            ''', commit=True)
+            """,
+                commit=True,
+            )
             logger.debug("Created index on files.ModificationDate")
 
             # Index on files.FileSize for aggregate queries (SUM, AVG)
-            self.execute('''
+            self.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_files_filesize ON files(FileSize)
-            ''', commit=True)
+            """,
+                commit=True,
+            )
             logger.debug("Created index on files.FileSize")
 
             # Composite index on metrics_history(metric_name, timestamp) for time-series queries
-            self.execute('''
+            self.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_metrics_name_time ON metrics_history(metric_name, timestamp)
-            ''', commit=True)
-            logger.debug("Created composite index on metrics_history(metric_name, timestamp)")
+            """,
+                commit=True,
+            )
+            logger.debug(
+                "Created composite index on metrics_history(metric_name, timestamp)"
+            )
 
             logger.info("Database performance indexes created successfully")
 
@@ -994,7 +1200,9 @@ class DatabaseManager:
             self.execute("SELECT ModificationDate FROM files LIMIT 1", fetchone=True)
         except (sqlite3.OperationalError, ServerError):
             logger.info("Adding ModificationDate column to files table")
-            self.execute("ALTER TABLE files ADD COLUMN ModificationDate TEXT", commit=True)
+            self.execute(
+                "ALTER TABLE files ADD COLUMN ModificationDate TEXT", commit=True
+            )
         try:
             self.execute("SELECT CRC FROM files LIMIT 1", fetchone=True)
         except (sqlite3.OperationalError, ServerError):
@@ -1014,6 +1222,7 @@ class DatabaseManager:
         """Apply database migrations to enhance functionality."""
         try:
             from .database_migrations import DatabaseMigrationManager
+
             migration_manager = DatabaseMigrationManager(self.db_name)
 
             if pending := migration_manager.get_pending_migrations():
@@ -1021,32 +1230,45 @@ class DatabaseManager:
                 if migration_manager.migrate_to_latest():
                     logger.info("Database migrations applied successfully")
                 else:
-                    logger.warning("Some database migrations failed - system will continue with existing schema")
+                    logger.warning(
+                        "Some database migrations failed - system will continue with existing schema"
+                    )
             else:
                 logger.debug("No pending database migrations")
         except ImportError:
             logger.debug("Migration system not available - skipping migrations")
         except Exception as e:
-            logger.warning(f"Migration system error: {e} - continuing with basic schema")
+            logger.warning(
+                f"Migration system error: {e} - continuing with basic schema"
+            )
 
     def _migrate_files_to_clientid_schema(self):
         """Migrate existing files table to use ClientID foreign key"""
         import uuid
+
         try:
             # Get all existing files
-            existing_files = self.execute("SELECT ID, FileName FROM files WHERE ClientID IS NULL", fetchall=True)
+            existing_files = self.execute(
+                "SELECT ID, FileName FROM files WHERE ClientID IS NULL", fetchall=True
+            )
 
             for file_id, filename in existing_files:
                 # The current ID is actually the client ID, so move it to ClientID
                 new_file_id = uuid.uuid4().bytes  # Generate new unique file ID
 
-                self.execute("""
+                self.execute(
+                    """
                     UPDATE files
                     SET ClientID = ?, ID = ?
                     WHERE ID = ? AND FileName = ? AND ClientID IS NULL
-                """, (file_id, new_file_id, file_id, filename), commit=True)
+                """,
+                    (file_id, new_file_id, file_id, filename),
+                    commit=True,
+                )
 
-            logger.info(f"Migrated {len(existing_files)} file records to use ClientID schema")
+            logger.info(
+                f"Migrated {len(existing_files)} file records to use ClientID schema"
+            )
 
         except Exception as e:
             logger.error(f"Failed to migrate files to ClientID schema: {e}")
@@ -1064,17 +1286,27 @@ class DatabaseManager:
         """
         logger.info("Loading existing clients from database...")
         try:
-            if rows := self.execute("SELECT ID, Name, PublicKey, LastSeen FROM clients", fetchall=True):
+            if rows := self.execute(
+                "SELECT ID, Name, PublicKey, LastSeen FROM clients", fetchall=True
+            ):
                 logger.info(f"Successfully loaded {len(rows)} client(s) from database.")
                 return rows
             else:
                 logger.info("No existing clients found in database.")
                 return []
         except ServerError as e:  # Raised by execute on critical read failure
-            logger.critical(f"CRITICAL FAILURE: Could not load client data from database: {e}")
+            logger.critical(
+                f"CRITICAL FAILURE: Could not load client data from database: {e}"
+            )
             raise
 
-    def save_client_to_db(self, client_id: bytes, name: str, public_key_bytes: bytes | None, aes_key: bytes | None) -> None:
+    def save_client_to_db(
+        self,
+        client_id: bytes,
+        name: str,
+        public_key_bytes: bytes | None,
+        aes_key: bytes | None,
+    ) -> None:
         """
         Saves or updates a client's information in the database.
 
@@ -1086,16 +1318,33 @@ class DatabaseManager:
         """
         # Convert monotonic client.last_seen to a wall-clock datetime for storage.
         # For the DB's LastSeen, always use current UTC wall-clock time to reflect this update event.
-        current_wall_time_utc_iso = datetime.now(UTC).isoformat(timespec='seconds') + "Z"
+        current_wall_time_utc_iso = (
+            datetime.now(UTC).isoformat(timespec="seconds") + "Z"
+        )
 
-        self.execute('''
+        self.execute(
+            """
             INSERT OR REPLACE INTO clients (ID, Name, PublicKey, LastSeen, AESKey)
             VALUES (?, ?, ?, ?, ?)
-        ''', (client_id, name, public_key_bytes, current_wall_time_utc_iso, aes_key), commit=True)
+        """,
+            (client_id, name, public_key_bytes, current_wall_time_utc_iso, aes_key),
+            commit=True,
+        )
 
-        logger.debug(f"Client '{name}' data saved/updated in database (Recorded LastSeen: {current_wall_time_utc_iso}).")
+        logger.debug(
+            f"Client '{name}' data saved/updated in database (Recorded LastSeen: {current_wall_time_utc_iso})."
+        )
 
-    def save_file_info_to_db(self, client_id: bytes, file_name: str, path_name: str, verified: bool, file_size: int, mod_date: str, crc: int | None = None) -> None:
+    def save_file_info_to_db(
+        self,
+        client_id: bytes,
+        file_name: str,
+        path_name: str,
+        verified: bool,
+        file_size: int,
+        mod_date: str,
+        crc: int | None = None,
+    ) -> None:
         """
         Saves or updates file information in the database.
 
@@ -1116,19 +1365,48 @@ class DatabaseManager:
         # Ensure path_name is stored consistently (e.g., relative to FILE_STORAGE_DIR or absolute)
         # Current implementation assumes path_name is the final, usable path.
         if crc is not None:
-            self.execute('''
+            self.execute(
+                """
                 INSERT OR REPLACE INTO files (ID, FileName, PathName, Verified, FileSize, ModificationDate, CRC, ClientID)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (file_id, file_name, path_name, verified, file_size, mod_date, crc, client_id), commit=True)
+            """,
+                (
+                    file_id,
+                    file_name,
+                    path_name,
+                    verified,
+                    file_size,
+                    mod_date,
+                    crc,
+                    client_id,
+                ),
+                commit=True,
+            )
         else:
-            self.execute('''
+            self.execute(
+                """
                 INSERT OR REPLACE INTO files (ID, FileName, PathName, Verified, FileSize, ModificationDate, ClientID)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
-            ''', (file_id, file_name, path_name, verified, file_size, mod_date, client_id), commit=True)
+            """,
+                (
+                    file_id,
+                    file_name,
+                    path_name,
+                    verified,
+                    file_size,
+                    mod_date,
+                    client_id,
+                ),
+                commit=True,
+            )
 
-        logger.debug(f"File info for '{file_name}' (Client ID: {client_id.hex()}) saved/updated in database. Verified status: {verified}.")
+        logger.debug(
+            f"File info for '{file_name}' (Client ID: {client_id.hex()}) saved/updated in database. Verified status: {verified}."
+        )
 
-    def get_client_by_id(self, client_id: bytes) -> tuple[bytes, str, bytes | None, str, bytes | None] | None:
+    def get_client_by_id(
+        self, client_id: bytes
+    ) -> tuple[bytes, str, bytes | None, str, bytes | None] | None:
         """
         Retrieves a client record by ID.
 
@@ -1139,13 +1417,18 @@ class DatabaseManager:
             Tuple containing (client_id, name, public_key_bytes, last_seen_iso_utc, aes_key) or None if not found.
         """
         try:
-            return self.execute("SELECT ID, Name, PublicKey, LastSeen, AESKey FROM clients WHERE ID = ?",
-                              (client_id,), fetchone=True)
+            return self.execute(
+                "SELECT ID, Name, PublicKey, LastSeen, AESKey FROM clients WHERE ID = ?",
+                (client_id,),
+                fetchone=True,
+            )
         except ServerError as e:
             logger.error(f"Error retrieving client by ID {client_id.hex()}: {e}")
             return None
 
-    def get_client_by_name(self, name: str) -> tuple[bytes, str, bytes | None, str, bytes | None] | None:
+    def get_client_by_name(
+        self, name: str
+    ) -> tuple[bytes, str, bytes | None, str, bytes | None] | None:
         """
         Retrieves a client record by name.
 
@@ -1156,8 +1439,11 @@ class DatabaseManager:
             Tuple containing (client_id, name, public_key_bytes, last_seen_iso_utc, aes_key) or None if not found.
         """
         try:
-            return self.execute("SELECT ID, Name, PublicKey, LastSeen, AESKey FROM clients WHERE Name = ?",
-                              (name,), fetchone=True)
+            return self.execute(
+                "SELECT ID, Name, PublicKey, LastSeen, AESKey FROM clients WHERE Name = ?",
+                (name,),
+                fetchone=True,
+            )
         except ServerError as e:
             logger.error(f"Error retrieving client by name '{name}': {e}")
             return None
@@ -1173,8 +1459,11 @@ class DatabaseManager:
             List of tuples containing (file_name, path_name, verified) for each file.
         """
         try:
-            results = self.execute("SELECT FileName, PathName, Verified FROM files WHERE ClientID = ?",
-                                 (client_id,), fetchall=True)
+            results = self.execute(
+                "SELECT FileName, PathName, Verified FROM files WHERE ClientID = ?",
+                (client_id,),
+                fetchall=True,
+            )
             return results or []
         except ServerError as e:
             logger.error(f"Error retrieving files for client {client_id.hex()}: {e}")
@@ -1191,9 +1480,13 @@ class DatabaseManager:
             True if the client was deleted, False if an error occurred.
         """
         try:
-            cursor = self.execute("DELETE FROM clients WHERE ID = ?", (client_id,), commit=True)
+            cursor = self.execute(
+                "DELETE FROM clients WHERE ID = ?", (client_id,), commit=True
+            )
             if cursor and cursor.rowcount > 0:
-                logger.info(f"Successfully deleted client {client_id.hex()} and associated files.")
+                logger.info(
+                    f"Successfully deleted client {client_id.hex()} and associated files."
+                )
                 return True
             else:
                 logger.warning(f"No client found with ID {client_id.hex()} to delete.")
@@ -1202,8 +1495,9 @@ class DatabaseManager:
             logger.error(f"Error deleting client {client_id.hex()}: {e}")
             return False
 
-    def update_client(self, client_id: bytes, name: str | None = None,
-                      public_key: bytes | None = None) -> bool:
+    def update_client(
+        self, client_id: bytes, name: str | None = None, public_key: bytes | None = None
+    ) -> bool:
         """
         Update client information in database.
 
@@ -1320,26 +1614,40 @@ class DatabaseManager:
             True if the file record was deleted, False if an error occurred.
         """
         try:
-            cursor = self.execute("DELETE FROM files WHERE ClientID = ? AND FileName = ?",
-                                (client_id, file_name), commit=True)
+            cursor = self.execute(
+                "DELETE FROM files WHERE ClientID = ? AND FileName = ?",
+                (client_id, file_name),
+                commit=True,
+            )
             if cursor and cursor.rowcount > 0:
-                logger.info(f"Successfully deleted file record '{file_name}' for client {client_id.hex()}.")
+                logger.info(
+                    f"Successfully deleted file record '{file_name}' for client {client_id.hex()}."
+                )
                 return True
             else:
-                logger.warning(f"No file record found for '{file_name}' and client {client_id.hex()}.")
+                logger.warning(
+                    f"No file record found for '{file_name}' and client {client_id.hex()}."
+                )
                 return False
         except Exception as e:
-            logger.error(f"Error deleting file record '{file_name}' for client {client_id.hex()}: {e}")
+            logger.error(
+                f"Error deleting file record '{file_name}' for client {client_id.hex()}: {e}"
+            )
             return False
 
     def delete_file(self, client_id: str, filename: str) -> bool:
         """Deletes a file from the filesystem and the database."""
         try:
             # First, get the file path from the database
-            file_info = self.execute("SELECT PathName FROM files WHERE ID = ? AND FileName = ?",
-                                    (bytes.fromhex(client_id), filename), fetchone=True)
+            file_info = self.execute(
+                "SELECT PathName FROM files WHERE ID = ? AND FileName = ?",
+                (bytes.fromhex(client_id), filename),
+                fetchone=True,
+            )
             if not file_info:
-                logger.warning(f"File '{filename}' not found in database for client {client_id}")
+                logger.warning(
+                    f"File '{filename}' not found in database for client {client_id}"
+                )
                 return False
 
             file_path = file_info[0]
@@ -1349,13 +1657,17 @@ class DatabaseManager:
                 os.remove(file_path)
                 logger.info(f"Deleted file from filesystem: {file_path}")
             else:
-                logger.warning(f"File not found on filesystem for deletion: {file_path}")
+                logger.warning(
+                    f"File not found on filesystem for deletion: {file_path}"
+                )
 
             # Delete the file record from the database
             return self.delete_file_record(bytes.fromhex(client_id), filename)
 
         except Exception as e:
-            logger.error(f"Error deleting file '{filename}' for client {client_id}: {e}")
+            logger.error(
+                f"Error deleting file '{filename}' for client {client_id}: {e}"
+            )
             return False
 
     def get_database_stats(self) -> dict[str, Any]:
@@ -1366,44 +1678,48 @@ class DatabaseManager:
             Dictionary containing database statistics.
         """
         # Initialize cache and lock on first call
-        if not hasattr(self, '_stats_cache'):
-            self._stats_cache = {'data': None, 'timestamp': 0}
+        if not hasattr(self, "_stats_cache"):
+            self._stats_cache = {"data": None, "timestamp": 0}
             self._stats_cache_ttl = 30  # seconds
             self._stats_cache_lock = threading.Lock()
 
         # Check cache with thread safety
         with self._stats_cache_lock:
             current_time = time.time()
-            if self._stats_cache['data'] and (current_time - self._stats_cache['timestamp'] < self._stats_cache_ttl):
-                return self._stats_cache['data']
+            if self._stats_cache["data"] and (
+                current_time - self._stats_cache["timestamp"] < self._stats_cache_ttl
+            ):
+                return self._stats_cache["data"]
 
         stats: dict[str, Any] = {
-            'total_clients': 0,
-            'total_files': 0,
-            'verified_files': 0,
-            'database_size_bytes': 0
+            "total_clients": 0,
+            "total_files": 0,
+            "verified_files": 0,
+            "database_size_bytes": 0,
         }
 
         try:
             # Count clients
             if result := self.execute("SELECT COUNT(*) FROM clients", fetchone=True):
-                stats['total_clients'] = result[0]
+                stats["total_clients"] = result[0]
 
             # Count files
             if result := self.execute("SELECT COUNT(*) FROM files", fetchone=True):
-                stats['total_files'] = result[0]
+                stats["total_files"] = result[0]
 
             # Count verified files
-            if result := self.execute("SELECT COUNT(*) FROM files WHERE Verified = 1", fetchone=True):
-                stats['verified_files'] = result[0]
+            if result := self.execute(
+                "SELECT COUNT(*) FROM files WHERE Verified = 1", fetchone=True
+            ):
+                stats["verified_files"] = result[0]
 
             # Get database file size
             if os.path.exists(self.db_name):
-                stats['database_size_bytes'] = os.path.getsize(self.db_name)
+                stats["database_size_bytes"] = os.path.getsize(self.db_name)
 
             # Update cache with thread safety
             with self._stats_cache_lock:
-                self._stats_cache = {'data': stats, 'timestamp': current_time}
+                self._stats_cache = {"data": stats, "timestamp": current_time}
 
         except Exception as e:
             logger.error(f"Error retrieving database statistics: {e}")
@@ -1413,13 +1729,14 @@ class DatabaseManager:
     def get_all_clients(self) -> list[dict[str, Any]]:
         """Retrieves all clients from the database."""
         try:
-            clients = self.execute("SELECT ID, Name, LastSeen FROM clients", fetchall=True)
+            clients = self.execute(
+                "SELECT ID, Name, LastSeen FROM clients", fetchall=True
+            )
             if clients:
-                return [{
-                    'id': row[0].hex(),
-                    'name': row[1],
-                    'last_seen': row[2]
-                } for row in clients]
+                return [
+                    {"id": row[0].hex(), "name": row[1], "last_seen": row[2]}
+                    for row in clients
+                ]
             return []
         except Exception as e:
             logger.error(f"Database error while getting all clients: {e}")
@@ -1428,36 +1745,46 @@ class DatabaseManager:
     def get_files_for_client(self, client_id: str) -> list[dict[str, Any]]:
         """Retrieves all files for a given client."""
         try:
-            files = self.execute("SELECT FileName, PathName, Verified FROM files WHERE ClientID=?",
-                               (bytes.fromhex(client_id),), fetchall=True)
+            files = self.execute(
+                "SELECT FileName, PathName, Verified FROM files WHERE ClientID=?",
+                (bytes.fromhex(client_id),),
+                fetchall=True,
+            )
             if files:
-                return [{
-                    'filename': row[0],
-                    'path': row[1],
-                    'verified': bool(row[2])
-                } for row in files]
+                return [
+                    {"filename": row[0], "path": row[1], "verified": bool(row[2])}
+                    for row in files
+                ]
             return []
         except Exception as e:
-            logger.error(f"Database error while getting files for client {client_id}: {e}")
+            logger.error(
+                f"Database error while getting files for client {client_id}: {e}"
+            )
             return []
 
     def get_all_files(self) -> list[dict[str, Any]]:
         """Retrieves all files from the database."""
         try:
-            files = self.execute("""
+            files = self.execute(
+                """
                 SELECT f.FileName, f.PathName, f.Verified, c.Name, f.FileSize, f.ModificationDate, f.ClientID
                 FROM files f JOIN clients c ON f.ClientID = c.ID
-            """, fetchall=True)
+            """,
+                fetchall=True,
+            )
             if files:
-                return [{
-                    'filename': row[0],
-                    'path': row[1],
-                    'verified': bool(row[2]),
-                    'client': row[3],
-                    'size': row[4],
-                    'date': row[5],
-                    'client_id': row[6]  # bytes
-                } for row in files]
+                return [
+                    {
+                        "filename": row[0],
+                        "path": row[1],
+                        "verified": bool(row[2]),
+                        "client": row[3],
+                        "size": row[4],
+                        "date": row[5],
+                        "client_id": row[6],  # bytes
+                    }
+                    for row in files
+                ]
             return []
         except Exception as e:
             logger.error(f"Database error while getting all files: {e}")
@@ -1466,32 +1793,42 @@ class DatabaseManager:
     def get_file_info(self, client_id: str, filename: str) -> dict[str, Any] | None:
         """Retrieves all information for a single file."""
         try:
-            row = self.execute("""
+            row = self.execute(
+                """
                 SELECT f.FileName, f.PathName, f.Verified, c.Name, f.FileSize, f.ModificationDate, f.CRC
                 FROM files f JOIN clients c ON f.ClientID = c.ID
                 WHERE f.ClientID = ? AND f.FileName = ?
-            """, (bytes.fromhex(client_id), filename), fetchone=True)
+            """,
+                (bytes.fromhex(client_id), filename),
+                fetchone=True,
+            )
             if row:
                 return {
-                    'filename': row[0],
-                    'path': row[1],
-                    'verified': bool(row[2]),
-                    'client': row[3],
-                    'size': row[4],
-                    'date': row[5],
-                    'crc': row[6]
+                    "filename": row[0],
+                    "path": row[1],
+                    "verified": bool(row[2]),
+                    "client": row[3],
+                    "size": row[4],
+                    "date": row[5],
+                    "crc": row[6],
                 }
             return None
         except Exception as e:
-            logger.error(f"Database error while getting file info for {client_id}/{filename}: {e}")
+            logger.error(
+                f"Database error while getting file info for {client_id}/{filename}: {e}"
+            )
             return None
 
-    def update_file_verification(self, client_id: str, filename: str, verified: bool, crc: int) -> bool:
+    def update_file_verification(
+        self, client_id: str, filename: str, verified: bool, crc: int
+    ) -> bool:
         """Update the verification status and CRC for a stored file."""
         try:
             client_id_bytes = bytes.fromhex(client_id)
         except ValueError as exc:
-            logger.error(f"Invalid client ID '{client_id}' while updating verification: {exc}")
+            logger.error(
+                f"Invalid client ID '{client_id}' while updating verification: {exc}"
+            )
             return False
 
         query = """
@@ -1524,15 +1861,15 @@ class DatabaseManager:
 
             return bool(rowcount)
         except Exception as e:
-            logger.error(f"Failed to update verification for file '{filename}' (client {client_id}): {e}")
+            logger.error(
+                f"Failed to update verification for file '{filename}' (client {client_id}): {e}"
+            )
             return False
 
     def get_total_clients_count(self) -> int:
         """Returns the total number of registered clients."""
         try:
-            if result := self.execute(
-                "SELECT COUNT(*) FROM clients", fetchone=True
-            ):
+            if result := self.execute("SELECT COUNT(*) FROM clients", fetchone=True):
                 return result[0]
             return 0
         except Exception as e:
@@ -1550,9 +1887,7 @@ class DatabaseManager:
             int: Total number of file records in the database
         """
         try:
-            if result := self.execute(
-                "SELECT COUNT(*) FROM files", fetchone=True
-            ):
+            if result := self.execute("SELECT COUNT(*) FROM files", fetchone=True):
                 return result[0]
             return 0
         except Exception as e:
@@ -1629,7 +1964,7 @@ class DatabaseManager:
         try:
             # Validate input
             if not client_list:
-                return {'success': False, 'data': None, 'error': 'Client list is empty'}
+                return {"success": False, "data": None, "error": "Client list is empty"}
 
             # Prepare parameters with defaults
             params = []
@@ -1638,51 +1973,74 @@ class DatabaseManager:
                     logger.warning(f"Skipping invalid client entry: {c}")
                     continue
 
-                name = c.get('name', '')
+                name = c.get("name", "")
                 if not name:
                     logger.warning("Skipping client without name")
                     continue
 
-                params.append((
-                    c.get('id', uuid.uuid4().bytes),
-                    name,
-                    c.get('public_key'),
-                    datetime.now(UTC).isoformat(),
-                    c.get('aes_key')
-                ))
+                params.append(
+                    (
+                        c.get("id", uuid.uuid4().bytes),
+                        name,
+                        c.get("public_key"),
+                        datetime.now(UTC).isoformat(),
+                        c.get("aes_key"),
+                    )
+                )
 
             if not params:
-                return {'success': False, 'data': None, 'error': 'No valid clients to insert'}
+                return {
+                    "success": False,
+                    "data": None,
+                    "error": "No valid clients to insert",
+                }
             # Count before insert for accurate reporting
             before_count = self.execute("SELECT COUNT(*) FROM clients", fetchone=True)
             before_count = before_count[0] if before_count else 0
-
 
             # Use executemany for efficient bulk insert
             success = self.execute_many(
                 "INSERT OR IGNORE INTO clients (ID, Name, PublicKey, LastSeen, AESKey) VALUES (?, ?, ?, ?, ?)",
                 params,
-                commit=True
+                commit=True,
             )
 
             if success:
                 # Get actual insert count (some may have been ignored due to duplicates)
-                after_count = self.execute("SELECT COUNT(*) FROM clients", fetchone=True)
+                after_count = self.execute(
+                    "SELECT COUNT(*) FROM clients", fetchone=True
+                )
                 actual_inserted = (after_count[0] if after_count else 0) - before_count
 
-                logger.info(f"Bulk inserted {actual_inserted} clients successfully ({len(params) - actual_inserted} skipped as duplicates)")
-                return {'success': True, 'data': {'inserted': actual_inserted, 'attempted': len(params), 'skipped': len(params) - actual_inserted}, 'error': None}
+                logger.info(
+                    f"Bulk inserted {actual_inserted} clients successfully ({len(params) - actual_inserted} skipped as duplicates)"
+                )
+                return {
+                    "success": True,
+                    "data": {
+                        "inserted": actual_inserted,
+                        "attempted": len(params),
+                        "skipped": len(params) - actual_inserted,
+                    },
+                    "error": None,
+                }
             else:
-                return {'success': False, 'data': None, 'error': 'Bulk insert operation failed'}
+                return {
+                    "success": False,
+                    "data": None,
+                    "error": "Bulk insert operation failed",
+                }
 
         except Exception as e:
             logger.error(f"Bulk client insert failed: {e}")
-            return {'success': False, 'data': None, 'error': str(e)}
+            return {"success": False, "data": None, "error": str(e)}
 
     def get_total_bytes_transferred(self) -> int:
         """Returns the total number of bytes transferred."""
         try:
-            if result := self.execute("SELECT SUM(FileSize) FROM files WHERE Verified = 1", fetchone=True):
+            if result := self.execute(
+                "SELECT SUM(FileSize) FROM files WHERE Verified = 1", fetchone=True
+            ):
                 return result[0] if result[0] is not None else 0
             return 0
         except Exception as e:
@@ -1709,7 +2067,7 @@ class DatabaseManager:
             self.execute(
                 "INSERT INTO metrics_history (timestamp, metric_name, value) VALUES (?, ?, ?)",
                 (timestamp, metric_name, value),
-                commit=True
+                commit=True,
             )
             logger.debug(f"Recorded metric '{metric_name}' = {value}")
             return True
@@ -1717,7 +2075,9 @@ class DatabaseManager:
             logger.error(f"Failed to record metric '{metric_name}': {e}")
             return False
 
-    def get_metrics_history(self, metric_name: str, hours: int = 24) -> list[dict[str, Any]]:
+    def get_metrics_history(
+        self, metric_name: str, hours: int = 24
+    ) -> list[dict[str, Any]]:
         """
         Retrieve historical metrics data for a specific metric.
 
@@ -1730,7 +2090,9 @@ class DatabaseManager:
         """
         try:
             # Calculate cutoff time
-            cutoff = datetime.now(UTC).replace(hour=0, minute=0, second=0, microsecond=0)
+            cutoff = datetime.now(UTC).replace(
+                hour=0, minute=0, second=0, microsecond=0
+            )
             cutoff = cutoff.replace(hour=cutoff.hour - hours)
             cutoff_iso = cutoff.isoformat()
 
@@ -1743,13 +2105,13 @@ class DatabaseManager:
                 ORDER BY timestamp ASC
                 """,
                 (metric_name, cutoff_iso),
-                fetchall=True
+                fetchall=True,
             )
 
             if not rows:
                 return []
 
-            return [{'timestamp': row[0], 'value': row[1]} for row in rows]
+            return [{"timestamp": row[0], "value": row[1]} for row in rows]
 
         except Exception as e:
             logger.error(f"Failed to retrieve metrics history for '{metric_name}': {e}")
@@ -1767,7 +2129,9 @@ class DatabaseManager:
         """
         try:
             # Calculate cutoff timestamp
-            cutoff = datetime.now(UTC).replace(hour=0, minute=0, second=0, microsecond=0)
+            cutoff = datetime.now(UTC).replace(
+                hour=0, minute=0, second=0, microsecond=0
+            )
             cutoff = cutoff.replace(day=cutoff.day - days_to_keep)
             cutoff_iso = cutoff.isoformat()
 
@@ -1775,12 +2139,14 @@ class DatabaseManager:
             cursor = self.execute(
                 "DELETE FROM metrics_history WHERE timestamp < ?",
                 (cutoff_iso,),
-                commit=True
+                commit=True,
             )
 
             rows_deleted = cursor.rowcount if cursor else 0
             if rows_deleted > 0:
-                logger.info(f"Cleaned up {rows_deleted} old metric samples (older than {days_to_keep} days)")
+                logger.info(
+                    f"Cleaned up {rows_deleted} old metric samples (older than {days_to_keep} days)"
+                )
             else:
                 logger.debug("No old metrics to clean up")
 
@@ -1827,7 +2193,9 @@ class DatabaseManager:
                 conn = sqlite3.connect(self.db_name, timeout=10.0)
 
             # Check if already in a transaction (SQLite 3.7.11+)
-            in_transaction = conn.in_transaction if hasattr(conn, 'in_transaction') else False
+            in_transaction = (
+                conn.in_transaction if hasattr(conn, "in_transaction") else False
+            )
 
             # Only begin if not already in transaction
             if not in_transaction:
@@ -1887,52 +2255,54 @@ class DatabaseManager:
         try:
             if not os.path.exists(self.db_name):
                 return {
-                    'size_mb': 0.0,
-                    'size_bytes': 0,
-                    'status': 'ok',
-                    'threshold_warning_mb': warning_threshold_mb,
-                    'threshold_critical_mb': critical_threshold_mb,
-                    'message': 'Database file not found'
+                    "size_mb": 0.0,
+                    "size_bytes": 0,
+                    "status": "ok",
+                    "threshold_warning_mb": warning_threshold_mb,
+                    "threshold_critical_mb": critical_threshold_mb,
+                    "message": "Database file not found",
                 }
 
             size_bytes = os.path.getsize(self.db_name)
             size_mb = round(size_bytes / (1024 * 1024), 2)
 
-            status = 'ok'
-            message = f'Database size is {size_mb}MB'
+            status = "ok"
+            message = f"Database size is {size_mb}MB"
 
             if size_mb > critical_threshold_mb:
-                status = 'critical'
-                message = f'CRITICAL: Database size {size_mb}MB exceeds critical threshold of {critical_threshold_mb}MB'
+                status = "critical"
+                message = f"CRITICAL: Database size {size_mb}MB exceeds critical threshold of {critical_threshold_mb}MB"
                 logger.critical(message)
             elif size_mb > warning_threshold_mb:
-                status = 'warning'
-                message = f'WARNING: Database size {size_mb}MB exceeds warning threshold of {warning_threshold_mb}MB'
+                status = "warning"
+                message = f"WARNING: Database size {size_mb}MB exceeds warning threshold of {warning_threshold_mb}MB"
                 logger.warning(message)
 
             return {
-                'size_mb': size_mb,
-                'size_bytes': size_bytes,
-                'status': status,
-                'threshold_warning_mb': warning_threshold_mb,
-                'threshold_critical_mb': critical_threshold_mb,
-                'message': message
+                "size_mb": size_mb,
+                "size_bytes": size_bytes,
+                "status": status,
+                "threshold_warning_mb": warning_threshold_mb,
+                "threshold_critical_mb": critical_threshold_mb,
+                "message": message,
             }
 
         except Exception as e:
             logger.error(f"Failed to check database size: {e}")
             return {
-                'size_mb': 0.0,
-                'size_bytes': 0,
-                'status': 'error',
-                'threshold_warning_mb': warning_threshold_mb,
-                'threshold_critical_mb': critical_threshold_mb,
-                'message': f'Error checking database size: {e}'
+                "size_mb": 0.0,
+                "size_bytes": 0,
+                "status": "error",
+                "threshold_warning_mb": warning_threshold_mb,
+                "threshold_critical_mb": critical_threshold_mb,
+                "message": f"Error checking database size: {e}",
             }
 
     # Enhanced Database Methods
 
-    def execute_many(self, query: str, param_list: list[tuple[Any, ...]], commit: bool = True) -> bool:
+    def execute_many(
+        self, query: str, param_list: list[tuple[Any, ...]], commit: bool = True
+    ) -> bool:
         """
         Execute a query multiple times with different parameters for bulk operations.
 
@@ -1969,10 +2339,17 @@ class DatabaseManager:
             logger.error(f"Bulk database operation failed: {e}")
             return False
 
-    def search_files_advanced(self, search_term: str = "", file_type: str = "",
-                             client_name: str = "", date_from: str = "",
-                             date_to: str = "", min_size: int = 0,
-                             max_size: int = 0, verified_only: bool = False) -> list[dict[str, Any]]:
+    def search_files_advanced(
+        self,
+        search_term: str = "",
+        file_type: str = "",
+        client_name: str = "",
+        date_from: str = "",
+        date_to: str = "",
+        min_size: int = 0,
+        max_size: int = 0,
+        verified_only: bool = False,
+    ) -> list[dict[str, Any]]:
         """
         Advanced file search with multiple filters.
 
@@ -2037,7 +2414,7 @@ class DatabaseManager:
             SELECT {base_columns}{extended_columns}
             FROM files f
             JOIN clients c ON f.ClientID = c.ID
-            WHERE {' AND '.join(conditions)}
+            WHERE {" AND ".join(conditions)}
             ORDER BY f.ModificationDate DESC
             LIMIT 1000
         """
@@ -2045,20 +2422,23 @@ class DatabaseManager:
         try:
             results = self.execute(query, tuple(params), fetchall=True)
             if results:
-                return [{
-                    'filename': row[0],
-                    'path': row[1],
-                    'size': row[2],
-                    'date': row[3],
-                    'verified': bool(row[4]),
-                    'crc': row[5],
-                    'client': row[6],
-                    'category': row[7] if len(row) > 7 else None,
-                    'mime_type': row[8] if len(row) > 8 else None,
-                    'extension': row[9] if len(row) > 9 else None,
-                    'transfer_duration': row[10] if len(row) > 10 else None,
-                    'transfer_speed': row[11] if len(row) > 11 else None
-                } for row in results]
+                return [
+                    {
+                        "filename": row[0],
+                        "path": row[1],
+                        "size": row[2],
+                        "date": row[3],
+                        "verified": bool(row[4]),
+                        "crc": row[5],
+                        "client": row[6],
+                        "category": row[7] if len(row) > 7 else None,
+                        "mime_type": row[8] if len(row) > 8 else None,
+                        "extension": row[9] if len(row) > 9 else None,
+                        "transfer_duration": row[10] if len(row) > 10 else None,
+                        "transfer_speed": row[11] if len(row) > 11 else None,
+                    }
+                    for row in results
+                ]
             return []
         except Exception as e:
             logger.error(f"Advanced file search failed: {e}")
@@ -2067,20 +2447,24 @@ class DatabaseManager:
     def get_storage_statistics(self) -> dict[str, Any]:
         """Get comprehensive storage and usage statistics."""
         stats: dict[str, Any] = {
-            'database_info': {},
-            'storage_info': {},
-            'client_stats': {},
-            'file_stats': {},
-            'performance_info': {}
+            "database_info": {},
+            "storage_info": {},
+            "client_stats": {},
+            "file_stats": {},
+            "performance_info": {},
         }
 
         try:
             # Database information
-            stats['database_info'] = {
-                'file_path': os.path.abspath(self.db_name),
-                'file_size_mb': round(os.path.getsize(self.db_name) / (1024 * 1024), 2) if os.path.exists(self.db_name) else 0,
-                'connection_pool_enabled': self.use_pool,
-                'pool_size': self.connection_pool.pool_size if self.connection_pool else 0
+            stats["database_info"] = {
+                "file_path": os.path.abspath(self.db_name),
+                "file_size_mb": round(os.path.getsize(self.db_name) / (1024 * 1024), 2)
+                if os.path.exists(self.db_name)
+                else 0,
+                "connection_pool_enabled": self.use_pool,
+                "pool_size": self.connection_pool.pool_size
+                if self.connection_pool
+                else 0,
             }
 
             # Storage directory information
@@ -2094,28 +2478,38 @@ class DatabaseManager:
                 except OSError as e:
                     logger.warning(f"Could not calculate storage directory size: {e}")
                     total_size = 0
-                stats['storage_info'] = {
-                    'directory': os.path.abspath(FILE_STORAGE_DIR),
-                    'total_files': len([f for f in os.listdir(FILE_STORAGE_DIR) if os.path.isfile(os.path.join(FILE_STORAGE_DIR, f))]),
-                    'total_size_mb': round(total_size / (1024 * 1024), 2)
+                stats["storage_info"] = {
+                    "directory": os.path.abspath(FILE_STORAGE_DIR),
+                    "total_files": len(
+                        [
+                            f
+                            for f in os.listdir(FILE_STORAGE_DIR)
+                            if os.path.isfile(os.path.join(FILE_STORAGE_DIR, f))
+                        ]
+                    ),
+                    "total_size_mb": round(total_size / (1024 * 1024), 2),
                 }
 
             # Client statistics
-            if client_stats := self.execute("""
+            if client_stats := self.execute(
+                """
                 SELECT
                     COUNT(*) as total_clients,
                     COUNT(CASE WHEN PublicKey IS NOT NULL THEN 1 END) as clients_with_keys,
                     AVG(CASE WHEN LastSeen IS NOT NULL THEN julianday('now') - julianday(LastSeen) END) as avg_days_since_seen
                 FROM clients
-            """, fetchone=True):
-                stats['client_stats'] = {
-                    'total_clients': client_stats[0],
-                    'clients_with_keys': client_stats[1],
-                    'average_days_since_seen': round(client_stats[2] or 0, 1)
+            """,
+                fetchone=True,
+            ):
+                stats["client_stats"] = {
+                    "total_clients": client_stats[0],
+                    "clients_with_keys": client_stats[1],
+                    "average_days_since_seen": round(client_stats[2] or 0, 1),
                 }
 
             # File statistics
-            if file_stats := self.execute("""
+            if file_stats := self.execute(
+                """
                 SELECT
                     COUNT(*) as total_files,
                     COUNT(CASE WHEN Verified = 1 THEN 1 END) as verified_files,
@@ -2125,7 +2519,9 @@ class DatabaseManager:
                     MAX(FileSize) as max_size
                 FROM files
                 WHERE FileSize IS NOT NULL
-            """, fetchone=True):
+            """,
+                fetchone=True,
+            ):
                 total_files = file_stats[0]
                 verified_files = file_stats[1]
                 avg_file_size = file_stats[2] if file_stats[2] is not None else 0
@@ -2133,35 +2529,51 @@ class DatabaseManager:
                 min_file_size = file_stats[4] if file_stats[4] is not None else 0
                 max_file_size = file_stats[5] if file_stats[5] is not None else 0
 
-                stats['file_stats'] = {
-                    'total_files': total_files,
-                    'verified_files': verified_files,
-                    'verification_rate': round((verified_files / total_files * 100) if total_files > 0 else 0, 1),
-                    'average_file_size_mb': round(avg_file_size / (1024 * 1024), 2) if avg_file_size is not None else 0.0,
-                    'total_size_gb': round(total_size / (1024 * 1024 * 1024), 2) if total_size is not None else 0.0,
-                    'min_file_size_kb': round(min_file_size / 1024, 2) if min_file_size is not None else 0.0,
-                    'max_file_size_mb': round(max_file_size / (1024 * 1024), 2) if max_file_size is not None else 0.0
+                stats["file_stats"] = {
+                    "total_files": total_files,
+                    "verified_files": verified_files,
+                    "verification_rate": round(
+                        (verified_files / total_files * 100) if total_files > 0 else 0,
+                        1,
+                    ),
+                    "average_file_size_mb": round(avg_file_size / (1024 * 1024), 2)
+                    if avg_file_size is not None
+                    else 0.0,
+                    "total_size_gb": round(total_size / (1024 * 1024 * 1024), 2)
+                    if total_size is not None
+                    else 0.0,
+                    "min_file_size_kb": round(min_file_size / 1024, 2)
+                    if min_file_size is not None
+                    else 0.0,
+                    "max_file_size_mb": round(max_file_size / (1024 * 1024), 2)
+                    if max_file_size is not None
+                    else 0.0,
                 }
 
             # Performance info (if tables exist)
             try:
-                index_info = self.execute("""
+                index_info = self.execute(
+                    """
                     SELECT name FROM sqlite_master
                     WHERE type='index' AND sql IS NOT NULL
                     ORDER BY name
-                """, fetchall=True)
+                """,
+                    fetchall=True,
+                )
 
-                stats['performance_info'] = {
-                    'indexes_count': len(index_info) if index_info else 0,
-                    'indexes': [idx[0] for idx in index_info] if index_info else []
+                stats["performance_info"] = {
+                    "indexes_count": len(index_info) if index_info else 0,
+                    "indexes": [idx[0] for idx in index_info] if index_info else [],
                 }
             except Exception as perf_error:
-                logger.debug(f"Failed to collect performance info for storage stats: {perf_error}")
-                stats['performance_info'] = {'indexes_count': 0, 'indexes': []}
+                logger.debug(
+                    f"Failed to collect performance info for storage stats: {perf_error}"
+                )
+                stats["performance_info"] = {"indexes_count": 0, "indexes": []}
 
         except Exception as e:
             logger.error(f"Failed to collect storage statistics: {e}")
-            stats['error'] = str(e)
+            stats["error"] = str(e)
 
         return stats
 
@@ -2173,44 +2585,50 @@ class DatabaseManager:
             Dictionary with optimization results
         """
         results: dict[str, Any] = {
-            'vacuum_performed': False,
-            'analyze_performed': False,
-            'size_before_mb': 0,
-            'size_after_mb': 0,
-            'space_saved_mb': 0,
-            'errors': []
+            "vacuum_performed": False,
+            "analyze_performed": False,
+            "size_before_mb": 0,
+            "size_after_mb": 0,
+            "space_saved_mb": 0,
+            "errors": [],
         }
 
         try:
             # Get initial size
             if os.path.exists(self.db_name):
-                results['size_before_mb'] = round(os.path.getsize(self.db_name) / (1024 * 1024), 2)
+                results["size_before_mb"] = round(
+                    os.path.getsize(self.db_name) / (1024 * 1024), 2
+                )
 
             # Perform VACUUM to reclaim space
             try:
                 self.execute("VACUUM", commit=True)
-                results['vacuum_performed'] = True
+                results["vacuum_performed"] = True
                 logger.info("Database VACUUM completed")
             except Exception as e:
-                results['errors'].append(f"VACUUM failed: {e}")
+                results["errors"].append(f"VACUUM failed: {e}")
                 logger.error(f"Database VACUUM failed: {e}")
 
             # Perform ANALYZE to update statistics
             try:
                 self.execute("ANALYZE", commit=True)
-                results['analyze_performed'] = True
+                results["analyze_performed"] = True
                 logger.info("Database ANALYZE completed")
             except Exception as e:
-                results['errors'].append(f"ANALYZE failed: {e}")
+                results["errors"].append(f"ANALYZE failed: {e}")
                 logger.error(f"Database ANALYZE failed: {e}")
 
             # Get final size
             if os.path.exists(self.db_name):
-                results['size_after_mb'] = round(os.path.getsize(self.db_name) / (1024 * 1024), 2)
-                results['space_saved_mb'] = round(results['size_before_mb'] - results['size_after_mb'], 2)
+                results["size_after_mb"] = round(
+                    os.path.getsize(self.db_name) / (1024 * 1024), 2
+                )
+                results["space_saved_mb"] = round(
+                    results["size_before_mb"] - results["size_after_mb"], 2
+                )
 
         except Exception as e:
-            results['errors'].append(f"Optimization failed: {e}")
+            results["errors"].append(f"Optimization failed: {e}")
             logger.error(f"Database optimization failed: {e}")
 
         return results
@@ -2290,34 +2708,44 @@ class DatabaseManager:
             Dictionary with health check results
         """
         health: dict[str, Any] = {
-            'integrity_check': False,
-            'foreign_key_check': False,
-            'table_count': 0,
-            'index_count': 0,
-            'connection_pool_healthy': False,
-            'issues': []
+            "integrity_check": False,
+            "foreign_key_check": False,
+            "table_count": 0,
+            "index_count": 0,
+            "connection_pool_healthy": False,
+            "issues": [],
         }
 
         try:
             # Integrity check
             result = self.execute("PRAGMA integrity_check", fetchone=True)
             if result and result[0] == "ok":
-                health['integrity_check'] = True
+                health["integrity_check"] = True
             else:
-                health['issues'].append(f"Integrity check failed: {result[0] if result else 'Unknown error'}")
+                health["issues"].append(
+                    f"Integrity check failed: {result[0] if result else 'Unknown error'}"
+                )
 
             # Foreign key check
-            if not (fk_results := self.execute("PRAGMA foreign_key_check", fetchall=True)):  # Empty result means no foreign key violations
-                health['foreign_key_check'] = True
+            if not (
+                fk_results := self.execute("PRAGMA foreign_key_check", fetchall=True)
+            ):  # Empty result means no foreign key violations
+                health["foreign_key_check"] = True
             else:
-                health['issues'].append(f"Foreign key violations found: {len(fk_results)}")
+                health["issues"].append(
+                    f"Foreign key violations found: {len(fk_results)}"
+                )
 
             # Count tables and indexes
-            tables = self.execute("SELECT COUNT(*) FROM sqlite_master WHERE type='table'", fetchone=True)
-            indexes = self.execute("SELECT COUNT(*) FROM sqlite_master WHERE type='index'", fetchone=True)
+            tables = self.execute(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type='table'", fetchone=True
+            )
+            indexes = self.execute(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type='index'", fetchone=True
+            )
 
-            health['table_count'] = tables[0] if tables else 0
-            health['index_count'] = indexes[0] if indexes else 0
+            health["table_count"] = tables[0] if tables else 0
+            health["index_count"] = indexes[0] if indexes else 0
 
             # Check connection pool health with detailed metrics
             if self.connection_pool:
@@ -2326,43 +2754,54 @@ class DatabaseManager:
                     conn = self.connection_pool.get_connection()
                     conn.execute("SELECT 1")
                     self.connection_pool.return_connection(conn)
-                    health['connection_pool_healthy'] = True
+                    health["connection_pool_healthy"] = True
 
                     # Add detailed pool metrics
                     pool_status = self.connection_pool.get_pool_status()
                     pool_monitoring = self.monitor_connection_pool()
 
-                    health['connection_pool_metrics'] = {
-                        'enabled': True,
-                        'pool_size': pool_status['pool_size'],
-                        'active_connections': pool_status['active_connections'],
-                        'available_connections': pool_status['available_connections'],
-                        'utilization_percent': round(
-                            (pool_status['active_connections'] / pool_status['pool_size'] * 100)
-                            if pool_status['pool_size'] > 0 else 0, 2
+                    health["connection_pool_metrics"] = {
+                        "enabled": True,
+                        "pool_size": pool_status["pool_size"],
+                        "active_connections": pool_status["active_connections"],
+                        "available_connections": pool_status["available_connections"],
+                        "utilization_percent": round(
+                            (
+                                pool_status["active_connections"]
+                                / pool_status["pool_size"]
+                                * 100
+                            )
+                            if pool_status["pool_size"] > 0
+                            else 0,
+                            2,
                         ),
-                        'health_score': pool_monitoring.get('health_score', 100),
-                        'exhaustion_events': pool_status['pool_exhaustion_events'],
-                        'peak_active': pool_status['peak_active_connections'],
-                        'warnings': pool_monitoring.get('warnings', []),
-                        'recommendations': pool_monitoring.get('recommendations', [])
+                        "health_score": pool_monitoring.get("health_score", 100),
+                        "exhaustion_events": pool_status["pool_exhaustion_events"],
+                        "peak_active": pool_status["peak_active_connections"],
+                        "warnings": pool_monitoring.get("warnings", []),
+                        "recommendations": pool_monitoring.get("recommendations", []),
                     }
 
                     # Add warnings if pool health is degraded
-                    if pool_monitoring.get('health_score', 100) < 70:
-                        health['issues'].append(
+                    if pool_monitoring.get("health_score", 100) < 70:
+                        health["issues"].append(
                             f"Connection pool health degraded (score: {pool_monitoring.get('health_score')})"
                         )
 
                 except Exception as e:
-                    health['issues'].append(f"Connection pool issue: {e}")
-                    health['connection_pool_metrics'] = {'enabled': True, 'error': str(e)}
+                    health["issues"].append(f"Connection pool issue: {e}")
+                    health["connection_pool_metrics"] = {
+                        "enabled": True,
+                        "error": str(e),
+                    }
             else:
-                health['connection_pool_healthy'] = True  # Not using pool is also healthy
-                health['connection_pool_metrics'] = {'enabled': False}
+                health["connection_pool_healthy"] = (
+                    True  # Not using pool is also healthy
+                )
+                health["connection_pool_metrics"] = {"enabled": False}
 
         except Exception as e:
-            health['issues'].append(f"Health check failed: {e}")
+            health["issues"].append(f"Health check failed: {e}")
 
         return health
 
@@ -2371,10 +2810,7 @@ class DatabaseManager:
         if self.connection_pool:
             return self.connection_pool.get_pool_status()
         else:
-            return {
-                "pool_enabled": False,
-                "message": "Connection pooling is disabled"
-            }
+            return {"pool_enabled": False, "message": "Connection pooling is disabled"}
 
     def monitor_connection_pool(self) -> dict[str, Any]:
         """Monitor connection pool for issues and return status."""
@@ -2382,7 +2818,9 @@ class DatabaseManager:
             return {
                 "monitoring_enabled": False,
                 "message": "Connection pooling is disabled",
-                "recommendations": ["Enable connection pooling for better resource management"]
+                "recommendations": [
+                    "Enable connection pooling for better resource management"
+                ],
             }
 
         status = self.connection_pool.get_pool_status()
@@ -2390,18 +2828,26 @@ class DatabaseManager:
         warnings: list[str] = []
 
         # Analyze pool status and generate recommendations
-        pool_utilization = status["active_connections"] / status["pool_size"] if status["pool_size"] > 0 else 0
+        pool_utilization = (
+            status["active_connections"] / status["pool_size"]
+            if status["pool_size"] > 0
+            else 0
+        )
 
         if pool_utilization > 0.8:
             warnings.append(f"High pool utilization: {pool_utilization:.1%}")
             recommendations.append("Consider increasing pool size")
 
         if status["pool_exhaustion_events"] > 5:
-            warnings.append(f"Frequent pool exhaustion: {status['pool_exhaustion_events']} events")
+            warnings.append(
+                f"Frequent pool exhaustion: {status['pool_exhaustion_events']} events"
+            )
             recommendations.append("Investigate long-running database operations")
 
         if status["average_connection_age_seconds"] > 3600:  # 1 hour
-            warnings.append(f"Long-lived connections detected: avg age {status['average_connection_age_seconds']:.0f}s")
+            warnings.append(
+                f"Long-lived connections detected: avg age {status['average_connection_age_seconds']:.0f}s"
+            )
             recommendations.append("Consider reducing max_connection_age")
 
         return {
@@ -2410,7 +2856,7 @@ class DatabaseManager:
             "pool_utilization": pool_utilization,
             "warnings": warnings,
             "recommendations": recommendations,
-            "health_score": self._calculate_pool_health_score(status)
+            "health_score": self._calculate_pool_health_score(status),
         }
 
     def _calculate_pool_health_score(self, status: dict[str, Any]) -> float:
@@ -2418,7 +2864,11 @@ class DatabaseManager:
         score = 100.0
 
         # Deduct points for various issues
-        pool_utilization = status["active_connections"] / status["pool_size"] if status["pool_size"] > 0 else 0
+        pool_utilization = (
+            status["active_connections"] / status["pool_size"]
+            if status["pool_size"] > 0
+            else 0
+        )
         if pool_utilization > 0.9:
             score -= 30
         elif pool_utilization > 0.7:
@@ -2447,7 +2897,7 @@ class DatabaseManager:
             return {
                 "cleanup_performed": False,
                 "message": "Connection pooling is disabled",
-                "recommendation": "Enable connection pooling for resource management"
+                "recommendation": "Enable connection pooling for resource management",
             }
 
         result = self.connection_pool.force_cleanup()
@@ -2455,8 +2905,7 @@ class DatabaseManager:
         # Log to structured logger if available
         if structured_logger:
             structured_logger.info(  # type: ignore
-                "Database connection pool force cleanup completed",
-                **result
+                "Database connection pool force cleanup completed", **result
             )
 
         return result
@@ -2464,10 +2913,7 @@ class DatabaseManager:
     def check_pool_exhaustion(self) -> dict[str, Any]:
         """Check for pool exhaustion scenarios and potential issues."""
         if not self.connection_pool:
-            return {
-                "pool_enabled": False,
-                "message": "Connection pooling is disabled"
-            }
+            return {"pool_enabled": False, "message": "Connection pooling is disabled"}
 
         status = self.connection_pool.get_pool_status()
 
@@ -2475,7 +2921,11 @@ class DatabaseManager:
         exhaustion_risk = "low"
         issues: list[str] = []
 
-        pool_utilization = status["active_connections"] / status["pool_size"] if status["pool_size"] > 0 else 0
+        pool_utilization = (
+            status["active_connections"] / status["pool_size"]
+            if status["pool_size"] > 0
+            else 0
+        )
 
         if pool_utilization > 0.9:
             exhaustion_risk = "high"
@@ -2487,7 +2937,9 @@ class DatabaseManager:
         if status["pool_exhaustion_events"] > 0:
             if status["pool_exhaustion_events"] > 10:
                 exhaustion_risk = "high"
-            issues.append(f"Pool exhaustion events detected: {status['pool_exhaustion_events']}")
+            issues.append(
+                f"Pool exhaustion events detected: {status['pool_exhaustion_events']}"
+            )
 
         if status["available_connections"] == 0:
             exhaustion_risk = "critical"
@@ -2502,31 +2954,41 @@ class DatabaseManager:
             "pool_size": status["pool_size"],
             "exhaustion_events": status["pool_exhaustion_events"],
             "issues": issues,
-            "recommendations": self._get_exhaustion_recommendations(exhaustion_risk, issues)
+            "recommendations": self._get_exhaustion_recommendations(
+                exhaustion_risk, issues
+            ),
         }
 
-    def _get_exhaustion_recommendations(self, risk_level: str, issues: list[str]) -> list[str]:
+    def _get_exhaustion_recommendations(
+        self, risk_level: str, issues: list[str]
+    ) -> list[str]:
         """Get recommendations based on exhaustion risk level."""
         recommendations: list[str] = []
 
         if risk_level == "critical":
-            recommendations.extend([
-                "URGENT: Force cleanup connections immediately",
-                "Investigate active database operations",
-                "Consider restarting the database service"
-            ])
+            recommendations.extend(
+                [
+                    "URGENT: Force cleanup connections immediately",
+                    "Investigate active database operations",
+                    "Consider restarting the database service",
+                ]
+            )
         elif risk_level == "high":
-            recommendations.extend([
-                "Increase connection pool size",
-                "Force cleanup of stale connections",
-                "Review database query performance"
-            ])
+            recommendations.extend(
+                [
+                    "Increase connection pool size",
+                    "Force cleanup of stale connections",
+                    "Review database query performance",
+                ]
+            )
         elif risk_level == "medium":
-            recommendations.extend([
-                "Monitor pool usage trends",
-                "Consider connection timeout adjustments",
-                "Review long-running operations"
-            ])
+            recommendations.extend(
+                [
+                    "Monitor pool usage trends",
+                    "Consider connection timeout adjustments",
+                    "Review long-running operations",
+                ]
+            )
 
         return recommendations
 
@@ -2550,14 +3012,24 @@ class DatabaseManager:
 
         # Check write permissions for file storage directory
         if not os.access(FILE_STORAGE_DIR, os.W_OK):
-            logger.critical(f"Fatal: No write permission for file storage directory: '{os.path.abspath(FILE_STORAGE_DIR)}'.")
-            raise SystemExit(f"Startup failed: No write access to '{FILE_STORAGE_DIR}'.")
+            logger.critical(
+                f"Fatal: No write permission for file storage directory: '{os.path.abspath(FILE_STORAGE_DIR)}'."
+            )
+            raise SystemExit(
+                f"Startup failed: No write access to '{FILE_STORAGE_DIR}'."
+            )
 
         # Check write permissions for the directory where the database file resides
         db_dir = os.path.dirname(os.path.abspath(self.db_name))
-        if not os.access(db_dir or '.', os.W_OK):  # Use current dir if DATABASE_NAME is relative with no path
-            logger.critical(f"Fatal: No write permission for database directory: '{db_dir or os.path.abspath('.')}'.")
-            raise SystemExit(f"Startup failed: No write access to database directory '{db_dir}'.")
+        if not os.access(
+            db_dir or ".", os.W_OK
+        ):  # Use current dir if DATABASE_NAME is relative with no path
+            logger.critical(
+                f"Fatal: No write permission for database directory: '{db_dir or os.path.abspath('.')}'."
+            )
+            raise SystemExit(
+                f"Startup failed: No write access to database directory '{db_dir}'."
+            )
 
         logger.info("Database startup permission checks passed.")
 
@@ -2569,10 +3041,16 @@ class DatabaseManager:
             OSError: If the directory cannot be created or accessed.
         """
         try:
-            os.makedirs(FILE_STORAGE_DIR, exist_ok=True)  # exist_ok=True means no error if dir already exists
-            logger.info(f"File storage directory is set to: '{os.path.abspath(FILE_STORAGE_DIR)}'")
+            os.makedirs(
+                FILE_STORAGE_DIR, exist_ok=True
+            )  # exist_ok=True means no error if dir already exists
+            logger.info(
+                f"File storage directory is set to: '{os.path.abspath(FILE_STORAGE_DIR)}'"
+            )
         except OSError as e:
-            logger.critical(f"Fatal: Could not create or access file storage directory '{FILE_STORAGE_DIR}': {e}")
+            logger.critical(
+                f"Fatal: Could not create or access file storage directory '{FILE_STORAGE_DIR}': {e}"
+            )
             raise  # This is a critical failure, server cannot operate
 
     def get_table_names(self) -> list[str]:
@@ -2583,11 +3061,14 @@ class DatabaseManager:
             List of table names for database browser functionality.
         """
         try:
-            result = self.execute("""
+            result = self.execute(
+                """
                 SELECT name FROM sqlite_master
                 WHERE type='table' AND name NOT LIKE 'sqlite_%'
                 ORDER BY name
-            """, fetchall=True)
+            """,
+                fetchall=True,
+            )
             return [row[0] for row in result] if result else []
         except Exception as e:
             logger.error(f"Error getting table names: {e}")
@@ -2606,12 +3087,12 @@ class DatabaseManager:
 
             return [
                 {
-                    'cid': column[0],
-                    'name': column[1],
-                    'type': column[2] or '',
-                    'notnull': bool(column[3]),
-                    'default': column[4],
-                    'pk': bool(column[5])
+                    "cid": column[0],
+                    "name": column[1],
+                    "type": column[2] or "",
+                    "notnull": bool(column[3]),
+                    "default": column[4],
+                    "pk": bool(column[5]),
                 }
                 for column in result
             ]
@@ -2635,19 +3116,21 @@ class DatabaseManager:
                 row_dict[column] = value
         return row_dict
 
-    def get_row_by_primary_key(self, table_name: str, primary_column: str, primary_value: Any) -> dict[str, Any] | None:
+    def get_row_by_primary_key(
+        self, table_name: str, primary_column: str, primary_value: Any
+    ) -> dict[str, Any] | None:
         """Fetch a single row by its primary key value."""
         schema = self.get_table_schema(table_name)
         if not schema:
             return None
 
-        columns = [col['name'] for col in schema]
+        columns = [col["name"] for col in schema]
 
         try:
             row = self.execute(
                 f"SELECT * FROM {table_name} WHERE {primary_column} = ?",
                 (primary_value,),
-                fetchone=True
+                fetchone=True,
             )
         except Exception as e:
             logger.error(f"Error fetching row from {table_name}: {e}")
@@ -2658,8 +3141,13 @@ class DatabaseManager:
 
         return self._row_to_dict(columns, row)
 
-    def update_table_row(self, table_name: str, primary_column: str,
-                         primary_value: Any, updates: dict[str, Any]) -> bool:
+    def update_table_row(
+        self,
+        table_name: str,
+        primary_column: str,
+        primary_value: Any,
+        updates: dict[str, Any],
+    ) -> bool:
         """Execute an UPDATE against a table using the identified primary key."""
         if not updates:
             logger.warning(f"update_table_row called for {table_name} with no updates")
@@ -2690,7 +3178,9 @@ class DatabaseManager:
             logger.error(f"Error updating row in {table_name}: {e}")
             return False
 
-    def delete_table_row(self, table_name: str, primary_column: str, primary_value: Any) -> bool:
+    def delete_table_row(
+        self, table_name: str, primary_column: str, primary_value: Any
+    ) -> bool:
         """Execute a DELETE statement on a table using its primary key."""
         try:
             query = f"DELETE FROM {table_name} WHERE {primary_column} = ?"
@@ -2713,7 +3203,9 @@ class DatabaseManager:
             logger.error(f"Error deleting row from {table_name}: {e}")
             return False
 
-    def get_table_content(self, table_name: str) -> tuple[list[str], list[dict[str, Any]]]:
+    def get_table_content(
+        self, table_name: str
+    ) -> tuple[list[str], list[dict[str, Any]]]:
         """
         Get column names and data for a specific table.
 
@@ -2734,7 +3226,9 @@ class DatabaseManager:
             columns = [row[1] for row in result]  # row[1] is the column name
 
             # Then get the table data
-            data_result = self.execute(f"SELECT * FROM {table_name} LIMIT 1000", fetchall=True)  # Limit for performance
+            data_result = self.execute(
+                f"SELECT * FROM {table_name} LIMIT 1000", fetchall=True
+            )  # Limit for performance
             if not data_result:
                 return columns, []
 

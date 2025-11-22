@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 """Consolidate scattered Flet documentation to /docs/flet/"""
-import os
 import shutil
 from pathlib import Path
 
@@ -117,4 +116,4 @@ Additional Flet documentation remains in:
 
 index_path = FLET_DOCS_DIR / "README.md"
 index_path.write_text(index_content, encoding='utf-8')
-print(f"\nCreated index: docs/flet/README.md")
+print("\nCreated index: docs/flet/README.md")

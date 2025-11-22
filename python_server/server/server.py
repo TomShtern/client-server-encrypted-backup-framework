@@ -3,20 +3,21 @@ import asyncio
 import base64
 import contextlib
 import functools
+import json
 import logging
 import os
 import shutil
-import socket
 import sqlite3
 import sys
 import threading
 import time
 from datetime import datetime
+from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import Any
 
 # Enable global UTF-8 support automatically (replaces all manual UTF-8 setup)
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 # Setup standardized import paths BEFORE importing any other Shared modules
 from Shared.filesystem.path_utils import setup_imports
@@ -24,95 +25,110 @@ from Shared.filesystem.path_utils import setup_imports
 setup_imports()
 
 # Now import ALL Shared modules after path setup - consolidate all imports here
-from Shared.logging.logging_utils import create_enhanced_logger, create_log_monitor_info, setup_dual_logging
-from Shared.monitoring.observability import get_metrics_collector, get_system_monitor
+from Shared.logging.logging_utils import (  # noqa: E402
+    create_enhanced_logger,
+    create_log_monitor_info,
+    setup_dual_logging,
+)
+from Shared.monitoring.observability import (  # noqa: E402
+    get_metrics_collector,
+    get_system_monitor,
+)
 
 # Try to import Sentry config - handle gracefully if not available
 try:
-    from Shared.sentry_config import init_sentry
+    from Shared.sentry_config import init_sentry  # noqa: E402
+
     sentry_available = True
 except ImportError:
     sentry_available = False
+
     def init_sentry(*args, **kwargs) -> bool:
         return False
 
-# Import singleton manager
-# Import crypto components directly from PyCryptodome
-from Crypto.Cipher import AES
-from Crypto.PublicKey import RSA
-from Crypto.Random import get_random_bytes
 
-from .config import (
-    SERVER_VERSION,
+# Import crypto components directly from PyCryptodome
+from Crypto.Cipher import AES  # noqa: E402
+from Crypto.PublicKey import RSA  # noqa: E402
+from Crypto.Random import get_random_bytes  # noqa: E402
+
+from .config import (  # noqa: E402
+    AES_KEY_SIZE_BYTES,  # noqa: F401
+    CLIENT_SESSION_TIMEOUT,  # noqa: F401
+    CLIENT_SOCKET_TIMEOUT,  # noqa: F401
     DEFAULT_PORT,
-    CLIENT_SOCKET_TIMEOUT,
-    CLIENT_SESSION_TIMEOUT,
-    PARTIAL_FILE_TIMEOUT,
-    MAINTENANCE_INTERVAL,
-    MAX_PAYLOAD_READ_LIMIT,
-    MAX_ORIGINAL_FILE_SIZE,
-    MAX_CONCURRENT_CLIENTS,
-    MAX_CLIENT_NAME_LENGTH,
-    MAX_FILENAME_FIELD_SIZE,
-    MAX_ACTUAL_FILENAME_LENGTH,
-    RSA_PUBLIC_KEY_SIZE,
-    AES_KEY_SIZE_BYTES,
     FILE_STORAGE_DIR,
-    SETTINGS_FILE
+    MAINTENANCE_INTERVAL,  # noqa: F401
+    MAX_ACTUAL_FILENAME_LENGTH,  # noqa: F401
+    MAX_CLIENT_NAME_LENGTH,
+    MAX_CONCURRENT_CLIENTS,  # noqa: F401
+    MAX_FILENAME_FIELD_SIZE,  # noqa: F401
+    MAX_ORIGINAL_FILE_SIZE,  # noqa: F401
+    MAX_PAYLOAD_READ_LIMIT,  # noqa: F401
+    PARTIAL_FILE_TIMEOUT,  # noqa: F401
+    RSA_PUBLIC_KEY_SIZE,  # noqa: F401
+    SERVER_VERSION,
+    SETTINGS_FILE,  # noqa: F401
 )
 
+# Import protocol constants and configuration (refactored for modularity)
+from .crc_utils import calculate_crc32  # Centralized CRC calculation # noqa: E402
+
 # Import database module
-from .database import DatabaseManager
+from .database import DatabaseManager  # noqa: E402
 
 # Import custom exceptions
-from .exceptions import ProtocolError, ServerError
+from .exceptions import ProtocolError, ServerError  # noqa: E402
 
 # Import network server module
-from .network_server import NetworkServer
-
-# Import protocol constants and configuration (refactored for modularity)
-from .protocol import *  # Protocol constants and utilities
-from .crc_utils import calculate_crc32  # Centralized CRC calculation
+from .network_server import NetworkServer  # noqa: E402
 
 # Import request handler module
-from .request_handlers import RequestHandler
-from .server_singleton import ensure_single_server_instance
+from .request_handlers import RequestHandler  # noqa: E402
+from .server_singleton import ensure_single_server_instance  # noqa: E402
 
 # Configuration constants now imported from config.py module
 # Remaining server-specific constants:
 
 # Behavior Configuration
-CLIENT_SOCKET_TIMEOUT = 60.0  # Timeout for individual socket operations with a client
-CLIENT_SESSION_TIMEOUT = 10 * 60  # Overall inactivity timeout for a client session (10 minutes)
-PARTIAL_FILE_TIMEOUT = 15 * 60 # Timeout for incomplete multi-packet file transfers (15 minutes)
-MAINTENANCE_INTERVAL = 20.0 # How often to run maintenance tasks (seconds)
-MAX_PAYLOAD_READ_LIMIT = (16 * 1024 * 1024) + 1024  # Max size for a single payload read (16MB chunk + headers)
-MAX_ORIGINAL_FILE_SIZE = 4 * 1024 * 1024 * 1024 # Max original file size (e.g., 4GB) - for sanity checking
-MAX_CONCURRENT_CLIENTS = 50 # Max number of concurrent client connections
+CLIENT_SOCKET_TIMEOUT = 60.0  # Timeout for individual socket operations with a client # noqa: F811
+CLIENT_SESSION_TIMEOUT = 10 * 60  # Overall inactivity timeout for a client session (10 minutes) # noqa: F811
+PARTIAL_FILE_TIMEOUT = 15 * 60  # Timeout for incomplete multi-packet file transfers (15 minutes) # noqa: F811
+MAINTENANCE_INTERVAL = 20.0  # How often to run maintenance tasks (seconds) # noqa: F811
+MAX_PAYLOAD_READ_LIMIT = 16 * 1024 * 1024 + 1024  # Max size for a single payload read (16MB chunk + headers) # noqa: F811
+MAX_ORIGINAL_FILE_SIZE = 4 * 1024 * 1024 * 1024  # Max original file size (e.g., 4GB) - for sanity checking # noqa: F811
+MAX_CONCURRENT_CLIENTS = 50  # Max number of concurrent client connections # noqa: F811
 
 # MAX_CLIENT_NAME_LENGTH imported from config.py (line 39)
-MAX_FILENAME_FIELD_SIZE = 255 # Size of the filename field in protocol
-MAX_ACTUAL_FILENAME_LENGTH = 250 # Practical limit for actual filename within the field
-RSA_PUBLIC_KEY_SIZE = 160 # Bytes, X.509 format (for 1024-bit RSA - per protocol specification)
-AES_KEY_SIZE_BYTES = 32 # 256-bit AES
+MAX_FILENAME_FIELD_SIZE = 255  # Size of the filename field in protocol # noqa: F811
+MAX_ACTUAL_FILENAME_LENGTH = 250  # Practical limit for actual filename within the field # noqa: F811
+RSA_PUBLIC_KEY_SIZE = 160  # Bytes, X.509 format (for 1024-bit RSA - per protocol specification) # noqa: F811
+AES_KEY_SIZE_BYTES = 32  # 256-bit AES # noqa: F811
 
 # Logging Configuration
-DEFAULT_LOG_LINES_LIMIT = 500  # Default number of log lines to retrieve (increased for GUI)
+DEFAULT_LOG_LINES_LIMIT = (
+    500  # Default number of log lines to retrieve (increased for GUI)
+)
 DEFAULT_ACTIVITY_LIMIT = 50  # Default number of activity entries to return
-MAX_INLINE_DOWNLOAD_BYTES = 10 * 1024 * 1024  # Limit for embedding file content in responses (10 MB)
-MAX_LOG_EXPORT_SIZE = 100 * 1024 * 1024  # Maximum log file size to export (100 MB) - prevents hang on huge logs
+MAX_INLINE_DOWNLOAD_BYTES = (
+    10 * 1024 * 1024
+)  # Limit for embedding file content in responses (10 MB)
+MAX_LOG_EXPORT_SIZE = (
+    100 * 1024 * 1024
+)  # Maximum log file size to export (100 MB) - prevents hang on huge logs
 MAX_LOG_EXPORT_LINES = 50000  # Maximum number of lines to read from log file during export - prevents hang on huge logs
 
 VALID_LOG_EXPORT_FORMATS = {"text", "json", "csv"}
 
 # Settings Configuration
-SETTINGS_FILE = "server_settings.json"  # Settings persistence file
+SETTINGS_FILE = "server_settings.json"  # Settings persistence file # noqa: F811
 
 # String constants for error messages and metrics
 METRIC_DB_QUERY_DURATION = "database.query.duration"
 ERROR_FILE_NOT_FOUND = "File not found"
 ERROR_ROW_ID_REQUIRED = "Row identifier is required"
-SERVER_LOG_FILENAME = 'server.log'
+SERVER_LOG_FILENAME = "server.log"
+SEPARATOR_LINE = "====================================================================="
 
 """
 LOGGING LEVEL STANDARDS:
@@ -144,7 +160,7 @@ logger, backup_log_file = setup_dual_logging(
     server_type="backup-server",
     console_level=logging.INFO,
     file_level=logging.DEBUG,
-    console_format='%(asctime)s - %(threadName)s - %(levelname)s - %(message)s'
+    console_format="%(asctime)s - %(threadName)s - %(levelname)s - %(message)s",
 )
 
 # Setup structured logging for backup server
@@ -157,7 +173,10 @@ system_monitor = get_system_monitor()
 # Retry Decorator for Transient Failures
 # ═══════════════════════════════════════════════════════════════════════════════
 
-def retry(max_attempts: int = 3, backoff_base: float = 0.5, exceptions: tuple = (Exception,)):
+
+def retry(
+    max_attempts: int = 3, backoff_base: float = 0.5, exceptions: tuple = (Exception,)
+):
     """
     Decorator to retry a function on transient failures with exponential backoff.
 
@@ -171,6 +190,7 @@ def retry(max_attempts: int = 3, backoff_base: float = 0.5, exceptions: tuple = 
         def get_clients(self):
             return self.db_manager.get_all_clients()
     """
+
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -189,7 +209,7 @@ def retry(max_attempts: int = 3, backoff_base: float = 0.5, exceptions: tuple = 
                     # Record retry metric
                     metrics_collector.record_counter(
                         "database.retry.attempts",
-                        tags={'function': func.__name__, 'attempt': str(attempt)}
+                        tags={"function": func.__name__, "attempt": str(attempt)},
                     )
 
                     # Calculate exponential backoff delay
@@ -210,23 +230,25 @@ def retry(max_attempts: int = 3, backoff_base: float = 0.5, exceptions: tuple = 
             if last_exception is not None:
                 raise last_exception
             # If somehow no exception was captured, raise a generic error
-            raise RuntimeError(f"All {max_attempts} attempts failed for {func.__name__} with no exception captured")
+            raise RuntimeError(
+                f"All {max_attempts} attempts failed for {func.__name__} with no exception captured"
+            )
 
         return wrapper
+
     return decorator
+
 
 # Maintain compatibility: also log to the original server.log file
 # Now uses RotatingFileHandler to prevent unbounded growth
-import os
-from logging.handlers import RotatingFileHandler
 
-LOG_FORMAT = '%(asctime)s - %(threadName)s - %(levelname)s - %(message)s'
+LOG_FORMAT = "%(asctime)s - %(threadName)s - %(levelname)s - %(message)s"
 os.makedirs("logs", exist_ok=True)
 server_log_handler = RotatingFileHandler(
     "logs/server.log",
-    mode='a',
-    maxBytes=10*1024*1024,  # 10 MB per file
-    backupCount=5           # Keep 5 backup files
+    mode="a",
+    maxBytes=10 * 1024 * 1024,  # 10 MB per file
+    backupCount=5,  # Keep 5 backup files
 )
 server_log_handler.setFormatter(logging.Formatter(LOG_FORMAT))
 server_log_handler.setLevel(logging.DEBUG)
@@ -240,7 +262,10 @@ class Client:
     """
     Represents a connected client and stores its state.
     """
-    def __init__(self, client_id: bytes, name: str, public_key_bytes: bytes | None = None):
+
+    def __init__(
+        self, client_id: bytes, name: str, public_key_bytes: bytes | None = None
+    ):
         """
         Initializes a Client object.
 
@@ -252,12 +277,18 @@ class Client:
         self.id: bytes = client_id
         self.name: str = name
         self.public_key_bytes: bytes | None = public_key_bytes
-        self.public_key_obj: Any | None = None # PyCryptodome RSA key object or compatibility layer equivalent
-        self.aes_key: bytes | None = None # Current session AES key
-        self.last_seen: float = time.monotonic() # Monotonic time for session timeout
-        self.last_seen_db: str | None = None # Database timestamp for audit purposes
-        self.partial_files: dict[str, dict[str, Any]] = {} # For reassembling multi-packet files
-        self.lock: threading.Lock = threading.Lock() # To protect concurrent access to client state
+        self.public_key_obj: Any | None = (
+            None  # PyCryptodome RSA key object or compatibility layer equivalent
+        )
+        self.aes_key: bytes | None = None  # Current session AES key
+        self.last_seen: float = time.monotonic()  # Monotonic time for session timeout
+        self.last_seen_db: str | None = None  # Database timestamp for audit purposes
+        self.partial_files: dict[
+            str, dict[str, Any]
+        ] = {}  # For reassembling multi-packet files
+        self.lock: threading.Lock = (
+            threading.Lock()
+        )  # To protect concurrent access to client state
 
         if public_key_bytes:
             self._import_public_key()
@@ -269,8 +300,10 @@ class Client:
                 self.public_key_obj = RSA.import_key(self.public_key_bytes)
                 logger.debug(f"Client '{self.name}': Successfully imported public key.")
             except ValueError as e:
-                logger.error(f"Client '{self.name}': Failed to import public key from stored bytes: {e}")
-                self.public_key_obj = None # Ensure consistent state if import fails
+                logger.error(
+                    f"Client '{self.name}': Failed to import public key from stored bytes: {e}"
+                )
+                self.public_key_obj = None  # Ensure consistent state if import fails
 
     def update_last_seen(self):
         """Updates the last seen timestamp to the current monotonic time."""
@@ -289,11 +322,15 @@ class Client:
         """
         with self.lock:
             if len(public_key_bytes_data) != RSA_PUBLIC_KEY_SIZE:
-                raise ProtocolError(f"Public key size is incorrect for client '{self.name}'. Expected {RSA_PUBLIC_KEY_SIZE}, got {len(public_key_bytes_data)}.")
+                raise ProtocolError(
+                    f"Public key size is incorrect for client '{self.name}'. Expected {RSA_PUBLIC_KEY_SIZE}, got {len(public_key_bytes_data)}."
+                )
             self.public_key_bytes = public_key_bytes_data
-            self._import_public_key() # Attempt to parse and store the RsaKey object
-            if not self.public_key_obj: # Check if import failed
-                 raise ProtocolError(f"Invalid RSA public key format provided by client '{self.name}' (failed to import).")
+            self._import_public_key()  # Attempt to parse and store the RsaKey object
+            if not self.public_key_obj:  # Check if import failed
+                raise ProtocolError(
+                    f"Invalid RSA public key format provided by client '{self.name}' (failed to import)."
+                )
 
     def get_aes_key(self) -> bytes | None:
         """Returns the current session AES key (thread-safe)."""
@@ -311,9 +348,11 @@ class Client:
         Raises:
             ValueError: If the AES key size is incorrect.
         """
-        with self.lock: # Protect AES key modification
+        with self.lock:  # Protect AES key modification
             if len(aes_key_data) != AES_KEY_SIZE_BYTES:
-                 raise ValueError(f"AES key size for client '{self.name}' is incorrect. Expected {AES_KEY_SIZE_BYTES}, got {len(aes_key_data)}.")
+                raise ValueError(
+                    f"AES key size for client '{self.name}' is incorrect. Expected {AES_KEY_SIZE_BYTES}, got {len(aes_key_data)}."
+                )
             self.aes_key = aes_key_data
 
     def clear_partial_file(self, filename: str):
@@ -321,15 +360,18 @@ class Client:
         with self.lock:
             if filename in self.partial_files:
                 del self.partial_files[filename]
-                logger.debug(f"Client '{self.name}': Cleared partial file reassembly data for '{filename}'.")
-
+                logger.debug(
+                    f"Client '{self.name}': Cleared partial file reassembly data for '{filename}'."
+                )
 
     def clear_all_partial_files(self):
         """Clears all in-memory partial file transfer states for this client."""
         with self.lock:
             count = len(self.partial_files)
             self.partial_files.clear()
-            logger.debug(f"Client '{self.name}': Cleared all partial file data ({count} entries)")
+            logger.debug(
+                f"Client '{self.name}': Cleared all partial file data ({count} entries)"
+            )
 
     def cleanup_stale_partial_files(self) -> int:
         """
@@ -341,13 +383,17 @@ class Client:
         with self.lock:
             current_monotonic_time = time.monotonic()
             stale_files_to_remove = [
-                filename for filename, data in self.partial_files.items()
-                if current_monotonic_time - data.get("timestamp", 0) > PARTIAL_FILE_TIMEOUT
+                filename
+                for filename, data in self.partial_files.items()
+                if current_monotonic_time - data.get("timestamp", 0)
+                > PARTIAL_FILE_TIMEOUT
             ]
 
             # Remove stale entries
             for filename in stale_files_to_remove:
-                logger.warning(f"Client '{self.name}': Stale partial file transfer timed out for '{filename}'. Removing associated data.")
+                logger.warning(
+                    f"Client '{self.name}': Stale partial file transfer timed out for '{filename}'. Removing associated data."
+                )
                 del self.partial_files[filename]
 
             return len(stale_files_to_remove)
@@ -362,14 +408,22 @@ class BackupServer:
 
     def __init__(self):
         """Initializes the BackupServer instance."""
-        self.clients: dict[bytes, Client] = {} # In-memory store: client_id_bytes -> Client object
-        self.clients_by_name: dict[str, bytes] = {} # In-memory store: client_name_str -> client_id_bytes
-        self.clients_lock: threading.Lock = threading.Lock() # Protects access to clients and clients_by_name
+        self.clients: dict[
+            bytes, Client
+        ] = {}  # In-memory store: client_id_bytes -> Client object
+        self.clients_by_name: dict[
+            str, bytes
+        ] = {}  # In-memory store: client_name_str -> client_id_bytes
+        self.clients_lock: threading.Lock = (
+            threading.Lock()
+        )  # Protects access to clients and clients_by_name
 
         # Rate limiting for log exports
         self._last_log_export_time: dict[str, float] = {}  # Track by session key
         self._log_export_lock: threading.Lock = threading.Lock()
-        self._last_db_export_time: dict[str, float] = {}  # Track database export rate limiting
+        self._last_db_export_time: dict[
+            str, float
+        ] = {}  # Track database export rate limiting
         self._db_export_lock: threading.Lock = threading.Lock()
 
         # Use default port for now
@@ -385,7 +439,7 @@ class BackupServer:
             port=self.port,
             request_handler=self.request_handler.process_request,
             client_resolver=self.get_client_by_id,
-            shutdown_event=self.shutdown_event
+            shutdown_event=self.shutdown_event,
         )
 
         # Initialize database manager
@@ -398,13 +452,15 @@ class BackupServer:
         self._last_maintenance_timestamp: float | None = None
         self._log_export_rate_limits: dict[str, float] = {}
         # Allow disabling integrated GUI when standalone GUI process will be launched
-        disable_flag = os.environ.get("CYBERBACKUP_DISABLE_INTEGRATED_GUI")
-        logger.info("[GUI] Legacy Tkinter GUI integration removed - FletV2 GUI is now used instead")
+        _ = os.environ.get("CYBERBACKUP_DISABLE_INTEGRATED_GUI")
+        logger.info(
+            "[GUI] Legacy Tkinter GUI integration removed - FletV2 GUI is now used instead"
+        )
 
         # Perform pre-flight checks and initialize database
-        self.db_manager.check_startup_permissions() # Perform pre-flight checks before extensive setup
-        self.db_manager.ensure_storage_dir() # Ensure 'received_files' directory exists
-        self.db_manager.init_database()      # Initialize SQLite database and tables
+        self.db_manager.check_startup_permissions()  # Perform pre-flight checks before extensive setup
+        self.db_manager.ensure_storage_dir()  # Ensure 'received_files' directory exists
+        self.db_manager.init_database()  # Initialize SQLite database and tables
 
         # Set backup_log_file instance attribute to enable enhanced log reading
         self.backup_log_file = backup_log_file
@@ -413,7 +469,7 @@ class BackupServer:
         # but we keep a reference for main server coordination
         # Port is already set during NetworkServer initialization
 
-    def create_client(self, client_id: bytes, name: str) -> 'Client':
+    def create_client(self, client_id: bytes, name: str) -> "Client":
         """Factory method to create a new Client instance."""
         return Client(client_id, name)
 
@@ -430,51 +486,60 @@ class BackupServer:
                 # Found by name
                 client_id_bytes = self.clients_by_name[client_identifier]
                 if client := self.clients.get(client_id_bytes):
-                    return self._format_response(True, {
-                        'id': client.id.hex(),
-                        'name': client.name,
-                        'public_key_size': len(client.public_key_bytes) if client.public_key_bytes else 0
-                    })
+                    return self._format_response(
+                        True,
+                        {
+                            "id": client.id.hex(),
+                            "name": client.name,
+                            "public_key_size": len(client.public_key_bytes)
+                            if client.public_key_bytes
+                            else 0,
+                        },
+                    )
 
             # Try to resolve by hex ID
             with contextlib.suppress(ValueError):
                 client_id_bytes = bytes.fromhex(client_identifier)
                 if client := self.clients.get(client_id_bytes):
-                    return self._format_response(True, {
-                        'id': client.id.hex(),
-                        'name': client.name,
-                        'public_key_size': len(client.public_key_bytes) if client.public_key_bytes else 0
-                    })
-            return self._format_response(False, error=f"Client '{client_identifier}' not found")
+                    return self._format_response(
+                        True,
+                        {
+                            "id": client.id.hex(),
+                            "name": client.name,
+                            "public_key_size": len(client.public_key_bytes)
+                            if client.public_key_bytes
+                            else 0,
+                        },
+                    )
+            return self._format_response(
+                False, error=f"Client '{client_identifier}' not found"
+            )
         except Exception as e:
             logger.error(f"Failed to resolve client {client_identifier}: {e}")
             return self._format_response(False, error=str(e))
 
-
     def _update_gui_client_stats(self):
         """Updates GUI with current client statistics."""
-        with self.clients_lock:
-            connected_clients = len(self.clients)
-            # Get total clients from database
-            total_clients = connected_clients
-            with contextlib.suppress(Exception):
-                total_from_db = len(self.db_manager.get_all_clients())
-                total_clients = max(total_from_db, connected_clients)
+        # Legacy method - kept for potential future use or interface compatibility
+        pass
 
-            # Calculate active transfers while holding lock for consistency
-            active_transfers = self._calculate_active_transfers()
-
-
-
-    def _parse_string_from_payload(self, payload_bytes: bytes, field_len: int, max_actual_len: int, field_name: str = "String") -> str:
+    def _parse_string_from_payload(
+        self,
+        payload_bytes: bytes,
+        field_len: int,
+        max_actual_len: int,
+        field_name: str = "String",
+    ) -> str:
         """
         Parses a null-terminated, zero-padded string from a fixed-length field within a payload.
         """
         if len(payload_bytes) < field_len:
-            raise ProtocolError(f"{field_name}: Field is shorter than expected ({len(payload_bytes)} < {field_len})")
+            raise ProtocolError(
+                f"{field_name}: Field is shorter than expected ({len(payload_bytes)} < {field_len})"
+            )
 
         string_field = payload_bytes[:field_len]
-        null_pos = string_field.find(b'\x00')
+        null_pos = string_field.find(b"\x00")
 
         if null_pos == -1:
             actual_string_bytes = string_field
@@ -482,10 +547,12 @@ class BackupServer:
             actual_string_bytes = string_field[:null_pos]
 
         if len(actual_string_bytes) > max_actual_len:
-            raise ProtocolError(f"{field_name}: String too long ({len(actual_string_bytes)} > {max_actual_len})")
+            raise ProtocolError(
+                f"{field_name}: String too long ({len(actual_string_bytes)} > {max_actual_len})"
+            )
 
         try:
-            return actual_string_bytes.decode('utf-8', errors='strict')
+            return actual_string_bytes.decode("utf-8", errors="strict")
         except UnicodeDecodeError as e:
             raise ProtocolError(f"{field_name}: Invalid UTF-8 encoding: {e}") from e
 
@@ -494,41 +561,60 @@ class BackupServer:
         logger.info("Loading existing clients from database into memory...")
         try:
             rows = self.db_manager.load_clients_from_db()
-        except ServerError as e: # Raised by db_manager on critical read failure
-            logger.critical(f"CRITICAL FAILURE: Could not load client data from database: {e}. Server cannot continue.")
+        except ServerError as e:  # Raised by db_manager on critical read failure
+            logger.critical(
+                f"CRITICAL FAILURE: Could not load client data from database: {e}. Server cannot continue."
+            )
             # This is a fatal error for server operation.
-            raise SystemExit(f"Startup aborted: Failed to load critical client data from database. Details: {e}") from e
+            raise SystemExit(
+                f"Startup aborted: Failed to load critical client data from database. Details: {e}"
+            ) from e
 
-        with self.clients_lock: # Ensure thread-safe access to shared client dictionaries
+        with (
+            self.clients_lock
+        ):  # Ensure thread-safe access to shared client dictionaries
             self.clients.clear()
             self.clients_by_name.clear()
             loaded_count = 0
-            if rows: # Check if any rows were returned
-                for row_id, name, pk_bytes, last_seen_iso_utc in rows:
-                    try:
-                        client = Client(row_id, name, pk_bytes) # Create Client object
-                        # Store DB timestamp for audit/logging while using fresh monotonic time for session
-                        client.last_seen_db = last_seen_iso_utc  # Database timestamp for audit
-                        self.clients[row_id] = client
-                        self.clients_by_name[name] = row_id
-                        loaded_count +=1
-                    except Exception as e_obj: # Catch errors creating individual Client objects (e.g. bad PK)
-                        logger.error(f"Error creating Client object for '{name}' (ID: {row_id.hex() if row_id else 'N/A'}) from DB row: {e_obj}")
+            if rows:  # Check if any rows were returned
+                for row in rows:
+                    if self._process_loaded_client_row(row):
+                        loaded_count += 1
             logger.info(f"Successfully loaded {loaded_count} client(s) from database.")
 
+    def _process_loaded_client_row(self, row: tuple) -> bool:
+        """Processes a single client row from the database."""
+        row_id, name, pk_bytes, last_seen_iso_utc = row
+        try:
+            client = Client(row_id, name, pk_bytes)  # Create Client object
+            # Store DB timestamp for audit/logging while using fresh monotonic time for session
+            client.last_seen_db = last_seen_iso_utc  # Database timestamp for audit
+            self.clients[row_id] = client
+            self.clients_by_name[name] = row_id
+            return True
+        except (
+            Exception
+        ) as e_obj:  # Catch errors creating individual Client objects (e.g. bad PK)
+            logger.error(
+                f"Error creating Client object for '{name}' (ID: {row_id.hex() if row_id else 'N/A'}) from DB row: {e_obj}"
+            )
+            return False
 
     # Port configuration is now handled by NetworkServer
-
 
     def _calculate_active_transfers(self) -> int:
         """Return the number of currently active file transfers across clients."""
         with self.clients_lock:
             # Transfer state is tracked per-client in client.partial_files
-            in_progress = sum(len(client.partial_files) for client in self.clients.values())
+            in_progress = sum(
+                len(client.partial_files) for client in self.clients.values()
+            )
 
         return in_progress
 
-    def _cleanup_stale_temp_files(self, cutoff_seconds: int = PARTIAL_FILE_TIMEOUT) -> int:
+    def _cleanup_stale_temp_files(
+        self, cutoff_seconds: int = PARTIAL_FILE_TIMEOUT
+    ) -> int:
         """Remove stale temporary files left behind by aborted transfers."""
         if not self._storage_dir.exists():
             return 0
@@ -541,14 +627,17 @@ class BackupServer:
                 if temp_path.stat().st_mtime <= cleanup_before:
                     temp_path.unlink()
                     cleaned += 1
-                    logger.info(f"Maintenance: Removed stale temp file '{temp_path.name}'")
+                    logger.info(
+                        f"Maintenance: Removed stale temp file '{temp_path.name}'"
+                    )
             except FileNotFoundError:
                 continue
             except OSError as err:
-                logger.warning(f"Maintenance: Failed to remove temp file '{temp_path}': {err}")
+                logger.warning(
+                    f"Maintenance: Failed to remove temp file '{temp_path}': {err}"
+                )
 
         return cleaned
-
 
     def _periodic_maintenance_job(self):
         """
@@ -556,101 +645,130 @@ class BackupServer:
         """
         try:
             # --- Maintenance Tasks ---
-            # (Existing cleanup logic remains the same)
-            inactive_clients_removed_count = 0
-            with self.clients_lock:
-                current_monotonic_time = time.monotonic()
-                inactive_client_ids_to_remove = [
-                    cid for cid, client_obj in self.clients.items()
-                    if (current_monotonic_time - client_obj.last_seen) > CLIENT_SESSION_TIMEOUT
-                ]
-                for cid in inactive_client_ids_to_remove:
-                    if client_obj := self.clients.pop(cid, None):
-                        self.clients_by_name.pop(client_obj.name, None)
-                        inactive_clients_removed_count += 1
-                        logger.info(f"Client '{client_obj.name}' session timed out.")
+            self._perform_client_session_cleanup()
 
             with self.clients_lock:
                 active_clients_list = list(self.clients.values())
-            stale_partial_files_cleaned_count = sum(
-                client_obj.cleanup_stale_partial_files() for client_obj in active_clients_list
-            )
 
-            stale_temp_files_cleaned_count = self._cleanup_stale_temp_files()
-            self._last_partial_files_cleaned = stale_partial_files_cleaned_count
-            self._last_files_cleaned_count = stale_temp_files_cleaned_count
+            self._perform_file_cleanup(active_clients_list)
             self._last_maintenance_timestamp = time.time()
 
             # --- Record Gauge Metrics ---
-            # Calculate real-time metrics for observability
-            active_transfers = self._calculate_active_transfers()
-            num_active_clients = len(active_clients_list)
-
-            # Record gauge metrics with real values
-            metrics_collector.record_gauge("server.clients.active", num_active_clients)
-            metrics_collector.record_gauge("server.transfers.active", active_transfers)
-
-            # Record memory usage using psutil (available through observability module)
-            try:
-                import psutil
-                process_memory = psutil.Process().memory_info().rss
-                metrics_collector.record_gauge("server.memory.usage_bytes", process_memory)
-            except Exception as mem_err:
-                logger.debug(f"Could not record memory metric: {mem_err}")
+            self._record_realtime_metrics(active_clients_list)
 
             # --- Persist Metrics to Database ---
-            # Record key metrics every maintenance cycle for historical tracking
-            try:
-                logger.debug(f"Recording metrics to database (interval: {MAINTENANCE_INTERVAL}s)")
-
-                # Record active clients count
-                self.db_manager.record_metric("connections", num_active_clients)
-                logger.debug(f"  ✓ Recorded connections metric: {num_active_clients}")
-
-                # Record total files backed up
-                total_files = self.db_manager.get_total_files_count()
-                self.db_manager.record_metric("files", total_files)
-                logger.debug(f"  ✓ Recorded files metric: {total_files}")
-
-                # Record bandwidth (total bytes transferred)
-                total_bytes = self.db_manager.get_total_bytes_transferred()
-                bandwidth_mb = total_bytes / (1024 * 1024)  # Convert to MB
-                self.db_manager.record_metric("bandwidth", bandwidth_mb)
-                logger.debug(f"  ✓ Recorded bandwidth metric: {bandwidth_mb:.2f} MB")
-
-                logger.debug(f"Successfully persisted all metrics: {num_active_clients} connections, {total_files} files, {bandwidth_mb:.2f} MB bandwidth")
-            except Exception as metrics_err:
-                logger.warning(f"Failed to persist metrics to database: {metrics_err}")
+            self._persist_metrics_to_db(len(active_clients_list))
 
             # --- Clean Up Old Metrics (once per day) ---
-            # Only run cleanup once per day (86400 seconds)
-            current_time = time.time()
-            if not hasattr(self, '_last_metrics_cleanup_time'):
-                self._last_metrics_cleanup_time = 0
-
-            if (current_time - self._last_metrics_cleanup_time) >= 86400:  # 24 hours
-                try:
-                    rows_deleted = self.db_manager.cleanup_old_metrics(days_to_keep=7)
-                    self._last_metrics_cleanup_time = current_time
-                    if rows_deleted > 0:
-                        logger.info(f"Daily metrics cleanup: removed {rows_deleted} old samples")
-                except Exception as cleanup_err:
-                    logger.warning(f"Failed to cleanup old metrics: {cleanup_err}")
+            self._perform_daily_metrics_cleanup()
 
             # GUI status updates removed - FletV2 GUI uses ServerBridge for data access
 
         except Exception as e:
-            logger.critical(f"Critical error in periodic maintenance job: {e}", exc_info=True)
+            logger.critical(
+                f"Critical error in periodic maintenance job: {e}", exc_info=True
+            )
 
+    def _perform_client_session_cleanup(self):
+        """Removes inactive client sessions."""
+        with self.clients_lock:
+            current_monotonic_time = time.monotonic()
+            inactive_client_ids_to_remove = [
+                cid
+                for cid, client_obj in self.clients.items()
+                if (current_monotonic_time - client_obj.last_seen)
+                > CLIENT_SESSION_TIMEOUT
+            ]
+            for cid in inactive_client_ids_to_remove:
+                if client_obj := self.clients.pop(cid, None):
+                    self.clients_by_name.pop(client_obj.name, None)
+                    logger.info(f"Client '{client_obj.name}' session timed out.")
+
+    def _perform_file_cleanup(self, active_clients_list: list[Client]):
+        """Cleans up stale partial files and temporary files."""
+        stale_partial_files_cleaned_count = sum(
+            client_obj.cleanup_stale_partial_files()
+            for client_obj in active_clients_list
+        )
+        stale_temp_files_cleaned_count = self._cleanup_stale_temp_files()
+        self._last_partial_files_cleaned = stale_partial_files_cleaned_count
+        self._last_files_cleaned_count = stale_temp_files_cleaned_count
+
+    def _record_realtime_metrics(self, active_clients_list: list[Client]):
+        """Records real-time gauge metrics."""
+        active_transfers = self._calculate_active_transfers()
+        num_active_clients = len(active_clients_list)
+
+        # Record gauge metrics with real values
+        metrics_collector.record_gauge("server.clients.active", num_active_clients)
+        metrics_collector.record_gauge("server.transfers.active", active_transfers)
+
+        # Record memory usage using psutil (available through observability module)
+        try:
+            import psutil
+
+            process_memory = psutil.Process().memory_info().rss
+            metrics_collector.record_gauge("server.memory.usage_bytes", process_memory)
+        except Exception as mem_err:
+            logger.debug(f"Could not record memory metric: {mem_err}")
+
+    def _persist_metrics_to_db(self, num_active_clients: int):
+        """Persists key metrics to the database."""
+        try:
+            logger.debug(
+                f"Recording metrics to database (interval: {MAINTENANCE_INTERVAL}s)"
+            )
+
+            # Record active clients count
+            self.db_manager.record_metric("connections", num_active_clients)
+            logger.debug(f"  ✓ Recorded connections metric: {num_active_clients}")
+
+            # Record total files backed up
+            total_files = self.db_manager.get_total_files_count()
+            self.db_manager.record_metric("files", total_files)
+            logger.debug(f"  ✓ Recorded files metric: {total_files}")
+
+            # Record bandwidth (total bytes transferred)
+            total_bytes = self.db_manager.get_total_bytes_transferred()
+            bandwidth_mb = total_bytes / (1024 * 1024)  # Convert to MB
+            self.db_manager.record_metric("bandwidth", bandwidth_mb)
+            logger.debug(f"  ✓ Recorded bandwidth metric: {bandwidth_mb:.2f} MB")
+
+            logger.debug(
+                f"Successfully persisted all metrics: {num_active_clients} connections, {total_files} files, {bandwidth_mb:.2f} MB bandwidth"
+            )
+        except Exception as metrics_err:
+            logger.warning(f"Failed to persist metrics to database: {metrics_err}")
+
+    def _perform_daily_metrics_cleanup(self):
+        """Cleans up old metrics once per day."""
+        current_time = time.time()
+        if not hasattr(self, "_last_metrics_cleanup_time"):
+            self._last_metrics_cleanup_time = 0
+
+        if (current_time - self._last_metrics_cleanup_time) >= 86400:  # 24 hours
+            try:
+                rows_deleted = self.db_manager.cleanup_old_metrics(days_to_keep=7)
+                self._last_metrics_cleanup_time = current_time
+                if rows_deleted > 0:
+                    logger.info(
+                        f"Daily metrics cleanup: removed {rows_deleted} old samples"
+                    )
+            except Exception as cleanup_err:
+                logger.warning(f"Failed to cleanup old metrics: {cleanup_err}")
 
     def _handle_startup_system_exit(self, e: SystemExit, start_time: float):
         """Extract method to handle SystemExit during startup."""
         duration_ms = (time.time() - start_time) * 1000
-        structured_logger.error(f"Server startup aborted: {e}",
-                              operation="server_start",
-                              duration_ms=duration_ms,
-                              error_code="SystemExit")
-        logger.critical(f"Server startup aborted due to critical error during data loading: {e}")
+        structured_logger.error(
+            f"Server startup aborted: {e}",
+            operation="server_start",
+            duration_ms=duration_ms,
+            error_code="SystemExit",
+        )
+        logger.critical(
+            f"Server startup aborted due to critical error during data loading: {e}"
+        )
         self.running = False
         self.shutdown_event.set()
 
@@ -679,31 +797,37 @@ class BackupServer:
 
         except SystemExit as e:
             self._handle_startup_system_exit(e, start_time)
-            return
+            raise
 
         # Start the network server in a separate thread
         import threading
-        self.network_thread = threading.Thread(target=self.network_server.start, daemon=True)
+
+        self.network_thread = threading.Thread(
+            target=self.network_server.start, daemon=True
+        )
         self.network_thread.start()
 
         duration_ms = (time.time() - start_time) * 1000
-        structured_logger.info("Backup server started successfully",
-                             operation="server_start",
-                             duration_ms=duration_ms,
-                             context={
-                                 "version": SERVER_VERSION,
-                                 "port": self.port,
-                                 "clients_loaded": len(self.clients)
-                             })
+        structured_logger.info(
+            "Backup server started successfully",
+            operation="server_start",
+            duration_ms=duration_ms,
+            context={
+                "version": SERVER_VERSION,
+                "port": self.port,
+                "clients_loaded": len(self.clients),
+            },
+        )
 
-        logger.info(f"Encrypted Backup Server Version {SERVER_VERSION} started successfully on port {self.port}.")
+        logger.info(
+            f"Encrypted Backup Server Version {SERVER_VERSION} started successfully on port {self.port}."
+        )
 
         # Record successful start metrics
         metrics_collector.record_timer("server.startup.duration", duration_ms)
         metrics_collector.record_gauge("server.clients.loaded", len(self.clients))
 
         # GUI status updates removed - FletV2 GUI gets status data through ServerBridge
-
 
     def stop(self):
         """Initiates a graceful shutdown of the server."""
@@ -720,7 +844,9 @@ class BackupServer:
                 try:
                     client.clear_all_partial_files()
                 except Exception as e:
-                    logger.debug(f"Error clearing partial files for client '{client.name}': {e}")
+                    logger.debug(
+                        f"Error clearing partial files for client '{client.name}': {e}"
+                    )
 
             # Clear in-memory client tracking
             num_clients = len(self.clients)
@@ -737,13 +863,11 @@ class BackupServer:
     # ServerBridge Integration Layer - Wrapper Methods
     # ============================================================================
 
-    def _format_response(self, success: bool, data: Any = None, error: str = "") -> dict[str, Any]:
+    def _format_response(
+        self, success: bool, data: Any = None, error: str = ""
+    ) -> dict[str, Any]:
         """Helper method to format responses in ServerBridge expected format."""
-        return {
-            'success': success,
-            'data': data,
-            'error': error
-        }
+        return {"success": success, "data": data, "error": error}
 
     def _validate_client_name(self, name: str) -> tuple[bool, str]:
         """
@@ -762,20 +886,28 @@ class BackupServer:
             return False, f"Client name too long (max {MAX_CLIENT_NAME_LENGTH} chars)"
 
         # Check for invalid control characters
-        if any(c in name for c in ('\x00', '\n', '\r', '\t')):
+        if any(c in name for c in ("\x00", "\n", "\r", "\t")):
             return False, "Client name contains invalid characters"
+
+        # Check for allowed characters (alphanumeric, underscores, hyphens)
+        # This rejects spaces and other special characters
+        if not all(c.isalnum() or c in ("_", "-") for c in name):
+            return (
+                False,
+                "Client name contains invalid characters (allowed: A-Z, a-z, 0-9, _, -)",
+            )
 
         return True, ""
 
     # --- Client Operations ---
-#
-# CLIENT RETRIEVAL METHODS - USAGE GUIDE:
-# ========================================
-# get_clients() - Synchronous, blocks until DB query completes. Use for simple operations
-# get_clients_async() - Non-blocking async version. Use in UI/async contexts to prevent blocking
-# get_client_details(client_id) - Get single client by ID. More efficient than getting all clients
-#
-# All methods query the database as single source of truth. No in-memory caching to avoid sync issues.
+    #
+    # CLIENT RETRIEVAL METHODS - USAGE GUIDE:
+    # ========================================
+    # get_clients() - Synchronous, blocks until DB query completes. Use for simple operations
+    # get_clients_async() - Non-blocking async version. Use in UI/async contexts to prevent blocking
+    # get_client_details(client_id) - Get single client by ID. More efficient than getting all clients
+    #
+    # All methods query the database as single source of truth. No in-memory caching to avoid sync issues.
 
     @retry(max_attempts=3, backoff_base=0.5, exceptions=(sqlite3.OperationalError,))
     def get_clients(self) -> dict[str, Any]:
@@ -792,9 +924,11 @@ class BackupServer:
             query_duration_ms = (time.time() - query_start) * 1000
 
             # Record database query timing metric
-            metrics_collector.record_timer(METRIC_DB_QUERY_DURATION,
-                                          query_duration_ms,
-                                          tags={'operation': 'get_all_clients'})
+            metrics_collector.record_timer(
+                METRIC_DB_QUERY_DURATION,
+                query_duration_ms,
+                tags={"operation": "get_all_clients"},
+            )
 
             return self._format_response(True, clients_data)
         except Exception as e:
@@ -813,14 +947,19 @@ class BackupServer:
             client_id_bytes = bytes.fromhex(client_id)
             client_data = self.db_manager.get_client_by_id(client_id_bytes)
             if client_data:
-                return self._format_response(True, {
-                    'id': client_id_bytes.hex(),
-                    'name': client_data[1],
-                    'last_seen': client_data[3],
-                    'public_key_size': len(client_data[2]) if client_data[2] else 0
-                })
+                return self._format_response(
+                    True,
+                    {
+                        "id": client_id_bytes.hex(),
+                        "name": client_data[1],
+                        "last_seen": client_data[3],
+                        "public_key_size": len(client_data[2]) if client_data[2] else 0,
+                    },
+                )
             else:
-                return self._format_response(False, error=f"Client with ID {client_id} not found")
+                return self._format_response(
+                    False, error=f"Client with ID {client_id} not found"
+                )
         except Exception as e:
             logger.error(f"Failed to get client details for {client_id}: {e}")
             return self._format_response(False, error=str(e))
@@ -835,8 +974,9 @@ class BackupServer:
         """
         try:
             import uuid
+
             client_id = uuid.uuid4().bytes
-            name = client_data.get('name', '')
+            name = client_data.get("name", "")
 
             # Validate name using centralized validation
             is_valid, error_msg = self._validate_client_name(name)
@@ -846,15 +986,21 @@ class BackupServer:
             # Check if client name already exists in memory
             with self.clients_lock:
                 if name in self.clients_by_name:
-                    return self._format_response(False, error=f"Client name '{name}' already exists")
+                    return self._format_response(
+                        False, error=f"Client name '{name}' already exists"
+                    )
 
             # Check database for duplicate name (catch race conditions)
             try:
                 existing_clients = self.db_manager.get_all_clients()
-                if any(c.get('name') == name for c in existing_clients):
-                    return self._format_response(False, error=f"Client name '{name}' already exists in database")
+                if any(c.get("name") == name for c in existing_clients):
+                    return self._format_response(
+                        False, error=f"Client name '{name}' already exists in database"
+                    )
             except Exception as db_check_error:
-                logger.warning(f"Could not verify name uniqueness in database: {db_check_error}")
+                logger.warning(
+                    f"Could not verify name uniqueness in database: {db_check_error}"
+                )
 
             # Create new client
             client = self.create_client(client_id, name)
@@ -866,19 +1012,21 @@ class BackupServer:
 
             # Save to database with timing
             query_start = time.time()
-            self.db_manager.save_client_to_db(client.id, client.name, client.public_key_bytes, client.get_aes_key())
+            self.db_manager.save_client_to_db(
+                client.id, client.name, client.public_key_bytes, client.get_aes_key()
+            )
             query_duration_ms = (time.time() - query_start) * 1000
 
             # Record database write timing metric
-            metrics_collector.record_timer(METRIC_DB_QUERY_DURATION,
-                                          query_duration_ms,
-                                          tags={'operation': 'save_client_to_db'})
+            metrics_collector.record_timer(
+                METRIC_DB_QUERY_DURATION,
+                query_duration_ms,
+                tags={"operation": "save_client_to_db"},
+            )
 
-            return self._format_response(True, {
-                'id': client_id.hex(),
-                'name': name,
-                'created': True
-            })
+            return self._format_response(
+                True, {"id": client_id.hex(), "name": name, "created": True}
+            )
         except Exception as e:
             logger.error(f"Failed to add client: {e}")
             return self._format_response(False, error=str(e))
@@ -905,19 +1053,23 @@ class BackupServer:
             query_duration_ms = (time.time() - query_start) * 1000
 
             # Record database write timing metric
-            metrics_collector.record_timer(METRIC_DB_QUERY_DURATION,
-                                          query_duration_ms,
-                                          tags={'operation': 'delete_client'})
+            metrics_collector.record_timer(
+                METRIC_DB_QUERY_DURATION,
+                query_duration_ms,
+                tags={"operation": "delete_client"},
+            )
 
             if not success:
-                return self._format_response(False, error="Failed to delete client from database")
+                return self._format_response(
+                    False, error="Failed to delete client from database"
+                )
 
             # THEN remove from in-memory store (only if database deletion succeeded)
             with self.clients_lock:
                 if client := self.clients.pop(client_id_bytes, None):
                     self.clients_by_name.pop(client.name, None)
 
-            return self._format_response(True, {'deleted': True})
+            return self._format_response(True, {"deleted": True})
         except Exception as e:
             logger.error(f"Failed to delete client {client_id}: {e}")
             return self._format_response(False, error=str(e))
@@ -928,7 +1080,9 @@ class BackupServer:
         return await loop.run_in_executor(None, self.delete_client, client_id)
 
     @retry(max_attempts=3, backoff_base=0.5, exceptions=(sqlite3.OperationalError,))
-    def update_client(self, client_id: str, updated_data: dict[str, Any]) -> dict[str, Any]:
+    def update_client(
+        self, client_id: str, updated_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Update client information.
 
@@ -949,8 +1103,8 @@ class BackupServer:
             client_id_bytes = bytes.fromhex(client_id)
 
             # Extract fields to update
-            name = updated_data.get('name')
-            public_key = updated_data.get('public_key')  # Should be bytes if provided
+            name = updated_data.get("name")
+            public_key = updated_data.get("public_key")  # Should be bytes if provided
 
             # Validate name if provided
             if name is not None:
@@ -963,7 +1117,9 @@ class BackupServer:
                     if name in self.clients_by_name:
                         existing_id = self.clients_by_name[name]
                         if existing_id != client_id_bytes:
-                            return self._format_response(False, error=f"Client name '{name}' already exists")
+                            return self._format_response(
+                                False, error=f"Client name '{name}' already exists"
+                            )
 
             # Update in database with timing
             query_start = time.time()
@@ -971,12 +1127,16 @@ class BackupServer:
             query_duration_ms = (time.time() - query_start) * 1000
 
             # Record database write timing metric
-            metrics_collector.record_timer(METRIC_DB_QUERY_DURATION,
-                                          query_duration_ms,
-                                          tags={'operation': 'update_client'})
+            metrics_collector.record_timer(
+                METRIC_DB_QUERY_DURATION,
+                query_duration_ms,
+                tags={"operation": "update_client"},
+            )
 
             if not success:
-                return self._format_response(False, error="Failed to update client in database")
+                return self._format_response(
+                    False, error="Failed to update client in database"
+                )
 
             # Update in-memory representation if client is currently connected
             with self.clients_lock:
@@ -995,11 +1155,18 @@ class BackupServer:
                         client.set_public_key(public_key)
                         logger.info(f"Updated public key for client '{client.name}'")
 
-            return self._format_response(True, {
-                'id': client_id,
-                'updated': True,
-                'fields_updated': [k for k, v in {'name': name, 'public_key': public_key}.items() if v is not None]
-            })
+            return self._format_response(
+                True,
+                {
+                    "id": client_id,
+                    "updated": True,
+                    "fields_updated": [
+                        k
+                        for k, v in {"name": name, "public_key": public_key}.items()
+                        if v is not None
+                    ],
+                },
+            )
 
         except ValueError as e:
             logger.error(f"Invalid client ID format '{client_id}': {e}")
@@ -1008,10 +1175,14 @@ class BackupServer:
             logger.error(f"Failed to update client {client_id}: {e}")
             return self._format_response(False, error=str(e))
 
-    async def update_client_async(self, client_id: str, updated_data: dict[str, Any]) -> dict[str, Any]:
+    async def update_client_async(
+        self, client_id: str, updated_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Async version of update_client()."""
         loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(None, self.update_client, client_id, updated_data)
+        return await loop.run_in_executor(
+            None, self.update_client, client_id, updated_data
+        )
 
     def disconnect_client(self, client_id: str) -> dict[str, Any]:
         """Disconnect a client (remove from in-memory store only)."""
@@ -1023,9 +1194,11 @@ class BackupServer:
                 if client:
                     self.clients_by_name.pop(client.name, None)
                     logger.info(f"Client '{client.name}' disconnected")
-                    return self._format_response(True, {'disconnected': True})
+                    return self._format_response(True, {"disconnected": True})
                 else:
-                    return self._format_response(False, error="Client not found in active connections")
+                    return self._format_response(
+                        False, error="Client not found in active connections"
+                    )
         except Exception as e:
             logger.error(f"Failed to disconnect client {client_id}: {e}")
             return self._format_response(False, error=str(e))
@@ -1037,10 +1210,10 @@ class BackupServer:
 
     def _parse_file_identifier(self, file_id: str) -> tuple[str, str]:
         """Validate and split a composite file identifier into client ID and filename."""
-        if not isinstance(file_id, str) or ':' not in file_id:
+        if not isinstance(file_id, str) or ":" not in file_id:
             raise ValueError("Invalid file identifier. Expected 'client_id:filename'.")
 
-        client_part, filename = file_id.split(':', 1)
+        client_part, filename = file_id.split(":", 1)
         client_part = client_part.strip()
         filename = filename.strip()
 
@@ -1052,7 +1225,7 @@ class BackupServer:
         except ValueError as exc:
             raise ValueError("Invalid client ID provided.") from exc
 
-        if any(sep in filename for sep in ('/', '\\')) or '..' in filename:
+        if any(sep in filename for sep in ("/", "\\")) or ".." in filename:
             raise ValueError("Invalid filename provided.")
 
         return client_part, filename
@@ -1097,14 +1270,18 @@ class BackupServer:
             query_duration_ms = (time.time() - query_start) * 1000
 
             # Record database query timing metric
-            metrics_collector.record_timer(METRIC_DB_QUERY_DURATION,
-                                          query_duration_ms,
-                                          tags={'operation': 'get_all_files'})
+            metrics_collector.record_timer(
+                METRIC_DB_QUERY_DURATION,
+                query_duration_ms,
+                tags={"operation": "get_all_files"},
+            )
 
             # Normalize client_id to hex string if it's bytes
             for file_data in files_data:
-                if 'client_id' in file_data and isinstance(file_data['client_id'], bytes):
-                    file_data['client_id'] = file_data['client_id'].hex()
+                if "client_id" in file_data and isinstance(
+                    file_data["client_id"], bytes
+                ):
+                    file_data["client_id"] = file_data["client_id"].hex()
             return self._format_response(True, files_data)
         except Exception as e:
             logger.error(f"Failed to get files: {e}")
@@ -1123,7 +1300,7 @@ class BackupServer:
             files_data = self.db_manager.get_files_for_client(client_id)
             # Attach client_id to each file entry
             for file_data in files_data:
-                file_data['client_id'] = client_id
+                file_data["client_id"] = client_id
             return self._format_response(True, files_data)
         except Exception as e:
             logger.error(f"Failed to get files for client {client_id}: {e}")
@@ -1138,13 +1315,15 @@ class BackupServer:
     def delete_file(self, file_id: str) -> dict[str, Any]:
         """Delete a file - delegates to db_manager.delete_file()."""
         try:
-            if ':' not in file_id:
+            if ":" not in file_id:
                 # Fallback: try to parse as a single identifier
-                return self._format_response(False, error="Invalid file_id format. Expected 'client_id:filename'")
+                return self._format_response(
+                    False, error="Invalid file_id format. Expected 'client_id:filename'"
+                )
 
-            client_id_str, filename = file_id.split(':', 1)
-            if success := self.db_manager.delete_file(client_id_str, filename):
-                return self._format_response(True, {'deleted': True})
+            client_id_str, filename = file_id.split(":", 1)
+            if self.db_manager.delete_file(client_id_str, filename):
+                return self._format_response(True, {"deleted": True})
             else:
                 return self._format_response(False, error="Failed to delete file")
         except Exception as e:
@@ -1152,12 +1331,14 @@ class BackupServer:
             return self._format_response(False, error=str(e))
 
     @retry(max_attempts=3, backoff_base=0.5, exceptions=(sqlite3.OperationalError,))
-    def delete_file_by_client_and_name(self, client_id: str, filename: str) -> dict[str, Any]:
+    def delete_file_by_client_and_name(
+        self, client_id: str, filename: str
+    ) -> dict[str, Any]:
         """Delete a file by client ID and filename."""
         try:
             success = self.db_manager.delete_file(client_id, filename)
             if success:
-                return self._format_response(True, {'deleted': True})
+                return self._format_response(True, {"deleted": True})
             else:
                 return self._format_response(False, error="Failed to delete file")
         except Exception as e:
@@ -1169,10 +1350,14 @@ class BackupServer:
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, self.delete_file, file_id)
 
-    async def delete_file_by_client_and_name_async(self, client_id: str, filename: str) -> dict[str, Any]:
+    async def delete_file_by_client_and_name_async(
+        self, client_id: str, filename: str
+    ) -> dict[str, Any]:
         """Async version of delete_file_by_client_and_name()."""
         loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(None, self.delete_file_by_client_and_name, client_id, filename)
+        return await loop.run_in_executor(
+            None, self.delete_file_by_client_and_name, client_id, filename
+        )
 
     def download_file(self, file_id: str, destination_path: str) -> dict[str, Any]:
         """Download a stored file and optionally persist it to a destination path."""
@@ -1184,36 +1369,46 @@ class BackupServer:
         try:
             file_info = self.db_manager.get_file_info(client_id_str, filename)
         except Exception as db_error:
-            logger.error(f"Database error while retrieving file '{file_id}': {db_error}")
+            logger.error(
+                f"Database error while retrieving file '{file_id}': {db_error}"
+            )
             return self._format_response(False, error=f"Database error: {db_error}")
 
         if not file_info:
-            logger.warning(f"Download requested for unknown file identifier '{file_id}'")
+            logger.warning(
+                f"Download requested for unknown file identifier '{file_id}'"
+            )
             return self._format_response(False, error=ERROR_FILE_NOT_FOUND)
 
-        source_path = self._resolve_storage_path(file_info.get('path'), filename)
+        source_path = self._resolve_storage_path(file_info.get("path"), filename)
 
         if not source_path.exists():
-            logger.error(f"Stored file missing for '{file_id}' (resolved path: {source_path})")
-            return self._format_response(False, error="Stored file data not found on server")
+            logger.error(
+                f"Stored file missing for '{file_id}' (resolved path: {source_path})"
+            )
+            return self._format_response(
+                False, error="Stored file data not found on server"
+            )
 
         try:
             file_stat = source_path.stat()
         except OSError as stat_error:
             logger.error(f"Failed to stat file '{source_path}': {stat_error}")
-            return self._format_response(False, error=f"Unable to access file metadata: {stat_error}")
+            return self._format_response(
+                False, error=f"Unable to access file metadata: {stat_error}"
+            )
 
         response_payload: dict[str, Any] = {
-            'client_id': client_id_str,
-            'filename': filename,
-            'verified': bool(file_info.get('verified', False)),
-            'size_bytes': file_stat.st_size,
-            'source_path': str(source_path),
-            'client_name': file_info.get('client'),
-            'crc': file_info.get('crc')
+            "client_id": client_id_str,
+            "filename": filename,
+            "verified": bool(file_info.get("verified", False)),
+            "size_bytes": file_stat.st_size,
+            "source_path": str(source_path),
+            "client_name": file_info.get("client"),
+            "crc": file_info.get("crc"),
         }
 
-        if destination_path := (destination_path or '').strip():
+        if destination_path := (destination_path or "").strip():
             dest_path = Path(destination_path).expanduser()
             try:
                 if dest_path.exists() and dest_path.is_dir():
@@ -1223,41 +1418,56 @@ class BackupServer:
                     dest_file_path.parent.mkdir(parents=True, exist_ok=True)
 
                 shutil.copy2(source_path, dest_file_path)
-                response_payload['destination_path'] = str(dest_file_path)
-                response_payload['copied_bytes'] = dest_file_path.stat().st_size
+                response_payload["destination_path"] = str(dest_file_path)
+                response_payload["copied_bytes"] = dest_file_path.stat().st_size
             except Exception as copy_error:
-                logger.error(f"Failed to write downloaded file to '{destination_path}': {copy_error}")
-                return self._format_response(False, error=f"Failed to write to destination: {copy_error}")
+                logger.error(
+                    f"Failed to write downloaded file to '{destination_path}': {copy_error}"
+                )
+                return self._format_response(
+                    False, error=f"Failed to write to destination: {copy_error}"
+                )
 
         try:
             if file_stat.st_size <= MAX_INLINE_DOWNLOAD_BYTES:
-                with open(source_path, 'rb') as file_handle:
+                with open(source_path, "rb") as file_handle:
                     file_bytes = file_handle.read()
-                response_payload['content_b64'] = base64.b64encode(file_bytes).decode('ascii')
+                response_payload["content_b64"] = base64.b64encode(file_bytes).decode(
+                    "ascii"
+                )
             else:
-                response_payload['content_b64'] = None
-                response_payload['note'] = (
+                response_payload["content_b64"] = None
+                response_payload["note"] = (
                     "File larger than 10 MB; content not embedded in response. "
                     "Use destination download path instead."
                 )
         except Exception as read_error:
-            logger.error(f"Failed to read file content for '{source_path}': {read_error}")
-            return self._format_response(False, error=f"Failed to read file content: {read_error}")
+            logger.error(
+                f"Failed to read file content for '{source_path}': {read_error}"
+            )
+            return self._format_response(
+                False, error=f"Failed to read file content: {read_error}"
+            )
 
         logger.info(
             f"File download fulfilled for client='{client_id_str}' file='{filename}' size={file_stat.st_size} bytes"
         )
 
         # Record metrics for successful file download
-        metrics_collector.record_counter("file.downloads.total",
-                                        tags={'client_id': client_id_str})
+        metrics_collector.record_counter(
+            "file.downloads.total", tags={"client_id": client_id_str}
+        )
 
         return self._format_response(True, response_payload)
 
-    async def download_file_async(self, file_id: str, destination_path: str) -> dict[str, Any]:
+    async def download_file_async(
+        self, file_id: str, destination_path: str
+    ) -> dict[str, Any]:
         """Async version of download_file()."""
         loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(None, self.download_file, file_id, destination_path)
+        return await loop.run_in_executor(
+            None, self.download_file, file_id, destination_path
+        )
 
     def verify_file(self, file_id: str) -> dict[str, Any]:
         """Verify a stored file by comparing computed CRC32 with the recorded value."""
@@ -1269,65 +1479,82 @@ class BackupServer:
         try:
             file_info = self.db_manager.get_file_info(client_id_str, filename)
         except Exception as db_error:
-            logger.error(f"Database error while retrieving file info for '{file_id}': {db_error}")
+            logger.error(
+                f"Database error while retrieving file info for '{file_id}': {db_error}"
+            )
             return self._format_response(False, error=f"Database error: {db_error}")
 
         if not file_info:
-            logger.warning(f"Verification requested for unknown file identifier '{file_id}'")
+            logger.warning(
+                f"Verification requested for unknown file identifier '{file_id}'"
+            )
             return self._format_response(False, error=ERROR_FILE_NOT_FOUND)
 
-        source_path = self._resolve_storage_path(file_info.get('path'), filename)
+        source_path = self._resolve_storage_path(file_info.get("path"), filename)
         if not source_path.exists():
-            logger.error(f"Stored file missing for '{file_id}' (resolved path: {source_path})")
-            return self._format_response(False, error="Stored file data not found on server")
+            logger.error(
+                f"Stored file missing for '{file_id}' (resolved path: {source_path})"
+            )
+            return self._format_response(
+                False, error="Stored file data not found on server"
+            )
 
         try:
             # Read entire file and calculate CRC in one operation
-            with open(source_path, 'rb') as file_handle:
+            with open(source_path, "rb") as file_handle:
                 file_data = file_handle.read()
                 total_bytes = len(file_data)
                 computed_crc = calculate_crc32(file_data)
         except Exception as read_error:
-            logger.error(f"Failed to read file '{source_path}' during verification: {read_error}")
-            return self._format_response(False, error=f"Failed to read file content: {read_error}")
-        expected_crc = file_info.get('crc')
+            logger.error(
+                f"Failed to read file '{source_path}' during verification: {read_error}"
+            )
+            return self._format_response(
+                False, error=f"Failed to read file content: {read_error}"
+            )
+        expected_crc = file_info.get("crc")
 
         # Treat files without stored CRC as newly verified after computing it
         verified_result = expected_crc is None or expected_crc == computed_crc
 
         update_success = self.db_manager.update_file_verification(
-            client_id_str,
-            filename,
-            verified_result,
-            computed_crc
+            client_id_str, filename, verified_result, computed_crc
         )
 
         if not update_success:
-            logger.warning(f"Verification result for '{file_id}' could not be persisted to database")
+            logger.warning(
+                f"Verification result for '{file_id}' could not be persisted to database"
+            )
 
-        status_text = 'verified' if verified_result else 'failed'
+        status_text = "verified" if verified_result else "failed"
         response_payload: dict[str, Any] = {
-            'client_id': client_id_str,
-            'filename': filename,
-            'verified': verified_result,
-            'status': status_text,
-            'size': total_bytes,
-            'modified': file_info.get('date'),
-            'hash': f"CRC32: 0x{computed_crc:08X}",
-            'computed_crc': f"0x{computed_crc:08X}",
-            'expected_crc': f"0x{expected_crc:08X}" if expected_crc is not None else None,
-            'storage_path': str(source_path)
+            "client_id": client_id_str,
+            "filename": filename,
+            "verified": verified_result,
+            "status": status_text,
+            "size": total_bytes,
+            "modified": file_info.get("date"),
+            "hash": f"CRC32: 0x{computed_crc:08X}",
+            "computed_crc": f"0x{computed_crc:08X}",
+            "expected_crc": f"0x{expected_crc:08X}"
+            if expected_crc is not None
+            else None,
+            "storage_path": str(source_path),
         }
 
         if expected_crc is None:
-            response_payload['note'] = (
+            response_payload["note"] = (
                 "No stored CRC was available; computed checksum has been persisted."
             )
         elif not verified_result:
-            response_payload['message'] = "Stored checksum does not match the computed value."
+            response_payload["message"] = (
+                "Stored checksum does not match the computed value."
+            )
 
         if not update_success:
-            response_payload['warning'] = "Could not persist verification result to database."
+            response_payload["warning"] = (
+                "Could not persist verification result to database."
+            )
 
         log_message = (
             f"File verification {'succeeded' if verified_result else 'failed'} "
@@ -1374,18 +1601,20 @@ class BackupServer:
                     remaining = 10 - (current_time - last_export)
                     return self._format_response(
                         False,
-                        error=f"Rate limit exceeded for table '{table_name}'. Please wait {remaining:.1f} seconds..."
+                        error=f"Rate limit exceeded for table '{table_name}'. Please wait {remaining:.1f} seconds...",
                     )
 
                 self._last_db_export_time[session_key] = current_time
 
             # This is a basic implementation - in a real system you'd want more sophisticated querying
-            if table_name.lower() == 'clients':
+            if table_name.lower() == "clients":
                 data = self.db_manager.get_all_clients()
-            elif table_name.lower() == 'files':
+            elif table_name.lower() == "files":
                 data = self.db_manager.get_all_files()
             else:
-                return self._format_response(False, error=f"Table '{table_name}' not supported")
+                return self._format_response(
+                    False, error=f"Table '{table_name}' not supported"
+                )
 
             return self._format_response(True, data)
         except Exception as e:
@@ -1407,23 +1636,22 @@ class BackupServer:
 
     @staticmethod
     def _supported_table_name(table_name: str) -> str | None:
-        table_mapping = {
-            'clients': 'clients',
-            'files': 'files'
-        }
+        table_mapping = {"clients": "clients", "files": "files"}
         normalized = BackupServer._normalize_table_name(table_name)
         return table_mapping.get(normalized)
 
     @staticmethod
-    def _convert_primary_key_value(column_info: dict[str, Any], value: str) -> tuple[Any, str]:
+    def _convert_primary_key_value(
+        column_info: dict[str, Any], value: str
+    ) -> tuple[Any, str]:
         """Convert UI-provided identifier into the database representation."""
         if value is None:
             raise ValueError(ERROR_ROW_ID_REQUIRED)
 
-        column_type = (column_info.get('type') or '').upper()
+        column_type = (column_info.get("type") or "").upper()
         raw_value = str(value).strip()
-        if column_type.startswith('BLOB'):
-            sanitized = raw_value.replace('-', '').strip()
+        if column_type.startswith("BLOB"):
+            sanitized = raw_value.replace("-", "").strip()
             if not sanitized:
                 raise ValueError(ERROR_ROW_ID_REQUIRED)
             if len(sanitized) % 2 != 0:
@@ -1434,7 +1662,7 @@ class BackupServer:
                 raise ValueError("Invalid identifier format provided") from exc
             return pk_bytes, pk_bytes.hex()
 
-        if column_type.startswith('INT') or column_type.startswith('INTEGER'):
+        if column_type.startswith("INT") or column_type.startswith("INTEGER"):
             try:
                 pk_int = int(raw_value, 10)
             except ValueError as exc:
@@ -1448,32 +1676,40 @@ class BackupServer:
     @staticmethod
     def _convert_column_input(column_info: dict[str, Any], value: Any) -> Any:
         """Convert UI-provided value into a database-compatible format."""
-        column_type = (column_info.get('type') or '').upper()
-        column_name = column_info.get('name', '')
+        column_type = (column_info.get("type") or "").upper()
+        column_name = column_info.get("name", "")
 
-        if value is None or (isinstance(value, str) and value.strip() == ''):
+        if value is None or (isinstance(value, str) and value.strip() == ""):
             return None
 
         if isinstance(value, memoryview):
             value = bytes(value)
 
-        if column_type.startswith('BLOB'):
+        if column_type.startswith("BLOB"):
             if isinstance(value, (bytes, bytearray)):
                 return bytes(value)
-            sanitized = str(value).strip().replace('-', '')
+            sanitized = str(value).strip().replace("-", "")
             if not sanitized:
                 return None
             if len(sanitized) % 2 != 0:
-                raise ValueError(f"Value for column '{column_name}' must be hexadecimal")
+                raise ValueError(
+                    f"Value for column '{column_name}' must be hexadecimal"
+                )
             try:
                 return bytes.fromhex(sanitized)
             except ValueError as exc:
-                raise ValueError(f"Value for column '{column_name}' must be hexadecimal") from exc
+                raise ValueError(
+                    f"Value for column '{column_name}' must be hexadecimal"
+                ) from exc
 
-        truthy = {'1', 'true', 'yes', 'on'}
-        falsy = {'0', 'false', 'no', 'off'}
+        truthy = {"1", "true", "yes", "on"}
+        falsy = {"0", "false", "no", "off"}
 
-        if 'BOOL' in column_type or 'BOOLEAN' in column_type or column_name.lower() in {'verified'}:
+        if (
+            "BOOL" in column_type
+            or "BOOLEAN" in column_type
+            or column_name.lower() in {"verified"}
+        ):
             if isinstance(value, bool):
                 return 1 if value else 0
             string_value = str(value).strip().lower()
@@ -1483,42 +1719,61 @@ class BackupServer:
                 return 0
             raise ValueError(f"Value for column '{column_name}' must be boolean")
 
-        if column_type.startswith('INT') or column_type.startswith('INTEGER'):
+        if column_type.startswith("INT") or column_type.startswith("INTEGER"):
             if isinstance(value, bool):
                 return 1 if value else 0
             try:
                 return int(float(str(value).strip()))
             except ValueError as exc:
-                raise ValueError(f"Value for column '{column_name}' must be numeric") from exc
+                raise ValueError(
+                    f"Value for column '{column_name}' must be numeric"
+                ) from exc
 
-        if column_type.startswith('REAL') or column_type.startswith('DOUBLE') or column_type.startswith('FLOAT'):
+        if (
+            column_type.startswith("REAL")
+            or column_type.startswith("DOUBLE")
+            or column_type.startswith("FLOAT")
+        ):
             try:
                 return float(str(value).strip())
             except ValueError as exc:
-                raise ValueError(f"Value for column '{column_name}' must be numeric") from exc
+                raise ValueError(
+                    f"Value for column '{column_name}' must be numeric"
+                ) from exc
 
         return str(value)
 
     @retry(max_attempts=3, backoff_base=0.5, exceptions=(sqlite3.OperationalError,))
-    def update_row(self, table_name: str, row_id: str, updated_data: dict[str, Any]) -> dict[str, Any]:
+    def update_row(
+        self, table_name: str, row_id: str, updated_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Update a row in a supported database table."""
         try:
             actual_table = self._supported_table_name(table_name)
             if not actual_table:
-                return self._format_response(False, error=f"Table '{table_name}' is not supported for updates")
+                return self._format_response(
+                    False, error=f"Table '{table_name}' is not supported for updates"
+                )
 
             schema = self.db_manager.get_table_schema(actual_table)
             if not schema:
-                return self._format_response(False, error=f"Table schema for '{table_name}' unavailable")
+                return self._format_response(
+                    False, error=f"Table schema for '{table_name}' unavailable"
+                )
 
-            schema_map = {column['name'].lower(): column for column in schema}
-            primary_columns = [column for column in schema if column.get('pk')]
+            schema_map = {column["name"].lower(): column for column in schema}
+            primary_columns = [column for column in schema if column.get("pk")]
             if len(primary_columns) != 1:
-                return self._format_response(False, error="Only tables with a single-column primary key are supported")
+                return self._format_response(
+                    False,
+                    error="Only tables with a single-column primary key are supported",
+                )
 
             primary_column_info = primary_columns[0]
             try:
-                primary_value, primary_hex = self._convert_primary_key_value(primary_column_info, row_id)
+                primary_value, primary_hex = self._convert_primary_key_value(
+                    primary_column_info, row_id
+                )
             except ValueError as exc:
                 return self._format_response(False, error=str(exc))
 
@@ -1531,57 +1786,63 @@ class BackupServer:
                 if not column_info:
                     continue
                 # Never allow updates to the primary key
-                if column_info['name'].lower() == primary_column_info['name'].lower():
+                if column_info["name"].lower() == primary_column_info["name"].lower():
                     continue
-                original_values[column_info['name']] = value
+                original_values[column_info["name"]] = value
                 try:
-                    updates[column_info['name']] = self._convert_column_input(column_info, value)
+                    updates[column_info["name"]] = self._convert_column_input(
+                        column_info, value
+                    )
                 except ValueError as conversion_error:
                     return self._format_response(False, error=str(conversion_error))
 
-            if actual_table == 'clients':
+            if actual_table == "clients":
                 client_payload: dict[str, Any] = {}
 
-                if 'Name' in original_values:
-                    proposed_name = str(original_values['Name']).strip()
+                if "Name" in original_values:
+                    proposed_name = str(original_values["Name"]).strip()
                     is_valid, error_msg = self._validate_client_name(proposed_name)
                     if not is_valid:
                         return self._format_response(False, error=error_msg)
                     try:
                         existing = self.db_manager.get_client_by_name(proposed_name)
                         if existing and existing[0] != primary_value:
-                            return self._format_response(False, error=f"Client name '{proposed_name}' already exists")
+                            return self._format_response(
+                                False,
+                                error=f"Client name '{proposed_name}' already exists",
+                            )
                     except Exception as uniqueness_error:
-                        logger.warning(f"Could not verify client name uniqueness: {uniqueness_error}")
-                    client_payload['name'] = proposed_name
-                    updates.pop('Name', None)
+                        logger.warning(
+                            f"Could not verify client name uniqueness: {uniqueness_error}"
+                        )
+                    client_payload["name"] = proposed_name
+                    updates.pop("Name", None)
 
-                if 'PublicKey' in updates:
-                    client_payload['public_key'] = updates.pop('PublicKey', None)
+                if "PublicKey" in updates:
+                    client_payload["public_key"] = updates.pop("PublicKey", None)
 
                 if client_payload:
                     client_response = self.update_client(primary_hex, client_payload)
-                    if not client_response.get('success', False):
+                    if not client_response.get("success", False):
                         return client_response
 
             # Apply remaining direct column updates if needed
             if updates:
                 update_success = self.db_manager.update_table_row(
-                    actual_table,
-                    primary_column_info['name'],
-                    primary_value,
-                    updates
+                    actual_table, primary_column_info["name"], primary_value, updates
                 )
                 if not update_success:
-                    return self._format_response(False, error="Failed to update database row")
+                    return self._format_response(
+                        False, error="Failed to update database row"
+                    )
 
             refreshed_row = self.db_manager.get_row_by_primary_key(
-                actual_table,
-                primary_column_info['name'],
-                primary_value
+                actual_table, primary_column_info["name"], primary_value
             )
             if not refreshed_row:
-                return self._format_response(False, error="Updated row could not be retrieved")
+                return self._format_response(
+                    False, error="Updated row could not be retrieved"
+                )
             return self._format_response(True, refreshed_row)
         except Exception as e:
             logger.error(f"Failed to update row {row_id} in table {table_name}: {e}")
@@ -1593,43 +1854,64 @@ class BackupServer:
         try:
             actual_table = self._supported_table_name(table_name)
             if not actual_table:
-                return self._format_response(False, error=f"Table '{table_name}' is not supported for deletion")
+                return self._format_response(
+                    False, error=f"Table '{table_name}' is not supported for deletion"
+                )
 
             schema = self.db_manager.get_table_schema(actual_table)
             if not schema:
-                return self._format_response(False, error=f"Table schema for '{table_name}' unavailable")
+                return self._format_response(
+                    False, error=f"Table schema for '{table_name}' unavailable"
+                )
 
-            primary_columns = [column for column in schema if column.get('pk')]
+            primary_columns = [column for column in schema if column.get("pk")]
             if len(primary_columns) != 1:
-                return self._format_response(False, error="Only tables with a single-column primary key are supported")
+                return self._format_response(
+                    False,
+                    error="Only tables with a single-column primary key are supported",
+                )
 
             primary_column_info = primary_columns[0]
             try:
-                primary_value, primary_hex = self._convert_primary_key_value(primary_column_info, row_id)
+                primary_value, primary_hex = self._convert_primary_key_value(
+                    primary_column_info, row_id
+                )
             except ValueError as exc:
                 return self._format_response(False, error=str(exc))
 
             normalized = self._normalize_table_name(table_name)
-            if normalized == 'clients':
+            if normalized == "clients":
                 return self.delete_client(primary_hex)
 
-            if normalized == 'files':
-                file_row = self.db_manager.get_row_by_primary_key(actual_table, primary_column_info['name'], primary_value)
+            if normalized == "files":
+                file_row = self.db_manager.get_row_by_primary_key(
+                    actual_table, primary_column_info["name"], primary_value
+                )
                 if not file_row:
                     return self._format_response(False, error=ERROR_FILE_NOT_FOUND)
 
-                client_identifier = file_row.get('ClientID') or file_row.get('client_id')
-                filename = file_row.get('FileName') or file_row.get('filename')
+                client_identifier = file_row.get("ClientID") or file_row.get(
+                    "client_id"
+                )
+                filename = file_row.get("FileName") or file_row.get("filename")
                 if not client_identifier or not filename:
-                    return self._format_response(False, error="File metadata incomplete; cannot delete")
+                    return self._format_response(
+                        False, error="File metadata incomplete; cannot delete"
+                    )
 
-                return self.delete_file_by_client_and_name(str(client_identifier), str(filename))
+                return self.delete_file_by_client_and_name(
+                    str(client_identifier), str(filename)
+                )
 
-            delete_success = self.db_manager.delete_table_row(actual_table, primary_column_info['name'], primary_value)
+            delete_success = self.db_manager.delete_table_row(
+                actual_table, primary_column_info["name"], primary_value
+            )
             if not delete_success:
-                return self._format_response(False, error="Row not found or could not be deleted")
+                return self._format_response(
+                    False, error="Row not found or could not be deleted"
+                )
 
-            return self._format_response(True, {'deleted': True})
+            return self._format_response(True, {"deleted": True})
         except Exception as e:
             logger.error(f"Failed to delete row {row_id} from table {table_name}: {e}")
             return self._format_response(False, error=str(e))
@@ -1640,43 +1922,61 @@ class BackupServer:
         try:
             actual_table = self._supported_table_name(table_name)
             if not actual_table:
-                return self._format_response(False, error=f"Table '{table_name}' is not supported for inserts")
+                return self._format_response(
+                    False, error=f"Table '{table_name}' is not supported for inserts"
+                )
 
-            if actual_table == 'clients':
-                proposed_name = str(row_data.get('name') or row_data.get('Name') or '').strip()
+            if actual_table == "clients":
+                proposed_name = str(
+                    row_data.get("name") or row_data.get("Name") or ""
+                ).strip()
                 if not proposed_name:
                     return self._format_response(False, error="Client name is required")
 
-                add_response = self.add_client({'name': proposed_name})
-                if not add_response.get('success', False):
+                add_response = self.add_client({"name": proposed_name})
+                if not add_response.get("success", False):
                     return add_response
 
-                if client_id := add_response.get('data', {}).get('id'):
+                if client_id := add_response.get("data", {}).get("id"):
                     try:
                         client_bytes = bytes.fromhex(client_id)
-                        if refreshed_row := self.db_manager.get_row_by_primary_key('clients', 'ID', client_bytes):
+                        if refreshed_row := self.db_manager.get_row_by_primary_key(
+                            "clients", "ID", client_bytes
+                        ):
                             return self._format_response(True, refreshed_row)
                     except ValueError:
-                        logger.warning("Failed to fetch inserted client row for return payload")
+                        logger.warning(
+                            "Failed to fetch inserted client row for return payload"
+                        )
                 return add_response
 
-            if actual_table == 'files':
-                return self._format_response(False, error="Adding files via GUI is not supported")
+            if actual_table == "files":
+                return self._format_response(
+                    False, error="Adding files via GUI is not supported"
+                )
 
-            return self._format_response(False, error=f"Table '{table_name}' does not support inserts")
+            return self._format_response(
+                False, error=f"Table '{table_name}' does not support inserts"
+            )
         except Exception as e:
             logger.error(f"Failed to add row to table {table_name}: {e}")
             return self._format_response(False, error=str(e))
 
-    async def update_row_async(self, table_name: str, row_id: str, updated_data: dict[str, Any]) -> dict[str, Any]:
+    async def update_row_async(
+        self, table_name: str, row_id: str, updated_data: dict[str, Any]
+    ) -> dict[str, Any]:
         loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(None, self.update_row, table_name, row_id, updated_data)
+        return await loop.run_in_executor(
+            None, self.update_row, table_name, row_id, updated_data
+        )
 
     async def delete_row_async(self, table_name: str, row_id: str) -> dict[str, Any]:
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, self.delete_row, table_name, row_id)
 
-    async def add_row_async(self, table_name: str, row_data: dict[str, Any]) -> dict[str, Any]:
+    async def add_row_async(
+        self, table_name: str, row_data: dict[str, Any]
+    ) -> dict[str, Any]:
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, self.add_row, table_name, row_data)
 
@@ -1693,7 +1993,11 @@ class BackupServer:
             try:
                 # Quick database health check
                 health = self.db_manager.get_database_health()
-                return health.get('integrity_check', False) if isinstance(health, dict) else False
+                return (
+                    health.get("integrity_check", False)
+                    if isinstance(health, dict)
+                    else False
+                )
             except Exception:
                 return False
 
@@ -1706,13 +2010,13 @@ class BackupServer:
         try:
             uptime = time.time() - self.network_server.start_time if self.running else 0
             status_data = {
-                'running': self.running,
-                'port': self.port,
-                'host': self.network_server.host,
-                'uptime_seconds': uptime,
-                'uptime_formatted': f"{int(uptime//3600)}h {int((uptime%3600)//60)}m {int(uptime%60)}s",
-                'version': SERVER_VERSION,
-                'last_error': self.network_server.last_error or ''
+                "running": self.running,
+                "port": self.port,
+                "host": self.network_server.host,
+                "uptime_seconds": uptime,
+                "uptime_formatted": f"{int(uptime // 3600)}h {int((uptime % 3600) // 60)}m {int(uptime % 60)}s",
+                "version": SERVER_VERSION,
+                "last_error": self.network_server.last_error or "",
             }
             return self._format_response(True, status_data)
         except Exception as e:
@@ -1727,7 +2031,7 @@ class BackupServer:
     def get_detailed_server_status(self) -> dict[str, Any]:
         """Get comprehensive server metrics including connection stats."""
         try:
-            basic_status = self.get_server_status()['data']
+            basic_status = self.get_server_status()["data"]
 
             # Get connection statistics
             connection_stats = self.network_server.get_connection_stats()
@@ -1740,18 +2044,18 @@ class BackupServer:
 
             detailed_data = {
                 **basic_status,
-                'connections': {
-                    'active_connections': connection_stats.get('active_connections', connected_clients),
-                    'total_connections': connection_stats.get('total_connections', 0),
-                    'peak_connections': connection_stats.get('peak_connections', 0)
+                "connections": {
+                    "active_connections": connection_stats.get(
+                        "active_connections", connected_clients
+                    ),
+                    "total_connections": connection_stats.get("total_connections", 0),
+                    "peak_connections": connection_stats.get("peak_connections", 0),
                 },
-                'clients': {
-                    'connected': connected_clients,
-                    'total_registered': total_clients
+                "clients": {
+                    "connected": connected_clients,
+                    "total_registered": total_clients,
                 },
-                'database': {
-                    'total_files': self.db_manager.get_total_files_count()
-                }
+                "database": {"total_files": self.db_manager.get_total_files_count()},
             }
 
             return self._format_response(True, detailed_data)
@@ -1768,65 +2072,74 @@ class BackupServer:
         """Get server health metrics including connection pool status."""
         try:
             health_data = {
-                'status': 'healthy' if self.running else 'stopped',
-                'database_accessible': True,  # Basic check
-                'network_server_running': self.network_server.running,
-                'fletv2_gui_active': True,  # FletV2 GUI is the current interface
-                'errors': []
+                "status": "healthy" if self.running else "stopped",
+                "database_accessible": True,  # Basic check
+                "network_server_running": self.network_server.running,
+                "fletv2_gui_active": True,  # FletV2 GUI is the current interface
+                "errors": [],
             }
 
             # Perform basic health checks
             try:
                 self.db_manager.get_total_clients_count()
             except Exception as e:
-                health_data['database_accessible'] = False
-                health_data['errors'].append(f"Database error: {e!s}")
-                health_data['status'] = 'unhealthy'
+                health_data["database_accessible"] = False
+                health_data["errors"].append(f"Database error: {e!s}")
+                health_data["status"] = "unhealthy"
 
             # Add connection pool metrics if database is accessible
-            if health_data['database_accessible']:
+            if health_data["database_accessible"]:
                 try:
                     # Check if connection_pool exists
                     pool = self.db_manager.connection_pool
                     if pool:
-
                         pool_status = pool.get_pool_status()
-                        health_data['connection_pool'] = {
-                            'active': pool_status.get('active_connections', 0),
-                            'available': pool_status.get('available_connections', 0),
-                            'total': pool_status.get('total_connections', 0),
-                            'peak_active': pool_status.get('peak_active_connections', 0),
-                            'exhaustion_events': pool_status.get('pool_exhaustion_events', 0),
-                            'cleanup_thread_alive': pool_status.get('cleanup_thread_alive', False)
+                        health_data["connection_pool"] = {
+                            "active": pool_status.get("active_connections", 0),
+                            "available": pool_status.get("available_connections", 0),
+                            "total": pool_status.get("total_connections", 0),
+                            "peak_active": pool_status.get(
+                                "peak_active_connections", 0
+                            ),
+                            "exhaustion_events": pool_status.get(
+                                "pool_exhaustion_events", 0
+                            ),
+                            "cleanup_thread_alive": pool_status.get(
+                                "cleanup_thread_alive", False
+                            ),
                         }
 
                         # Check for pool exhaustion issues
-                        if pool_status.get('pool_exhaustion_events', 0) > 0:
-                            health_data['errors'].append(
+                        if pool_status.get("pool_exhaustion_events", 0) > 0:
+                            health_data["errors"].append(
                                 f"Connection pool exhausted {pool_status['pool_exhaustion_events']} times"
                             )
-                            if health_data['status'] == 'healthy':
-                                health_data['status'] = 'degraded'
+                            if health_data["status"] == "healthy":
+                                health_data["status"] = "degraded"
 
                         # Check cleanup thread health
-                        if not pool_status.get('cleanup_thread_alive', False):
-                            health_data['errors'].append("Connection pool cleanup thread is dead")
-                            if health_data['status'] == 'healthy':
-                                health_data['status'] = 'degraded'
+                        if not pool_status.get("cleanup_thread_alive", False):
+                            health_data["errors"].append(
+                                "Connection pool cleanup thread is dead"
+                            )
+                            if health_data["status"] == "healthy":
+                                health_data["status"] = "degraded"
 
                         # Check for emergency connection leaks
                         leak_count = len(pool.emergency_connections)
                         if leak_count > 0:
-                            health_data['errors'].append(f"{leak_count} emergency connections leaked")
-                            if health_data['status'] == 'healthy':
-                                health_data['status'] = 'degraded'
+                            health_data["errors"].append(
+                                f"{leak_count} emergency connections leaked"
+                            )
+                            if health_data["status"] == "healthy":
+                                health_data["status"] = "degraded"
                     else:
                         # Connection pool not available or incomplete
-                        health_data['connection_pool'] = {'status': 'unavailable'}
+                        health_data["connection_pool"] = {"status": "unavailable"}
 
                 except Exception as pool_err:
                     logger.debug(f"Could not get connection pool metrics: {pool_err}")
-                    health_data['connection_pool'] = {'error': str(pool_err)}
+                    health_data["connection_pool"] = {"error": str(pool_err)}
 
             return self._format_response(True, health_data)
         except Exception as e:
@@ -1845,7 +2158,7 @@ class BackupServer:
                 return self._format_response(False, error="Server is already running")
 
             self.start()
-            return self._format_response(True, {'started': True})
+            return self._format_response(True, {"started": True})
         except Exception as e:
             logger.error(f"Failed to start server: {e}")
             return self._format_response(False, error=str(e))
@@ -1862,7 +2175,7 @@ class BackupServer:
                 return self._format_response(False, error="Server is not running")
 
             self.stop()
-            return self._format_response(True, {'stopped': True})
+            return self._format_response(True, {"stopped": True})
         except Exception as e:
             logger.error(f"Failed to stop server: {e}")
             return self._format_response(False, error=str(e))
@@ -1876,19 +2189,21 @@ class BackupServer:
         """Test server connection status."""
         try:
             test_data = {
-                'server_accessible': self.running,
-                'database_accessible': True,
-                'response_time_ms': None
+                "server_accessible": self.running,
+                "database_accessible": True,
+                "response_time_ms": None,
             }
 
             # Basic database connectivity test
             start_time = time.perf_counter()
             try:
                 self.db_manager.get_total_clients_count()
-                test_data['response_time_ms'] = round((time.perf_counter() - start_time) * 1000, 2)
+                test_data["response_time_ms"] = round(
+                    (time.perf_counter() - start_time) * 1000, 2
+                )
             except Exception as e:
-                test_data['database_accessible'] = False
-                test_data['database_error'] = str(e)
+                test_data["database_accessible"] = False
+                test_data["database_error"] = str(e)
 
             return self._format_response(True, test_data)
         except Exception as e:
@@ -1906,20 +2221,23 @@ class BackupServer:
         """Get system-level status information."""
         try:
             import psutil
+
             system_data = {
-                'cpu_percent': psutil.cpu_percent(interval=1),
-                'memory_percent': psutil.virtual_memory().percent,
-                'disk_usage_percent': psutil.disk_usage('/').percent if os.name != 'nt' else psutil.disk_usage('C:\\').percent,
-                'python_version': sys.version.split()[0],
-                'platform': sys.platform
+                "cpu_percent": psutil.cpu_percent(interval=1),
+                "memory_percent": psutil.virtual_memory().percent,
+                "disk_usage_percent": psutil.disk_usage("/").percent
+                if os.name != "nt"
+                else psutil.disk_usage("C:\\").percent,
+                "python_version": sys.version.split()[0],
+                "platform": sys.platform,
             }
             return self._format_response(True, system_data)
         except ImportError:
             # Fallback if psutil is not available
             system_data = {
-                'python_version': sys.version.split()[0],
-                'platform': sys.platform,
-                'note': 'Limited system info available (psutil not installed)'
+                "python_version": sys.version.split()[0],
+                "platform": sys.platform,
+                "note": "Limited system info available (psutil not installed)",
             }
             return self._format_response(True, system_data)
         except Exception as e:
@@ -1943,27 +2261,43 @@ class BackupServer:
             if (not total_bytes) or (not avg_bytes):
                 try:
                     storage_stats = self.db_manager.get_storage_statistics()
-                    fs = (storage_stats or {}).get('file_stats') or {}
-                    si = (storage_stats or {}).get('storage_info') or {}
+                    fs = (storage_stats or {}).get("file_stats") or {}
+                    si = (storage_stats or {}).get("storage_info") or {}
                     if not total_bytes:
                         # file_stats.total_size_gb → convert back to bytes if present
-                        total_size_gb = fs.get('total_size_gb')
-                        if isinstance(total_size_gb, (int, float)) and total_size_gb > 0:
+                        total_size_gb = fs.get("total_size_gb")
+                        if (
+                            isinstance(total_size_gb, (int, float))
+                            and total_size_gb > 0
+                        ):
                             total_bytes = int(total_size_gb * 1024 * 1024 * 1024)
                         else:
-                            total_size_mb_val = si.get('total_size_mb')
-                            if isinstance(total_size_mb_val, (int, float)) and total_size_mb_val > 0:
-                                total_bytes = int(float(total_size_mb_val) * 1024 * 1024)
+                            total_size_mb_val = si.get("total_size_mb")
+                            if (
+                                isinstance(total_size_mb_val, (int, float))
+                                and total_size_mb_val > 0
+                            ):
+                                total_bytes = int(
+                                    float(total_size_mb_val) * 1024 * 1024
+                                )
                     if not avg_bytes:
-                        avg_mb = fs.get('average_file_size_mb')
+                        avg_mb = fs.get("average_file_size_mb")
                         if isinstance(avg_mb, (int, float)) and avg_mb > 0:
                             avg_bytes = float(avg_mb) * 1024 * 1024
                         else:
                             # Try deriving from filesystem directory size / file count
-                            total_size_mb_val = si.get('total_size_mb')
-                            total_files_fs = si.get('total_files')
-                            if isinstance(total_size_mb_val, (int, float)) and isinstance(total_files_fs, int) and total_files_fs > 0:
-                                avg_bytes = (float(total_size_mb_val) / float(total_files_fs)) * 1024 * 1024
+                            total_size_mb_val = si.get("total_size_mb")
+                            total_files_fs = si.get("total_files")
+                            if (
+                                isinstance(total_size_mb_val, (int, float))
+                                and isinstance(total_files_fs, int)
+                                and total_files_fs > 0
+                            ):
+                                avg_bytes = (
+                                    (float(total_size_mb_val) / float(total_files_fs))
+                                    * 1024
+                                    * 1024
+                                )
                 except Exception:
                     # Last resort: leave zeros
                     pass
@@ -1972,8 +2306,10 @@ class BackupServer:
             verified_count = 0
             with contextlib.suppress(Exception):
                 all_files = self.db_manager.get_all_files()
-                verified_count = sum(f.get('verified', False) for f in all_files)
-            success_rate = (verified_count / total_files * 100.0) if total_files > 0 else 100.0
+                verified_count = sum(f.get("verified", False) for f in all_files)
+            success_rate = (
+                (verified_count / total_files * 100.0) if total_files > 0 else 100.0
+            )
 
             # Get client storage breakdown
             client_storage = []
@@ -1982,19 +2318,26 @@ class BackupServer:
                 # Group files by client and calculate storage
                 client_stats = {}
                 for f in all_files:
-                    client_name = f.get('client', 'Unknown')
+                    client_name = f.get("client", "Unknown")
                     if client_name not in client_stats:
-                        client_stats[client_name] = {'size': 0, 'count': 0}
-                    client_stats[client_name]['size'] += f.get('size', 0) or 0
-                    client_stats[client_name]['count'] += 1
+                        client_stats[client_name] = {"size": 0, "count": 0}
+                    client_stats[client_name]["size"] += f.get("size", 0) or 0
+                    client_stats[client_name]["count"] += 1
 
                 # Sort by storage size and take top 10
-                sorted_clients = sorted(client_stats.items(), key=lambda x: x[1]['size'], reverse=True)[:10]
-                client_storage = [{
-                    'client': name[:20],
-                    'storage_gb': round(stats['size'] / (1024 * 1024 * 1024), 3) if stats['size'] else 0.0,
-                    'file_count': stats['count']
-                } for name, stats in sorted_clients]
+                sorted_clients = sorted(
+                    client_stats.items(), key=lambda x: x[1]["size"], reverse=True
+                )[:10]
+                client_storage = [
+                    {
+                        "client": name[:20],
+                        "storage_gb": round(stats["size"] / (1024 * 1024 * 1024), 3)
+                        if stats["size"]
+                        else 0.0,
+                        "file_count": stats["count"],
+                    }
+                    for name, stats in sorted_clients
+                ]
 
             # Get file type distribution
             file_type_distribution = []
@@ -2002,43 +2345,58 @@ class BackupServer:
                 all_files = self.db_manager.get_all_files()
                 type_counts = {}
                 for f in all_files:
-                    filename = f.get('filename', '')
-                    ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else 'no_ext'
+                    filename = f.get("filename", "")
+                    ext = (
+                        filename.rsplit(".", 1)[-1].lower()
+                        if "." in filename
+                        else "no_ext"
+                    )
                     ext = ext[:10]  # Limit extension length
                     type_counts[ext] = type_counts.get(ext, 0) + 1
 
                 # Top 8 file types
-                sorted_types = sorted(type_counts.items(), key=lambda x: x[1], reverse=True)[:8]
-                file_type_distribution = [{'type': t, 'count': c} for t, c in sorted_types]
+                sorted_types = sorted(
+                    type_counts.items(), key=lambda x: x[1], reverse=True
+                )[:8]
+                file_type_distribution = [
+                    {"type": t, "count": c} for t, c in sorted_types
+                ]
 
             # Generate backup trend (last 7 days simulated from current data)
             backup_trend = []
             with contextlib.suppress(Exception):
-                from datetime import timedelta
                 import random
+                from datetime import timedelta
+
                 files_per_day = max(1, total_files // 7) if total_files > 0 else 0
                 for i in range(7):
-                    date = (datetime.now() - timedelta(days=6-i)).strftime('%m/%d')
+                    date = (datetime.now() - timedelta(days=6 - i)).strftime("%m/%d")
                     # Simulate variation: ±20% around average
                     count = int(files_per_day * random.uniform(0.8, 1.2))
-                    backup_trend.append({'date': date, 'count': count})
+                    backup_trend.append({"date": date, "count": count})
 
             analytics_data = {
-                'total_clients': self.db_manager.get_total_clients_count(),
-                'total_files': total_files,
-                'server_uptime_seconds': time.time() - self.network_server.start_time if self.running else 0,
-                'database_stats': self.db_manager.get_database_stats(),
+                "total_clients": self.db_manager.get_total_clients_count(),
+                "total_files": total_files,
+                "server_uptime_seconds": time.time() - self.network_server.start_time
+                if self.running
+                else 0,
+                "database_stats": self.db_manager.get_database_stats(),
                 # New canonical analytics fields for UI
-                'total_storage_bytes': total_bytes,
-                'avg_backup_size_bytes': avg_bytes,
+                "total_storage_bytes": total_bytes,
+                "avg_backup_size_bytes": avg_bytes,
                 # Back-compat convenience (GB values)
-                'total_storage_gb': round(float(total_bytes) / (1024 * 1024 * 1024), 2) if total_bytes else 0.0,
-                'avg_backup_size_gb': round(float(avg_bytes) / (1024 * 1024 * 1024), 2) if avg_bytes else 0.0,
+                "total_storage_gb": round(float(total_bytes) / (1024 * 1024 * 1024), 2)
+                if total_bytes
+                else 0.0,
+                "avg_backup_size_gb": round(float(avg_bytes) / (1024 * 1024 * 1024), 2)
+                if avg_bytes
+                else 0.0,
                 # Rich visualization data
-                'success_rate': round(success_rate, 1),
-                'backup_trend': backup_trend,
-                'client_storage': client_storage,
-                'file_type_distribution': file_type_distribution,
+                "success_rate": round(success_rate, 1),
+                "backup_trend": backup_trend,
+                "client_storage": client_storage,
+                "file_type_distribution": file_type_distribution,
             }
             return self._format_response(True, analytics_data)
         except Exception as e:
@@ -2054,31 +2412,38 @@ class BackupServer:
         """Get performance data with real system metrics."""
         try:
             metrics_data = {
-                'active_connections': len(self.clients),
-                'database_response_time_ms': 0,
-                'memory_usage_mb': 0.0,
-                'cpu_usage_percent': 0.0
+                "active_connections": len(self.clients),
+                "database_response_time_ms": 0,
+                "memory_usage_mb": 0.0,
+                "cpu_usage_percent": 0.0,
             }
 
             # Test database response time
             start_time = time.time()
             try:
                 self.db_manager.get_total_clients_count()
-                metrics_data['database_response_time_ms'] = int((time.time() - start_time) * 1000)
+                metrics_data["database_response_time_ms"] = int(
+                    (time.time() - start_time) * 1000
+                )
             except Exception:
-                metrics_data['database_response_time_ms'] = -1
+                metrics_data["database_response_time_ms"] = -1
 
             # Get real system metrics
             try:
                 import psutil
+
                 process = psutil.Process(os.getpid())
 
                 # Memory usage in MB
                 memory_info = process.memory_info()
-                metrics_data['memory_usage_mb'] = round(memory_info.rss / (1024 * 1024), 2)
+                metrics_data["memory_usage_mb"] = round(
+                    memory_info.rss / (1024 * 1024), 2
+                )
 
                 # CPU usage percent (non-blocking, interval=None uses cached value)
-                metrics_data['cpu_usage_percent'] = round(process.cpu_percent(interval=None), 2)
+                metrics_data["cpu_usage_percent"] = round(
+                    process.cpu_percent(interval=None), 2
+                )
 
             except ImportError:
                 logger.debug("psutil not available, system metrics unavailable")
@@ -2101,12 +2466,14 @@ class BackupServer:
         """Get dashboard data."""
         try:
             dashboard_data = {
-                'server_status': 'running' if self.running else 'stopped',
-                'total_clients': self.db_manager.get_total_clients_count(),
-                'connected_clients': len(self.clients),
-                'total_files': self.db_manager.get_total_files_count(),
-                'server_version': SERVER_VERSION,
-                'uptime': time.time() - self.network_server.start_time if self.running else 0
+                "server_status": "running" if self.running else "stopped",
+                "total_clients": self.db_manager.get_total_clients_count(),
+                "connected_clients": len(self.clients),
+                "total_files": self.db_manager.get_total_files_count(),
+                "server_version": SERVER_VERSION,
+                "uptime": time.time() - self.network_server.start_time
+                if self.running
+                else 0,
             }
             return self._format_response(True, dashboard_data)
         except Exception as e:
@@ -2122,20 +2489,20 @@ class BackupServer:
         """Get detailed statistics."""
         try:
             stats_data = {
-                'server': {
-                    'version': SERVER_VERSION,
-                    'running': self.running,
-                    'uptime_seconds': time.time() - self.network_server.start_time if self.running else 0,
-                    'port': self.port
+                "server": {
+                    "version": SERVER_VERSION,
+                    "running": self.running,
+                    "uptime_seconds": time.time() - self.network_server.start_time
+                    if self.running
+                    else 0,
+                    "port": self.port,
                 },
-                'clients': {
-                    'total_registered': self.db_manager.get_total_clients_count(),
-                    'currently_connected': len(self.clients)
+                "clients": {
+                    "total_registered": self.db_manager.get_total_clients_count(),
+                    "currently_connected": len(self.clients),
                 },
-                'files': {
-                    'total_files': self.db_manager.get_total_files_count()
-                },
-                'database': self.db_manager.get_database_stats()
+                "files": {"total_files": self.db_manager.get_total_files_count()},
+                "database": self.db_manager.get_database_stats(),
             }
             return self._format_response(True, stats_data)
         except Exception as e:
@@ -2147,7 +2514,9 @@ class BackupServer:
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, self.get_server_statistics)
 
-    async def get_recent_activity_async(self, limit: int = DEFAULT_ACTIVITY_LIMIT) -> dict[str, Any]:
+    async def get_recent_activity_async(
+        self, limit: int = DEFAULT_ACTIVITY_LIMIT
+    ) -> dict[str, Any]:
         """
         Get recent system activity from server logs.
 
@@ -2166,7 +2535,9 @@ class BackupServer:
         try:
             # Run log parsing in executor to avoid blocking
             loop = asyncio.get_event_loop()
-            activities = await loop.run_in_executor(None, self._parse_recent_logs, limit)
+            activities = await loop.run_in_executor(
+                None, self._parse_recent_logs, limit
+            )
 
             return self._format_response(True, activities)
         except Exception as e:
@@ -2195,14 +2566,14 @@ class BackupServer:
             return []
 
         try:
-            with open(log_file, 'r', encoding='utf-8', errors='replace') as f:
+            with open(log_file, "r", encoding="utf-8", errors="replace") as f:
                 # Read last N*2 lines (we'll filter and limit after parsing)
-                lines = f.readlines()[-(limit * 2):]
+                lines = f.readlines()[-(limit * 2) :]
 
             # Parse log format: "timestamp - thread - level - message"
             for line in lines:
                 try:
-                    parts = line.strip().split(' - ', 3)
+                    parts = line.strip().split(" - ", 3)
                     if len(parts) < 4:
                         continue
 
@@ -2212,16 +2583,18 @@ class BackupServer:
                     activity_type = self._classify_activity(message, log_level)
 
                     # Skip debug/verbose entries unless specifically requested
-                    if log_level.upper() == 'DEBUG':
+                    if log_level.upper() == "DEBUG":
                         continue
 
-                    activities.append({
-                        'timestamp': timestamp_str,
-                        'type': activity_type,
-                        'level': log_level.upper(),
-                        'message': message,
-                        'thread': thread_name
-                    })
+                    activities.append(
+                        {
+                            "timestamp": timestamp_str,
+                            "type": activity_type,
+                            "level": log_level.upper(),
+                            "message": message,
+                            "thread": thread_name,
+                        }
+                    )
 
                 except (ValueError, IndexError) as e:
                     # Skip malformed log lines
@@ -2250,27 +2623,38 @@ class BackupServer:
         message_lower = message.lower()
 
         # Client-related activities
-        if any(keyword in message_lower for keyword in ['client', 'connected', 'disconnected', 'registered']):
-            return 'client'
+        if any(
+            keyword in message_lower
+            for keyword in ["client", "connected", "disconnected", "registered"]
+        ):
+            return "client"
 
         # File-related activities
-        if any(keyword in message_lower for keyword in ['file', 'upload', 'backup', 'download', 'verified']):
-            return 'file'
+        if any(
+            keyword in message_lower
+            for keyword in ["file", "upload", "backup", "download", "verified"]
+        ):
+            return "file"
 
         # Server-related activities
-        if any(keyword in message_lower for keyword in ['server', 'started', 'stopped', 'shutdown', 'startup']):
-            return 'server'
+        if any(
+            keyword in message_lower
+            for keyword in ["server", "started", "stopped", "shutdown", "startup"]
+        ):
+            return "server"
 
         # Error/warning based on log level
-        if log_level.upper() == 'ERROR':
-            return 'error'
-        if log_level.upper() == 'WARNING':
-            return 'warning'
+        if log_level.upper() == "ERROR":
+            return "error"
+        if log_level.upper() == "WARNING":
+            return "warning"
 
         # Default
-        return 'info'
+        return "info"
 
-    def get_historical_data(self, metric: str = "connections", hours: int = 24) -> dict[str, Any]:
+    def get_historical_data(
+        self, metric: str = "connections", hours: int = 24
+    ) -> dict[str, Any]:
         """
         Get historical data for metrics from persistent storage.
 
@@ -2290,14 +2674,14 @@ class BackupServer:
             if metric not in VALID_METRICS:
                 return self._format_response(
                     False,
-                    error=f"Invalid metric '{metric}'. Supported metrics: {sorted(VALID_METRICS)}"
+                    error=f"Invalid metric '{metric}'. Supported metrics: {sorted(VALID_METRICS)}",
                 )
 
             # Validate hours parameter
             if not isinstance(hours, int) or hours < 1 or hours > 168:  # Max 1 week
                 return self._format_response(
                     False,
-                    error="Hours must be an integer between 1 and 168 (1 week maximum)"
+                    error="Hours must be an integer between 1 and 168 (1 week maximum)",
                 )
 
             # Retrieve real historical data from database
@@ -2305,30 +2689,38 @@ class BackupServer:
 
             # If no data available, return empty points with note
             if not points:
-                logger.debug(f"No historical data available for metric '{metric}' (last {hours} hours)")
+                logger.debug(
+                    f"No historical data available for metric '{metric}' (last {hours} hours)"
+                )
                 return self._format_response(
                     True,
                     {
-                        'points': [],
-                        'note': f'No data yet. Metrics recorded every {MAINTENANCE_INTERVAL:.0f} seconds starting from server start. First data point will appear in {MAINTENANCE_INTERVAL:.0f}s.'
-                    }
+                        "points": [],
+                        "note": f"No data yet. Metrics recorded every {MAINTENANCE_INTERVAL:.0f} seconds starting from server start. First data point will appear in {MAINTENANCE_INTERVAL:.0f}s.",
+                    },
                 )
 
-            logger.debug(f"Retrieved {len(points)} historical data points for '{metric}' (last {hours} hours)")
-            return self._format_response(True, {'points': points})
+            logger.debug(
+                f"Retrieved {len(points)} historical data points for '{metric}' (last {hours} hours)"
+            )
+            return self._format_response(True, {"points": points})
 
         except Exception as e:
             logger.error(f"Failed to get historical data: {e}")
             return self._format_response(False, error=str(e))
 
-    async def get_historical_data_async(self, metric: str = "connections", hours: int = 24) -> dict[str, Any]:
+    async def get_historical_data_async(
+        self, metric: str = "connections", hours: int = 24
+    ) -> dict[str, Any]:
         """Async version of get_historical_data()."""
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, self.get_historical_data, metric, hours)
 
     # --- Log Operations ---
 
-    def _read_log_file(self, filepath: str, limit: int = DEFAULT_LOG_LINES_LIMIT) -> list[str]:
+    def _read_log_file(
+        self, filepath: str, limit: int = DEFAULT_LOG_LINES_LIMIT
+    ) -> list[str]:
         """
         Read last N lines from a log file.
 
@@ -2343,7 +2735,7 @@ class BackupServer:
             return []
 
         try:
-            with open(filepath, encoding='utf-8') as f:
+            with open(filepath, encoding="utf-8") as f:
                 lines = f.readlines()
                 recent_lines = lines[-limit:] if len(lines) > limit else lines
                 return [line.strip() for line in recent_lines]
@@ -2361,26 +2753,33 @@ class BackupServer:
             log_paths = [
                 self.backup_log_file,  # Instance variable
                 backup_log_file,  # Module variable
-                SERVER_LOG_FILENAME  # Fallback
+                SERVER_LOG_FILENAME,  # Fallback
             ]
 
             # Read from current log file (NO BREAK - removed to allow multi-file aggregation)
             for log_path in log_paths:
-                if log_path and os.path.exists(log_path):  # Skip None values and check existence
-                    if logs := self._read_log_file(log_path, limit=500):  # Increased limit
+                if log_path and os.path.exists(
+                    log_path
+                ):  # Skip None values and check existence
+                    if logs := self._read_log_file(
+                        log_path, limit=500
+                    ):  # Increased limit
                         all_logs.extend(logs)
-                        current_log_path = os.path.abspath(log_path)  # Store absolute path
+                        current_log_path = os.path.abspath(
+                            log_path
+                        )  # Store absolute path
                         break  # Only read from ONE current log file
 
             # Also try to read from rotated log files in logs/ directory
             import glob
+
             logs_dir = os.path.dirname(self.backup_log_file)
             if not logs_dir or not os.path.exists(logs_dir):
-                logs_dir = 'logs'  # Fallback to default logs directory
+                logs_dir = "logs"  # Fallback to default logs directory
 
             if os.path.exists(logs_dir):
                 # Find all backup-server_*.log files and sort by modification time (newest first)
-                log_files = glob.glob(os.path.join(logs_dir, 'backup-server_*.log'))
+                log_files = glob.glob(os.path.join(logs_dir, "backup-server_*.log"))
                 log_files.sort(key=lambda x: os.path.getmtime(x), reverse=True)
 
                 # Read from up to 5 most recent log files (excluding current one already read)
@@ -2393,9 +2792,9 @@ class BackupServer:
                         all_logs.extend(rotated_logs)
 
             log_data = {
-                'logs': all_logs,
-                'count': len(all_logs),
-                'note': f'Retrieved {len(all_logs)} log entries from current and {len(log_files[:5]) if "log_files" in locals() else 0} historical log files'
+                "logs": all_logs,
+                "count": len(all_logs),
+                "note": f"Retrieved {len(all_logs)} log entries from current and {len(log_files[:5]) if 'log_files' in locals() else 0} historical log files",
             }
 
             return self._format_response(True, log_data)
@@ -2415,7 +2814,6 @@ class BackupServer:
         Instead of deleting logs, this creates a backup and starts fresh log files.
         """
         try:
-
             # Run in executor to avoid blocking
             loop = asyncio.get_event_loop()
             return await loop.run_in_executor(None, self._rotate_logs_sync)
@@ -2450,19 +2848,26 @@ class BackupServer:
                     logger.warning(f"Could not rotate server.log: {e}")
 
             if rotated_files:
-                return self._format_response(True, {
-                    'rotated': True,
-                    'archived_files': rotated_files,
-                    'timestamp': timestamp
-                })
+                return self._format_response(
+                    True,
+                    {
+                        "rotated": True,
+                        "archived_files": rotated_files,
+                        "timestamp": timestamp,
+                    },
+                )
             else:
-                return self._format_response(False, error="No log files found to rotate")
+                return self._format_response(
+                    False, error="No log files found to rotate"
+                )
 
         except Exception as e:
             logger.error(f"Log rotation failed: {e}")
             return self._format_response(False, error=str(e))
 
-    async def export_logs_async(self, export_format: str = "text", filters: dict[str, Any] | None = None) -> dict[str, Any]:
+    async def export_logs_async(
+        self, export_format: str = "text", filters: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """
         Export logs with optional filtering to a file.
 
@@ -2479,8 +2884,6 @@ class BackupServer:
             dict: {'success': bool, 'data': dict with 'file_path' and 'entries_exported', 'error': str}
         """
         try:
-            import json
-
             # Rate limiting check (10 second minimum interval)
             session_key = "global"  # Global rate limit for now
             with self._log_export_lock:
@@ -2491,7 +2894,7 @@ class BackupServer:
                     remaining = 10 - (current_time - last_export)
                     return self._format_response(
                         False,
-                        error=f"Rate limit exceeded. Please wait {remaining:.1f} seconds before exporting again."
+                        error=f"Rate limit exceeded. Please wait {remaining:.1f} seconds before exporting again.",
                     )
 
                 self._last_log_export_time[session_key] = current_time
@@ -2500,19 +2903,22 @@ class BackupServer:
             if normalized_format not in VALID_LOG_EXPORT_FORMATS:
                 return self._format_response(
                     False,
-                    error=f"Invalid format. Supported formats: {sorted(VALID_LOG_EXPORT_FORMATS)}"
+                    error=f"Invalid format. Supported formats: {sorted(VALID_LOG_EXPORT_FORMATS)}",
                 )
 
             # Run in executor to avoid blocking
             loop = asyncio.get_event_loop()
-            return await loop.run_in_executor(None, self._export_logs_sync, normalized_format, filters or {})
+            return await loop.run_in_executor(
+                None, self._export_logs_sync, normalized_format, filters or {}
+            )
         except Exception as e:
             logger.error(f"Failed to export logs: {e}")
             return self._format_response(False, error=str(e))
 
-    def _export_logs_sync(self, export_format: str, filters: dict[str, Any]) -> dict[str, Any]:
+    def _export_logs_sync(
+        self, export_format: str, filters: dict[str, Any]
+    ) -> dict[str, Any]:
         """Synchronous log export implementation."""
-        import json
 
         try:
             # Determine log file to read
@@ -2523,111 +2929,175 @@ class BackupServer:
             if not os.path.exists(log_file):
                 return self._format_response(False, error="Log file not found")
 
-            # Check file size to prevent hang on huge logs
-            try:
-                file_size = os.path.getsize(log_file)
-                if file_size > MAX_LOG_EXPORT_SIZE:
-                    size_mb = file_size / (1024 * 1024)
-                    max_mb = MAX_LOG_EXPORT_SIZE / (1024 * 1024)
-                    return self._format_response(
-                        False,
-                        error=f"Log file too large ({size_mb:.1f} MB). Maximum: {max_mb:.0f} MB"
-                    )
-            except OSError as size_err:
-                logger.warning(f"Could not check log file size: {size_err}")
-                # Continue anyway - file exists, so size check failure shouldn't block export
-
-            # Extract filter parameters
-            level_filter = filters.get('level', '').upper()
-            start_date = filters.get('start_date', '')
-            end_date = filters.get('end_date', '')
-            search_term = filters.get('search_term', '').lower()
-            limit = filters.get('limit', 1000)
+            # Check file size
+            is_safe, size_error = self._check_log_file_size(log_file)
+            if not is_safe:
+                return self._format_response(False, error=size_error)
 
             # Read and filter log entries
-            filtered_entries: list[str] = []
-            lines_read = 0
-            try:
-                with open(log_file, 'r', encoding='utf-8', errors='replace') as f:
-                    for line in f:
-                        lines_read += 1
+            filtered_entries, read_error = self._read_and_filter_logs(log_file, filters)
+            if read_error:
+                return self._format_response(False, error=read_error)
 
-                        # Hard cap on total lines read to prevent processing huge files
-                        if lines_read > MAX_LOG_EXPORT_LINES:
-                            logger.warning(
-                                f"Log export stopped at {MAX_LOG_EXPORT_LINES} lines. "
-                                f"File has more lines, use more specific filters."
-                            )
-                            break
+            # Generate export file
+            success, result, error = self._generate_log_export(
+                filtered_entries, export_format
+            )
+            if not success:
+                return self._format_response(False, error=error)
 
-                        stripped = line.strip()
-                        if not stripped:
-                            continue
-                        lower_line = stripped.lower()
-                        if level_filter and level_filter not in line:
-                            continue
-                        if search_term and search_term not in lower_line:
-                            continue
-                        # (Date filtering simplified for now)
-                        filtered_entries.append(stripped)
-                        if len(filtered_entries) >= limit:
-                            break
-            except Exception as read_exc:
-                return self._format_response(False, error=f"Error reading log file: {read_exc}")
-
-            # Generate export filename
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            export_filename = f"logs_export_{timestamp}.{export_format}"
-
-            # Export based on format
-            try:
-                if export_format == "json":
-                    # Export as JSON array
-                    log_entries = []
-                    for line in filtered_entries:
-                        parts = line.split(' - ', 3)
-                        if len(parts) >= 4:
-                            log_entries.append({
-                                'timestamp': parts[0],
-                                'thread': parts[1],
-                                'level': parts[2],
-                                'message': parts[3]
-                            })
-                        else:
-                            log_entries.append({'raw': line})
-
-                    with open(export_filename, 'w', encoding='utf-8') as f:
-                        json.dump(log_entries, f, indent=2, ensure_ascii=False)
-
-                elif export_format == "csv":
-                    import csv
-                    with open(export_filename, 'w', newline='', encoding='utf-8') as f:
-                        writer = csv.writer(f)
-                        writer.writerow(['Timestamp', 'Thread', 'Level', 'Message'])
-                        for entry in filtered_entries:
-                            parts = entry.split(' - ', 3)
-                            writer.writerow(parts if len(parts) >= 4 else ['', '', '', entry])
-                else:  # text format (default)
-                    with open(export_filename, 'w', encoding='utf-8') as f:
-                        f.write('\n'.join(filtered_entries) + ('\n' if filtered_entries else ''))
-
-                logger.info(f"Logs exported to {export_filename}: {len(filtered_entries)} entries")
-                return self._format_response(True, {
-                    'exported': True,
-                    'file_path': os.path.abspath(export_filename),
-                    'entries_exported': len(filtered_entries),
-                    'format': export_format,
-                    'filters_applied': filters
-                })
-
-            except Exception as e:
-                return self._format_response(False, error=f"Error writing export file: {e}")
+            logger.info(f"Logs exported to {result}: {len(filtered_entries)} entries")
+            return self._format_response(
+                True,
+                {
+                    "exported": True,
+                    "file_path": os.path.abspath(result),
+                    "filename": result,
+                    "count": len(filtered_entries),
+                },
+            )
 
         except Exception as e:
             logger.error(f"Log export failed: {e}")
             return self._format_response(False, error=str(e))
 
+    def _check_log_file_size(self, log_file: str) -> tuple[bool, str]:
+        """Check if log file is safe to process."""
+        try:
+            file_size = os.path.getsize(log_file)
+            if file_size > MAX_LOG_EXPORT_SIZE:
+                size_mb = file_size / (1024 * 1024)
+                max_mb = MAX_LOG_EXPORT_SIZE / (1024 * 1024)
+                return (
+                    False,
+                    f"Log file too large ({size_mb:.1f} MB). Maximum: {max_mb:.0f} MB",
+                )
+            return True, ""
+        except OSError as size_err:
+            logger.warning(f"Could not check log file size: {size_err}")
+            # Continue anyway - file exists, so size check failure shouldn't block export
+            return True, ""
+
+    def _read_and_filter_logs(
+        self, log_file: str, filters: dict[str, Any]
+    ) -> tuple[list[str], str]:
+        """Read and filter log entries."""
+        level_filter = filters.get("level", "").upper()
+        search_term = filters.get("search_term", "").lower()
+        limit = filters.get("limit", 1000)
+
+        filtered_entries: list[str] = []
+        lines_read = 0
+
+        try:
+            with open(log_file, "r", encoding="utf-8", errors="replace") as f:
+                for line in f:
+                    lines_read += 1
+
+                    # Hard cap on total lines read to prevent processing huge files
+                    if lines_read > MAX_LOG_EXPORT_LINES:
+                        logger.warning(
+                            f"Log export stopped at {MAX_LOG_EXPORT_LINES} lines. "
+                            f"File has more lines, use more specific filters."
+                        )
+                        break
+
+                    stripped = line.strip()
+                    if not stripped:
+                        continue
+
+                    if level_filter and level_filter not in line:
+                        continue
+
+                    if search_term and search_term not in stripped.lower():
+                        continue
+
+                    filtered_entries.append(stripped)
+                    if len(filtered_entries) >= limit:
+                        break
+            return filtered_entries, ""
+        except Exception as read_exc:
+            return [], f"Error reading log file: {read_exc}"
+
+    def _generate_log_export(
+        self, filtered_entries: list[str], export_format: str
+    ) -> tuple[bool, str, str]:
+        """Generate the export file in the requested format."""
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        export_filename = f"logs_export_{timestamp}.{export_format}"
+
+        try:
+            if export_format == "json":
+                self._export_as_json(filtered_entries, export_filename)
+            elif export_format == "csv":
+                self._export_as_csv(filtered_entries, export_filename)
+            else:  # text format (default)
+                with open(export_filename, "w", encoding="utf-8") as f:
+                    f.write(
+                        "\n".join(filtered_entries) + ("\n" if filtered_entries else "")
+                    )
+
+            return True, export_filename, ""
+        except Exception as e:
+            return False, "", f"Error generating export file: {e}"
+
+    def _export_as_json(self, entries: list[str], filename: str):
+        """Helper to export logs as JSON."""
+        log_entries = []
+        for line in entries:
+            parts = line.split(" - ", 3)
+            if len(parts) >= 4:
+                log_entries.append(
+                    {
+                        "timestamp": parts[0],
+                        "thread": parts[1],
+                        "level": parts[2],
+                        "message": parts[3],
+                    }
+                )
+            else:
+                log_entries.append({"raw": line})
+
+        with open(filename, "w", encoding="utf-8") as f:
+            json.dump(log_entries, f, indent=2, ensure_ascii=False)
+
+    def _export_as_csv(self, entries: list[str], filename: str):
+        """Helper to export logs as CSV."""
+        import csv
+
+        with open(filename, "w", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            writer.writerow(["Timestamp", "Thread", "Level", "Message"])
+            for entry in entries:
+                parts = entry.split(" - ", 3)
+                writer.writerow(parts if len(parts) >= 4 else ["", "", "", entry])
+
     # --- Settings Management ---
+
+    # Define settings schema with (type, min_value, max_value) or (type, allowed_values)
+    _SETTINGS_SCHEMA = {
+        # Server settings (int with ranges)
+        "server_port": (int, 1024, 65535),
+        "max_concurrent_clients": (int, 1, 1000),
+        "client_timeout": (int, 60, 7200),  # 1 min to 2 hours
+        # Interface settings (str with allowed values)
+        "theme": (str, ["light", "dark", "system"]),
+        "language": (str, ["en", "es", "fr", "de", "zh"]),
+        # Monitoring settings
+        "enable_monitoring": (bool,),
+        "metrics_retention_days": (int, 1, 365),
+        # Logging settings
+        "log_level": (str, ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]),
+        "log_to_file": (bool,),
+        "log_rotation_size_mb": (int, 1, 1000),
+        # Security settings
+        "encryption_enabled": (bool,),
+        "key_size": (int, [1024, 2048, 4096]),  # Only specific key sizes
+        # Backup settings
+        "auto_backup_interval": (int, 300, 86400),  # 5 min to 24 hours
+        "backup_retention_days": (int, 1, 3650),  # 1 day to 10 years
+        "compression_enabled": (bool,),
+    }
 
     def _validate_settings(self, settings: dict[str, Any]) -> tuple[bool, str]:
         """
@@ -2639,63 +3109,49 @@ class BackupServer:
         Returns:
             Tuple of (is_valid, error_message)
         """
-        # Define settings schema with (type, min_value, max_value) or (type, allowed_values)
-        SETTINGS_SCHEMA = {
-            # Server settings (int with ranges)
-            'server_port': (int, 1024, 65535),
-            'max_concurrent_clients': (int, 1, 1000),
-            'client_timeout': (int, 60, 7200),  # 1 min to 2 hours
-
-            # Interface settings (str with allowed values)
-            'theme': (str, ['light', 'dark', 'system']),
-            'language': (str, ['en', 'es', 'fr', 'de', 'zh']),
-
-            # Monitoring settings
-            'enable_monitoring': (bool,),
-            'metrics_retention_days': (int, 1, 365),
-
-            # Logging settings
-            'log_level': (str, ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']),
-            'log_to_file': (bool,),
-            'log_rotation_size_mb': (int, 1, 1000),
-
-            # Security settings
-            'encryption_enabled': (bool,),
-            'key_size': (int, [1024, 2048, 4096]),  # Only specific key sizes
-
-            # Backup settings
-            'auto_backup_interval': (int, 300, 86400),  # 5 min to 24 hours
-            'backup_retention_days': (int, 1, 3650),  # 1 day to 10 years
-            'compression_enabled': (bool,)
-        }
-
         for key, value in settings.items():
             # Skip unknown keys (forward compatibility)
-            if key not in SETTINGS_SCHEMA:
+            if key not in self._SETTINGS_SCHEMA:
                 continue
 
-            schema = SETTINGS_SCHEMA[key]
+            schema = self._SETTINGS_SCHEMA[key]
             expected_type = schema[0]
 
             # Type validation
             if not isinstance(value, expected_type):
-                return False, f"Invalid type for '{key}': expected {expected_type.__name__}, got {type(value).__name__}"
+                return (
+                    False,
+                    f"Invalid type for '{key}': expected {expected_type.__name__}, got {type(value).__name__}",
+                )
 
             # Range/enum validation
-            if expected_type == int and len(schema) == 3:
+            if expected_type is int and len(schema) == 3:
                 min_val, max_val = schema[1], schema[2]
                 if not (min_val <= value <= max_val):
-                    return False, f"Value for '{key}' out of range: must be between {min_val} and {max_val}, got {value}"
+                    return (
+                        False,
+                        f"Value for '{key}' out of range: must be between {min_val} and {max_val}, got {value}",
+                    )
 
-            elif expected_type == str and len(schema) == 2:
+            elif expected_type is str and len(schema) == 2:
                 allowed_values = schema[1]
                 if value not in allowed_values:
-                    return False, f"Invalid value for '{key}': must be one of {allowed_values}, got '{value}'"
+                    return (
+                        False,
+                        f"Invalid value for '{key}': must be one of {allowed_values}, got '{value}'",
+                    )
 
-            elif expected_type == int and len(schema) == 2 and isinstance(schema[1], list):
+            elif (
+                expected_type is int
+                and len(schema) == 2
+                and isinstance(schema[1], list)
+            ):
                 allowed_values = schema[1]
                 if value not in allowed_values:
-                    return False, f"Invalid value for '{key}': must be one of {allowed_values}, got {value}"
+                    return (
+                        False,
+                        f"Invalid value for '{key}': must be one of {allowed_values}, got {value}",
+                    )
 
         return True, ""
 
@@ -2710,55 +3166,64 @@ class BackupServer:
             dict: {'success': bool, 'data': dict, 'error': str}
         """
         try:
-            import json
-
-            # Validate settings structure
+            # Validate settings
             if not isinstance(settings_data, dict):
-                return self._format_response(False, error="Settings must be a dictionary")
+                return self._format_response(
+                    False, error="Settings must be a dictionary"
+                )
 
-            # Validate settings values
             is_valid, error_msg = self._validate_settings(settings_data)
             if not is_valid:
                 logger.warning(f"Settings validation failed: {error_msg}")
-                return self._format_response(False, error=f"Invalid settings: {error_msg}")
+                return self._format_response(
+                    False, error=f"Invalid settings: {error_msg}"
+                )
 
-            # Add metadata
+            # Prepare metadata
             settings_with_metadata = {
-                'version': '1.0',
-                'saved_at': datetime.now().isoformat(),
-                'server_version': SERVER_VERSION,
-                'settings': settings_data
+                "version": "1.0",
+                "saved_at": datetime.now().isoformat(),
+                "server_version": SERVER_VERSION,
+                "settings": settings_data,
             }
 
-            # Write to file with atomic operation (write to temp, then rename)
-            temp_file = f"{SETTINGS_FILE}.tmp"
-            try:
-                with open(temp_file, 'w', encoding='utf-8') as f:
-                    json.dump(settings_with_metadata, f, indent=2, ensure_ascii=False)
+            # Atomic write
+            self._atomic_write_settings(settings_with_metadata)
 
-                # Atomic rename
-                if os.path.exists(SETTINGS_FILE):
-                    os.replace(temp_file, SETTINGS_FILE)
-                else:
-                    os.rename(temp_file, SETTINGS_FILE)
-
-                logger.info(f"Settings saved successfully to {SETTINGS_FILE}")
-                return self._format_response(True, {
-                    'saved': True,
-                    'file': SETTINGS_FILE,
-                    'timestamp': settings_with_metadata['saved_at']
-                })
-
-            finally:
-                # Clean up temp file if it still exists
-                with contextlib.suppress(OSError):
-                    os.remove(temp_file)
+            logger.info(f"Settings saved successfully to {SETTINGS_FILE}")
+            return self._format_response(
+                True,
+                {
+                    "saved": True,
+                    "file": SETTINGS_FILE,
+                    "timestamp": settings_with_metadata["saved_at"],
+                },
+            )
 
         except Exception as e:
             logger.error(f"Failed to save settings: {e}")
             return self._format_response(False, error=str(e))
 
-    async def save_settings_async(self, settings_data: dict[str, Any]) -> dict[str, Any]:
+    def _atomic_write_settings(self, content: dict[str, Any]):
+        """Write settings to file atomically."""
+        temp_file = f"{SETTINGS_FILE}.tmp"
+        try:
+            with open(temp_file, "w", encoding="utf-8") as f:
+                json.dump(content, f, indent=2, ensure_ascii=False)
+
+            # Atomic rename
+            if os.path.exists(SETTINGS_FILE):
+                os.replace(temp_file, SETTINGS_FILE)
+            else:
+                os.rename(temp_file, SETTINGS_FILE)
+        finally:
+            with contextlib.suppress(OSError):
+                if os.path.exists(temp_file):
+                    os.remove(temp_file)
+
+    async def save_settings_async(
+        self, settings_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Async version of save_settings()."""
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, self.save_settings, settings_data)
@@ -2772,16 +3237,19 @@ class BackupServer:
                 If file doesn't exist, returns default settings
         """
         try:
-            import json
-
             # Return defaults if no saved settings exist
             if not os.path.exists(SETTINGS_FILE):
-                default_settings = self._get_default_settings()
-                return self._format_response(True, default_settings)
+                return self._format_response(True, self._get_default_settings())
 
-            # Read settings file
-            with open(SETTINGS_FILE, 'r', encoding='utf-8') as f:
-                settings_with_metadata = json.load(f)
+            # Read and parse settings file
+            try:
+                with open(SETTINGS_FILE, "r", encoding="utf-8") as f:
+                    settings_with_metadata = json.load(f)
+            except json.JSONDecodeError as e:
+                logger.error(f"Failed to parse settings file: {e}")
+                return self._format_response(
+                    False, error=f"Invalid JSON in settings file: {e}"
+                )
 
             # Validate structure
             if not isinstance(settings_with_metadata, dict):
@@ -2789,11 +3257,7 @@ class BackupServer:
                 return self._format_response(True, self._get_default_settings())
 
             # Extract settings (handle both old and new format)
-            if 'settings' in settings_with_metadata:
-                settings = settings_with_metadata['settings']
-            else:
-                # Old format - entire file is settings
-                settings = settings_with_metadata
+            settings = settings_with_metadata.get("settings", settings_with_metadata)
 
             # Merge with defaults to ensure all keys exist
             default_settings = self._get_default_settings()
@@ -2808,9 +3272,6 @@ class BackupServer:
             logger.info(f"Settings loaded successfully from {SETTINGS_FILE}")
             return self._format_response(True, merged_settings)
 
-        except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse settings file: {e}")
-            return self._format_response(False, error=f"Invalid JSON in settings file: {e}")
         except Exception as e:
             logger.error(f"Failed to load settings: {e}")
             return self._format_response(False, error=str(e))
@@ -2824,31 +3285,26 @@ class BackupServer:
         """
         return {
             # Server settings
-            'server_port': self.port,
-            'max_concurrent_clients': MAX_CONCURRENT_CLIENTS,
-            'client_timeout': CLIENT_SESSION_TIMEOUT,
-
+            "server_port": self.port,
+            "max_concurrent_clients": MAX_CONCURRENT_CLIENTS,
+            "client_timeout": CLIENT_SESSION_TIMEOUT,
             # Interface settings
-            'theme': 'dark',
-            'language': 'en',
-
+            "theme": "dark",
+            "language": "en",
             # Monitoring settings
-            'enable_monitoring': True,
-            'metrics_retention_days': 30,
-
+            "enable_monitoring": True,
+            "metrics_retention_days": 30,
             # Logging settings
-            'log_level': 'INFO',
-            'log_to_file': True,
-            'log_rotation_size_mb': 10,
-
+            "log_level": "INFO",
+            "log_to_file": True,
+            "log_rotation_size_mb": 10,
             # Security settings
-            'encryption_enabled': True,
-            'key_size': 1024,
-
+            "encryption_enabled": True,
+            "key_size": 1024,
             # Backup settings
-            'auto_backup_interval': 3600,
-            'backup_retention_days': 90,
-            'compression_enabled': True
+            "auto_backup_interval": 3600,
+            "backup_retention_days": 90,
+            "compression_enabled": True,
         }
 
     async def load_settings_async(self) -> dict[str, Any]:
@@ -2862,10 +3318,12 @@ if __name__ == "__main__":
     server_instance = None  # Initialize to ensure it's always bound
     try:
         # Display a startup banner for the server console
-        print("=====================================================================")
-        print(f"      Secure Encrypted File Backup Server - Version {SERVER_VERSION}      ")
+        print(SEPARATOR_LINE)
+        print(
+            f"      Secure Encrypted File Backup Server - Version {SERVER_VERSION}      "
+        )
         print(f"      Process ID: {os.getpid()}                                     ")
-        print("=====================================================================")
+        print(SEPARATOR_LINE)
 
         # Display logging information
         try:
@@ -2875,26 +3333,44 @@ if __name__ == "__main__":
             print(f"  Legacy Log:   {os.path.abspath(SERVER_LOG_FILENAME)}")
             print(f"  Live Monitor: {log_monitor_info['powershell_cmd']}")
             print("  Console:      Visible in this window (dual output enabled)")
-            print("=====================================================================")
+            print(SEPARATOR_LINE)
         except Exception as e:
             print(f"  [WARNING] Could not display logging info: {e}")
-            print("=====================================================================")
+            print(SEPARATOR_LINE)
 
         # Perform basic pre-flight checks before attempting to start the server
-        if sys.version_info < (3, 7): # PyCryptodome generally works better with Python 3.7+
-            print("Warning: Python 3.7 or newer is recommended for optimal server performance and security library compatibility.", file=sys.stderr)
+        if sys.version_info < (
+            3,
+            7,
+        ):  # PyCryptodome generally works better with Python 3.7+
+            print(
+                "Warning: Python 3.7 or newer is recommended for optimal server performance and security library compatibility.",
+                file=sys.stderr,
+            )
 
         # Quick check to ensure PyCryptodome is available and basic operations work
         try:
             # Test RSA key generation functionality
             RSA.generate(1024, randfunc=get_random_bytes)
             # Test AES cipher creation functionality
-            AES.new(get_random_bytes(AES_KEY_SIZE_BYTES), AES.MODE_CBC, iv=get_random_bytes(16))  # type: ignore[misc]
-            logger.info("PyCryptodome library check passed: Basic crypto operations are available.")
+            AES.new(
+                get_random_bytes(AES_KEY_SIZE_BYTES),
+                AES.MODE_CBC,
+                iv=get_random_bytes(16),
+            )  # type: ignore[misc]
+            logger.info(
+                "PyCryptodome library check passed: Basic crypto operations are available."
+            )
         except Exception as e_crypto_check:
-            print(f"CRITICAL FAILURE: PyCryptodome library is not installed correctly or is non-functional: {e_crypto_check}", file=sys.stderr)
-            print("Please ensure PyCryptodome is properly installed (e.g., via 'pip install pycryptodomex'). Server cannot start.", file=sys.stderr)
-            sys.exit(1) # Exit if essential crypto library is missing/broken
+            print(
+                f"CRITICAL FAILURE: PyCryptodome library is not installed correctly or is non-functional: {e_crypto_check}",
+                file=sys.stderr,
+            )
+            print(
+                "Please ensure PyCryptodome is properly installed (e.g., via 'pip install pycryptodomex'). Server cannot start.",
+                file=sys.stderr,
+            )
+            sys.exit(1)  # Exit if essential crypto library is missing/broken
 
         logger.info("Verifying cryptography library availability...")
         # Ensure only one server instance runs at a time
@@ -2921,19 +3397,28 @@ if __name__ == "__main__":
         logger.info("Backup server started successfully")
 
         # Console-only mode - FletV2 GUI runs separately
-        logger.info("Server running in headless mode. FletV2 GUI launched separately via start_with_server.py")
+        logger.info(
+            "Server running in headless mode. FletV2 GUI launched separately via start_with_server.py"
+        )
         while server_instance.running and not server_instance.shutdown_event.is_set():
             time.sleep(1)
 
     except KeyboardInterrupt:
-        logger.info("KeyboardInterrupt detected in main execution block. Initiating shutdown.")
+        logger.info(
+            "KeyboardInterrupt detected in main execution block. Initiating shutdown."
+        )
     except SystemExit as e_sys_exit:
         logger.critical(f"Server startup process was aborted: {e_sys_exit}")
     except Exception as e_main_fatal:
-        logger.critical(f"Server encountered a fatal unhandled exception in main execution: {e_main_fatal}", exc_info=True)
+        logger.critical(
+            f"Server encountered a fatal unhandled exception in main execution: {e_main_fatal}",
+            exc_info=True,
+        )
     finally:
         if server_instance:
-            logger.info("Ensuring server shutdown is called from __main__ 'finally' block...")
+            logger.info(
+                "Ensuring server shutdown is called from __main__ 'finally' block..."
+            )
             server_instance.stop()
 
         logger.info("Server application has completed its full termination sequence.")
