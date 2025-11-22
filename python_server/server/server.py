@@ -42,7 +42,24 @@ from Crypto.Cipher import AES
 from Crypto.PublicKey import RSA
 from Crypto.Random import get_random_bytes
 
-from .config import *  # Configuration constants
+from .config import (
+    SERVER_VERSION,
+    DEFAULT_PORT,
+    CLIENT_SOCKET_TIMEOUT,
+    CLIENT_SESSION_TIMEOUT,
+    PARTIAL_FILE_TIMEOUT,
+    MAINTENANCE_INTERVAL,
+    MAX_PAYLOAD_READ_LIMIT,
+    MAX_ORIGINAL_FILE_SIZE,
+    MAX_CONCURRENT_CLIENTS,
+    MAX_CLIENT_NAME_LENGTH,
+    MAX_FILENAME_FIELD_SIZE,
+    MAX_ACTUAL_FILENAME_LENGTH,
+    RSA_PUBLIC_KEY_SIZE,
+    AES_KEY_SIZE_BYTES,
+    FILE_STORAGE_DIR,
+    SETTINGS_FILE
+)
 
 # Import database module
 from .database import DatabaseManager
@@ -382,7 +399,7 @@ class BackupServer:
         self._log_export_rate_limits: dict[str, float] = {}
         # Allow disabling integrated GUI when standalone GUI process will be launched
         disable_flag = os.environ.get("CYBERBACKUP_DISABLE_INTEGRATED_GUI")
-        logger.info(f"[GUI] Legacy Tkinter GUI integration removed - FletV2 GUI is now used instead")
+        logger.info("[GUI] Legacy Tkinter GUI integration removed - FletV2 GUI is now used instead")
 
         # Perform pre-flight checks and initialize database
         self.db_manager.check_startup_permissions() # Perform pre-flight checks before extensive setup
@@ -1770,9 +1787,10 @@ class BackupServer:
             if health_data['database_accessible']:
                 try:
                     # Check if connection_pool exists
-                    if self.db_manager.connection_pool:
+                    pool = self.db_manager.connection_pool
+                    if pool:
 
-                        pool_status = self.db_manager.connection_pool.get_pool_status()
+                        pool_status = pool.get_pool_status()
                         health_data['connection_pool'] = {
                             'active': pool_status.get('active_connections', 0),
                             'available': pool_status.get('available_connections', 0),
@@ -1797,7 +1815,7 @@ class BackupServer:
                                 health_data['status'] = 'degraded'
 
                         # Check for emergency connection leaks
-                        leak_count = len(self.db_manager.connection_pool.emergency_connections)
+                        leak_count = len(pool.emergency_connections)
                         if leak_count > 0:
                             health_data['errors'].append(f"{leak_count} emergency connections leaked")
                             if health_data['status'] == 'healthy':

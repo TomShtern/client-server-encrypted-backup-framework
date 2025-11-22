@@ -6,10 +6,10 @@
 include = [
     "FletV2",
     "Shared",
+    "python_server",
     "api_server"
 ]
 exclude = [
-    "python_server",
     "stubs",
     "tests",
     "tmp",

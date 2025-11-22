@@ -53,19 +53,19 @@ from Shared.path_utils import setup_imports
 
 setup_imports()  # This must be called before any other first-party imports
 
-from python_server.server.connection_health import get_connection_health_monitor  # Moved from global scope
-from python_server.server.server_singleton import ensure_single_server_instance
-from Shared.logging.logging_utils import (
+from python_server.server.connection_health import get_connection_health_monitor  # noqa: E402 # Moved from global scope
+from python_server.server.server_singleton import ensure_single_server_instance  # noqa: E402
+from Shared.logging.logging_utils import (  # noqa: E402
     create_enhanced_logger,
     create_log_monitor_info,
     log_performance_metrics,
     setup_dual_logging,
 )
-from Shared.observability_middleware import setup_observability_for_flask
-from Shared.sentry_config import capture_error, init_sentry
-from Shared.monitoring.unified_monitor import UnifiedFileMonitor
-from Shared.monitoring.performance_monitor import get_performance_monitor  # Moved from api_perf_job()
-from Shared.config.unified_config import get_config
+from Shared.observability_middleware import setup_observability_for_flask  # noqa: E402
+from Shared.sentry_config import capture_error, init_sentry  # noqa: E402
+from Shared.monitoring.unified_monitor import UnifiedFileMonitor  # noqa: E402
+from Shared.monitoring.performance_monitor import get_performance_monitor  # noqa: E402 # Moved from api_perf_job()
+from Shared.config.unified_config import get_config  # noqa: E402
 
 # Define PROJECT_ROOT for consistent path resolution
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -208,14 +208,8 @@ if SENTRY_INITIALIZED:
         return jsonify({"error": "Unexpected error", "message": "An unexpected error occurred"}), 500
 
 
-# Performance monitoring singleton
-# Connection health monitoring
-from python_server.server.connection_health import get_connection_health_monitor
-from Shared.utils.performance_monitor import get_performance_monitor
+# Performance monitoring singleton and Connection health monitoring are already initialized above
 
-conn_health: Any = get_connection_health_monitor()
-
-perf_monitor: Any = get_performance_monitor()
 
 
 # --- CallbackMultiplexer for concurrent request handling ---
@@ -303,12 +297,11 @@ def _make_json_safe(value: Any, depth: int = 0, max_depth: int = 6) -> Any:
 
 def _sanitize_job_snapshot(snapshot: dict[str, Any]) -> dict[str, Any]:
     """Return a JSON-safe representation of a job snapshot without executors."""
-    safe_snapshot = {}
-    for key, value in snapshot.items():
-        if key == "executor":
-            continue
-        safe_snapshot[key] = _make_json_safe(value)
-    return safe_snapshot
+    return {
+        key: _make_json_safe(value)
+        for key, value in snapshot.items()
+        if key != "executor"
+    }
 
 
 # For general, non-job-specific server status
@@ -1026,7 +1019,7 @@ def api_start_backup_working():
             try:
                 expected_size = os.path.getsize(temp_file_path_for_thread)
                 # Use streaming hash calculation to prevent memory overflow on large files
-                from Shared.utils.streaming_file_utils import calculate_file_hash_streaming
+                from Shared.filesystem.streaming_file_utils import calculate_file_hash_streaming
 
                 expected_hash = calculate_file_hash_streaming(temp_file_path_for_thread, "sha256")
                 if expected_hash is None:
@@ -1325,17 +1318,14 @@ if __name__ == "__main__":
     print("Component Status:")
 
     # Check HTML client
-    current_file_abs = os.path.abspath(__file__)
-    api_server_dir = os.path.dirname(current_file_abs)
-    project_root = os.path.dirname(api_server_dir)
-    client_html = os.path.join(project_root, "Client", "Client-gui", CLIENT_GUI_HTML_FILE)
+    client_html = os.path.join(CLIENT_GUI_PATH, CLIENT_GUI_HTML_FILE)
     if os.path.exists(client_html):
         print(f"[OK] HTML Client: {client_html}")
     else:
         print(f"[MISSING] HTML Client: {client_html} NOT FOUND")
 
     # Check C++ client
-    client_exe = os.path.join(project_root, "build", "Release", "EncryptedBackupClient.exe")
+    client_exe = os.path.join(PROJECT_ROOT, "build", "Release", "EncryptedBackupClient.exe")
     if os.path.exists(client_exe):
         print(f"[OK] C++ Client: {client_exe}")
     else:

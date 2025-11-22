@@ -1,4 +1,4 @@
-#include "../../include/utils/CompressionWrapper.h"
+#include "CompressionWrapper.h"
 #include <iostream>
 #include <chrono>
 #include <algorithm>
@@ -100,7 +100,7 @@ std::string CompressionWrapper::decompressToString(const std::vector<uint8_t>& c
     if (decompressed.empty()) {
         return "";
     }
-    
+
     return std::string(decompressed.begin(), decompressed.end());
 }
 
@@ -108,7 +108,7 @@ double CompressionWrapper::getCompressionRatio(size_t originalSize, size_t compr
     if (originalSize == 0) {
         return 0.0;
     }
-    
+
     return static_cast<double>(compressedSize) / static_cast<double>(originalSize);
 }
 
@@ -116,7 +116,7 @@ bool CompressionWrapper::shouldCompress(const uint8_t* data, size_t size) {
     if (!data || size < MIN_COMPRESSION_SIZE) {
         return false;
     }
-    
+
     // With zlib, it's almost always beneficial to at least try to compress,
     // as it's fast and effective on a wide range of data.
     // The decision to use the compressed data will be made based on the result.
@@ -125,11 +125,11 @@ bool CompressionWrapper::shouldCompress(const uint8_t* data, size_t size) {
 
 std::vector<uint8_t> EnhancedCompressionWrapper::compressWithMetrics(const uint8_t* data, size_t size, CompressionMetrics& metrics) {
     auto start = std::chrono::high_resolution_clock::now();
-    
+
     metrics.originalSize = size;
-    
+
     std::vector<uint8_t> result;
-    
+
     if (CompressionWrapper::shouldCompress(data, size)) {
         result = CompressionWrapper::compress(data, size);
         metrics.compressionUsed = result.size() < size;
@@ -140,29 +140,29 @@ std::vector<uint8_t> EnhancedCompressionWrapper::compressWithMetrics(const uint8
     if (!metrics.compressionUsed) {
         result.assign(data, data + size);
     }
-    
+
     auto end = std::chrono::high_resolution_clock::now();
     metrics.compressionTimeMs = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-    
+
     metrics.compressedSize = result.size();
     metrics.compressionRatio = CompressionWrapper::getCompressionRatio(size, result.size());
-    
+
     return result;
 }
 
 std::vector<uint8_t> EnhancedCompressionWrapper::decompressWithMetrics(const std::vector<uint8_t>& compressedData, bool wasCompressed, CompressionMetrics& metrics) {
     auto start = std::chrono::high_resolution_clock::now();
-    
+
     std::vector<uint8_t> result;
-    
+
     if (wasCompressed) {
         result = CompressionWrapper::decompress(compressedData);
     } else {
         result = compressedData; // Data wasn't compressed
     }
-    
+
     auto end = std::chrono::high_resolution_clock::now();
     metrics.decompressionTimeMs = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-    
+
     return result;
 }

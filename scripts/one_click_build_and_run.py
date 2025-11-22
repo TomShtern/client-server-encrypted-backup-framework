@@ -52,14 +52,26 @@ import webbrowser
 from pathlib import Path
 from typing import Any
 import shutil
+import psutil
+
+# Add repository root to path for imports
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from Shared.config.unified_config import get_config
 
+# Ensure psutil is available for process cleanup
 try:
     import psutil
 except ImportError:
-    print("[WARNING] psutil not available - process cleanup may be limited")
-    psutil = None
+    print("[INFO] psutil not found - installing for process cleanup...")
+    try:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "psutil"])
+        import psutil
+        print("[OK] psutil installed successfully")
+    except Exception as e:
+        print(f"[WARNING] Failed to install psutil: {e}")
+        print("Process cleanup may be limited")
+        psutil = None
 
 def setup_logging():
     """Setup basic logging for the build script"""
@@ -427,7 +439,6 @@ def force_vcpkg_reinstall():
     if vcpkg_installed_path.exists():
         print("Removing vcpkg_installed directory...")
         try:
-            import shutil
             shutil.rmtree(vcpkg_installed_path)
             print("[OK] vcpkg_installed directory removed")
         except Exception as e:
@@ -525,10 +536,8 @@ def _latest_mtime(paths: list[Path]) -> float:
     latest = 0.0
     for p in paths:
         if p.is_file():
-            try:
+            with contextlib.suppress(Exception):
                 latest = max(latest, p.stat().st_mtime)
-            except Exception:
-                pass
         elif p.is_dir():
             with contextlib.suppress(Exception):
                 for root, _, files in os.walk(p):
@@ -564,19 +573,23 @@ def cleanup_existing_processes():  # sourcery skip: low-code-quality
     print()
 
     terminated_processes: list[str] = []
+    current_pid = os.getpid()
 
     # Define process patterns to look for
     process_patterns = {
         "API Server": ["cyberbackup_api_server.py", "api_server"],
         "Backup Server": ["python_server/server.py", "server.py", "backup_server"],
         "C++ Client": ["encryptedbackupclient.exe", "EncryptedBackupClient.exe"],
-        "Server GUI": ["ServerGUI.py", "server_gui"]
+        "Server GUI": ["ServerGUI.py", "server_gui", "start_with_server.py", "flet"]
     }
 
     try:
         # Get list of all running processes with better error handling
         for process in psutil.process_iter(['pid', 'name', 'cmdline']):  # type: ignore
             try:
+                if process.pid == current_pid:
+                    continue
+
                 process_info: dict[str, Any] = process.info
                 cmdline: list[str] = process_info.get('cmdline', [])
                 name: str = process_info.get('name', '').lower()
@@ -591,9 +604,25 @@ def cleanup_existing_processes():  # sourcery skip: low-code-quality
                 # Check against each pattern
                 for ptype, patterns in process_patterns.items():
                     if any(pattern.lower() in cmdline_str for pattern in patterns):
+                        # Avoid killing the build script itself if it matches a pattern (e.g. 'flet' in venv path)
+                        if process.pid == current_pid:
+                            continue
+
+                        # EXTRA SAFETY: Don't kill anything running this script
+                        if "one_click_build_and_run" in cmdline_str:
+                            continue
+
                         should_terminate = True
                         process_type = ptype
                         break
+
+                # Special check for Flet processes which might just look like python running main.py
+                if 'python' in name and 'flet' in cmdline_str:
+                    if process.pid == current_pid or "one_click_build_and_run" in cmdline_str:
+                        should_terminate = False
+                    else:
+                        should_terminate = True
+                        process_type = "Flet GUI Process"
 
                 # Additional port-based detection with safer connection checking
                 if not should_terminate:
@@ -612,12 +641,15 @@ def cleanup_existing_processes():  # sourcery skip: low-code-quality
                                 if (port in [9090, 1256] and
                                     hasattr(conn, 'status') and conn.status == psutil.CONN_LISTEN and
                                     ('python' in name or 'flask' in cmdline_str)):
+                                        if process.pid == current_pid:
+                                            continue
                                         should_terminate = True
                                         process_type = f"Port-bound Server ({port})"
                                         break
 
                 if should_terminate:
                     print(f"Terminating {process_type} (PID: {process.info['pid']})")
+                    print(f"  Command: {cmdline_str[:100]}...") # Debug info
                     try:
                         # Try graceful termination first
                         process.terminate()
@@ -805,7 +837,6 @@ def main():
                     print("Cleaning buildtrees to resolve file locks...")
 
                     # Clean problematic package buildtrees (common offenders on Windows)
-                    import shutil
                     for pkg in ("boost-mpl", "zstd"):
                         bt = Path("vcpkg") / "buildtrees" / pkg
                         if bt.exists():
@@ -1018,11 +1049,15 @@ def main():
     fletv2_env['CYBERBACKUP_DISABLE_GUI'] = '1'  # Force console mode for server
     fletv2_env['BACKUP_DATABASE_PATH'] = str(Path(os.getcwd()) / "data" / "database" / "defensive.db")  # Database location
 
-    # Launch FletV2 in new console window
+    # Launch FletV2
     try:
+        # Use CREATE_NEW_CONSOLE to spawn a separate window for the Flet process
+        # This allows viewing the server logs in real-time while the GUI runs
+        creation_flags = subprocess.CREATE_NEW_CONSOLE if os.name == 'nt' else 0
+
         fletv2_process = subprocess.Popen(
             [sys.executable, str(fletv2_launcher)],
-            creationflags=subprocess.CREATE_NEW_CONSOLE if os.name == 'nt' else 0,
+            creationflags=creation_flags,
             env=fletv2_env,
             cwd=os.getcwd()
         )
@@ -1288,7 +1323,6 @@ def main():
         print("  • Use FletV2 Desktop GUI window for server administration")
         print(f"  • Open {gui_url} in browser for C++ client backup operations")
         print("  • All components share the same database and file storage")
-        print()
 
     elif fletv2_running and backup_server_running:
         print_multiline(
@@ -1307,7 +1341,6 @@ def main():
         print("  1. Check API server console window for errors")
         print("  2. Verify port 9090 not in use: netstat -an | findstr 9090")
         print("  3. Try manual start: python api_server/cyberbackup_api_server.py")
-        print()
 
     elif fletv2_running:
         print_multiline(
@@ -1325,7 +1358,6 @@ def main():
         print("  1. Check FletV2 console window for BackupServer errors")
         print("  2. Verify port 1256 available: netstat -an | findstr 1256")
         print("  3. Check database exists: data/database/defensive.db")
-        print()
 
     else:
         print_multiline(
@@ -1343,8 +1375,8 @@ def main():
         print("  4. Verify Flet installed: cd FletV2 && ../flet_venv/Scripts/pip list | grep flet")
         print("  5. Review build script logs: logs/build_script.log")
         print("  6. Try manual FletV2 launch: python FletV2/scripts/start_with_server.py")
-        print()
 
+    print()
     print("=" * 70)
 
 

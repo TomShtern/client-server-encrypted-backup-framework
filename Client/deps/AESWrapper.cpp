@@ -1,4 +1,4 @@
-#include "../../include/wrappers/AESWrapper.h"
+#include "AESWrapper.h"
 #include <stdexcept>
 #include <iostream>
 #include <string>

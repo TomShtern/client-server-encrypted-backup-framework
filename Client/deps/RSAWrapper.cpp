@@ -1,4 +1,4 @@
-#include "../../include/wrappers/RSAWrapper.h"
+#include "RSAWrapper.h"
 #include <cryptopp/rsa.h>
 #include <cryptopp/osrng.h>
 #include <cryptopp/oaep.h>
@@ -17,17 +17,17 @@ RSAPublicWrapper::RSAPublicWrapper(const char* key, size_t keylen) : publicKeyIm
         throw std::invalid_argument("Invalid key data");
     }
     keyData.assign(key, key + keylen);
-    
+
     try {
         // Load the public key from DER format
         CryptoPP::ByteQueue queue;
         queue.Put(reinterpret_cast<const CryptoPP::byte*>(key), keylen);
         queue.MessageEnd();
-        
+
         publicKeyImpl = new CryptoPP::RSA::PublicKey();
         CryptoPP::RSA::PublicKey* publicKey = static_cast<CryptoPP::RSA::PublicKey*>(publicKeyImpl);
         publicKey->BERDecode(queue);
-        
+
         std::cout << "[DEBUG] RSAPublicWrapper: Successfully loaded " << keylen << "-byte public key from buffer" << std::endl;
     } catch (const CryptoPP::Exception& e) {
         std::cerr << "[ERROR] RSAPublicWrapper: Failed to load public key from buffer: " << e.what() << std::endl;
@@ -40,27 +40,27 @@ RSAPublicWrapper::RSAPublicWrapper(const std::string& filename) : publicKeyImpl(
     if (!file.is_open()) {
         throw std::runtime_error("Cannot open file: " + filename);
     }
-    
+
     // Read file content
     std::string fileData((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
     file.close();
-    
+
     if (fileData.empty()) {
         throw std::runtime_error("Empty key file: " + filename);
     }
-    
+
     keyData.assign(fileData.begin(), fileData.end());
-    
+
     try {
         // Load the public key from DER format
         CryptoPP::ByteQueue queue;
         queue.Put(reinterpret_cast<const CryptoPP::byte*>(keyData.data()), keyData.size());
         queue.MessageEnd();
-        
+
         publicKeyImpl = new CryptoPP::RSA::PublicKey();
         CryptoPP::RSA::PublicKey* publicKey = static_cast<CryptoPP::RSA::PublicKey*>(publicKeyImpl);
         publicKey->BERDecode(queue);
-        
+
         std::cout << "[DEBUG] RSAPublicWrapper: Successfully loaded public key from " << filename << std::endl;
     } catch (const CryptoPP::Exception& e) {
         std::cerr << "[ERROR] RSAPublicWrapper: Failed to load public key from file " << filename << ": " << e.what() << std::endl;
@@ -94,7 +94,7 @@ std::string RSAPublicWrapper::encrypt(const char* plain, size_t length) {
     if (!publicKeyImpl) {
         throw std::runtime_error("RSA public key not initialized");
     }
-    
+
     try {
         CryptoPP::RSA::PublicKey* publicKey = static_cast<CryptoPP::RSA::PublicKey*>(publicKeyImpl);
 
@@ -103,11 +103,11 @@ std::string RSAPublicWrapper::encrypt(const char* plain, size_t length) {
 
         // Use OAEP with SHA-256 for spec compliance
         CryptoPP::RSAES_OAEP_SHA256_Encryptor encryptor(*publicKey);
-        
+
         std::string cipher;
         CryptoPP::StringSource ss(reinterpret_cast<const CryptoPP::byte*>(plain), length, true,
             new CryptoPP::PK_EncryptorFilter(rng, encryptor, new CryptoPP::StringSink(cipher)));
-        
+
         std::cout << "[DEBUG] RSAPublicWrapper: Successfully encrypted " << length << " bytes" << std::endl;
         return cipher;
     } catch (const CryptoPP::Exception& e) {
@@ -131,38 +131,38 @@ RSAPrivateWrapper::RSAPrivateWrapper() : privateKeyImpl(nullptr), publicKeyImpl(
 
         // Generate RSA key pair that produces exactly 160-byte DER public key
         std::cout << "[DEBUG] RSAPrivateWrapper: Generating RSA key with exactly 160-byte public key..." << std::endl;
-        
+
         size_t publicSize = 0;
         int attempts = 0;
         const int maxAttempts = 1000; // Reasonable limit to prevent infinite loop
-        
+
         do {
             attempts++;
-            
+
             // Clean up previous attempt if any
             if (publicKeyImpl) {
                 delete static_cast<CryptoPP::RSA::PublicKey*>(publicKeyImpl);
                 publicKeyImpl = nullptr;
             }
-            
+
             // Generate new key pair
             privateKey->Initialize(rng, BITS);
-            
+
             // Extract public key from private key
             publicKeyImpl = new CryptoPP::RSA::PublicKey(*privateKey);
-            
+
             // Check public key X.509 size (as required by specification)
             CryptoPP::ByteQueue testQueue;
             static_cast<CryptoPP::RSA::PublicKey*>(publicKeyImpl)->BEREncode(testQueue);
             testQueue.MessageEnd();
             publicSize = testQueue.MaxRetrievable();
-            
+
             if (attempts % 50 == 0) {
                 std::cout << "[DEBUG] RSAPrivateWrapper: Attempt " << attempts << ", public key size: " << publicSize << " bytes" << std::endl;
             }
-            
+
         } while (publicSize != 160 && attempts < maxAttempts);
-        
+
         if (publicSize != 160) {
             std::cout << "[WARNING] RSAPrivateWrapper: Could not generate exactly 160-byte public key after " << maxAttempts << " attempts (got " << publicSize << " bytes)" << std::endl;
             std::cout << "[WARNING] RSAPrivateWrapper: Using best attempt and padding/truncating as fallback" << std::endl;
@@ -181,7 +181,7 @@ RSAPrivateWrapper::RSAPrivateWrapper() : privateKeyImpl(nullptr), publicKeyImpl(
         publicSize = publicQueue.MaxRetrievable(); // Update with final size
         privateKeyData.resize(privateSize);
         privateQueue.Get(reinterpret_cast<CryptoPP::byte*>(&privateKeyData[0]), privateSize);
-        
+
         // Handle public key size - prefer exact match, fallback to padding/truncation
         publicKeyData.resize(160, 0);
         if (publicSize == 160) {
@@ -221,30 +221,30 @@ RSAPrivateWrapper::RSAPrivateWrapper(const char* key, size_t keylen) : privateKe
         throw std::invalid_argument("Invalid key data");
     }
     privateKeyData.assign(key, key + keylen);
-    
+
     try {
         // Load the private key from DER format
         CryptoPP::ByteQueue queue;
         queue.Put(reinterpret_cast<const CryptoPP::byte*>(key), keylen);
         queue.MessageEnd();
-        
+
         privateKeyImpl = new CryptoPP::RSA::PrivateKey();
         CryptoPP::RSA::PrivateKey* privateKey = static_cast<CryptoPP::RSA::PrivateKey*>(privateKeyImpl);
         privateKey->BERDecode(queue);
-        
+
         // Extract public key
         publicKeyImpl = new CryptoPP::RSA::PublicKey(*privateKey);
-        
+
         // Save public key to X.509 format (as per specification)
         CryptoPP::ByteQueue publicQueue;
         static_cast<CryptoPP::RSA::PublicKey*>(publicKeyImpl)->BEREncode(publicQueue);
         publicQueue.MessageEnd();
-        
+
         size_t publicSize = publicQueue.MaxRetrievable();
-        
+
         // Always ensure public key is exactly 160 bytes as required by protocol
         publicKeyData.resize(160, 0); // Initialize with zeros for padding
-        
+
         if (publicSize <= 160) {
             // Key fits within 160 bytes, copy it and let the rest be zero-padded
             publicQueue.Get(reinterpret_cast<CryptoPP::byte*>(&publicKeyData[0]), publicSize);
@@ -254,7 +254,7 @@ RSAPrivateWrapper::RSAPrivateWrapper(const char* key, size_t keylen) : privateKe
             publicQueue.Get(reinterpret_cast<CryptoPP::byte*>(&tempKey[0]), publicSize);
             std::copy(tempKey.begin(), tempKey.begin() + 160, publicKeyData.begin());
         }
-        
+
         std::cout << "[DEBUG] RSAPrivateWrapper: Successfully loaded private key from buffer" << std::endl;
     } catch (const CryptoPP::Exception& e) {
         std::cerr << "[ERROR] RSAPrivateWrapper: Failed to load private key from buffer: " << e.what() << std::endl;
@@ -267,40 +267,40 @@ RSAPrivateWrapper::RSAPrivateWrapper(const std::string& filename) : privateKeyIm
     if (!file.is_open()) {
         throw std::runtime_error("Cannot open file: " + filename);
     }
-    
+
     // Read file content
     std::string fileData((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
     file.close();
-    
+
     if (fileData.empty()) {
         throw std::runtime_error("Empty key file: " + filename);
     }
-    
+
     privateKeyData.assign(fileData.begin(), fileData.end());
-    
+
     try {
         // Load the private key from DER format
         CryptoPP::ByteQueue queue;
         queue.Put(reinterpret_cast<const CryptoPP::byte*>(privateKeyData.data()), privateKeyData.size());
         queue.MessageEnd();
-        
+
         privateKeyImpl = new CryptoPP::RSA::PrivateKey();
         CryptoPP::RSA::PrivateKey* privateKey = static_cast<CryptoPP::RSA::PrivateKey*>(privateKeyImpl);
         privateKey->BERDecode(queue);
-        
+
         // Extract public key
         publicKeyImpl = new CryptoPP::RSA::PublicKey(*privateKey);
-        
+
         // Save public key to X.509 format (as per specification)
         CryptoPP::ByteQueue publicQueue;
         static_cast<CryptoPP::RSA::PublicKey*>(publicKeyImpl)->BEREncode(publicQueue);
         publicQueue.MessageEnd();
-        
+
         size_t publicSize = publicQueue.MaxRetrievable();
-        
+
         // Always ensure public key is exactly 160 bytes as required by protocol
         publicKeyData.resize(160, 0); // Initialize with zeros for padding
-        
+
         if (publicSize <= 160) {
             // Key fits within 160 bytes, copy it and let the rest be zero-padded
             publicQueue.Get(reinterpret_cast<CryptoPP::byte*>(&publicKeyData[0]), publicSize);
@@ -310,7 +310,7 @@ RSAPrivateWrapper::RSAPrivateWrapper(const std::string& filename) : privateKeyIm
             publicQueue.Get(reinterpret_cast<CryptoPP::byte*>(&tempKey[0]), publicSize);
             std::copy(tempKey.begin(), tempKey.begin() + 160, publicKeyData.begin());
         }
-        
+
         std::cout << "[DEBUG] RSAPrivateWrapper: Successfully loaded private key from " << filename << std::endl;
     } catch (const CryptoPP::Exception& e) {
         std::cerr << "[ERROR] RSAPrivateWrapper: Failed to load private key from file " << filename << ": " << e.what() << std::endl;

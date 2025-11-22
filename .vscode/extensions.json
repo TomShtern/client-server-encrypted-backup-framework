@@ -23,6 +23,8 @@
         "supermaven.supermaven",
         "google.geminicodeassist",
         "google.gemini-cli-vscode-ide-companion",
-        "dbaeumer.vscode-eslint"
+        "dbaeumer.vscode-eslint",
+        "trunk.io",
+        "charliermarsh.ruff"
     ]
 }

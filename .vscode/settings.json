@@ -64,6 +64,22 @@
     "**/node_modules/**",
     "**/dist/**"
   ],
+  "python.analysis.extraPaths": [
+    "${workspaceFolder}",
+    "${workspaceFolder}/FletV2",
+    "${workspaceFolder}/python_server",
+    "${workspaceFolder}/Shared",
+    "${workspaceFolder}/api_server",
+    "${workspaceFolder}/flet_venv/Lib/site-packages"
+  ],
+  "python.autoComplete.extraPaths": [
+    "${workspaceFolder}",
+    "${workspaceFolder}/FletV2",
+    "${workspaceFolder}/python_server",
+    "${workspaceFolder}/Shared",
+    "${workspaceFolder}/api_server",
+    "${workspaceFolder}/flet_venv/Lib/site-packages"
+  ],
   "problems.exclude": {
     "**/scripts/cmake/vcpkg_buildpath_length_warning.cmake": true,
     "**/archive/**": true,
@@ -107,5 +123,10 @@
     "VCPKG_TARGET_TRIPLET": "x64-windows"
   },
   "cmake.generator": "Visual Studio 17 2022",
-  "cmake.platform": "x64"
+  "cmake.platform": "x64",
+  "python.experiments.enabled": false,
+  "python.testing.pytestEnabled": true,
+  "python.testing.unittestEnabled": true,
+  "python.useEnvironmentsExtension": true,
+  "python.envFile": "c:/Users/tom7s/Desktopp/Claude_Folder_2/Client_Server_Encrypted_Backup_Framework/flet_venv"
 }

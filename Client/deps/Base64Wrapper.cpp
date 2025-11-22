@@ -1,4 +1,4 @@
-#include "../../include/wrappers/Base64Wrapper.h"
+#include "Base64Wrapper.h"
 #include <stdexcept>
 #include <iostream>
 #include <string>
@@ -16,11 +16,11 @@ std::string Base64Wrapper::encode(const std::string& str) {
                 new CryptoPP::StringSink(encoded)
             ) // Base64Encoder
         ); // StringSource
-        
+
         // Remove newlines that Crypto++ Base64 encoder adds
         encoded.erase(std::remove(encoded.begin(), encoded.end(), '\n'), encoded.end());
         encoded.erase(std::remove(encoded.begin(), encoded.end(), '\r'), encoded.end());
-        
+
         return encoded;
     } catch (const std::exception& e) {
         std::cerr << "[ERROR] Base64Wrapper::encode failed: " << e.what() << std::endl;
@@ -36,7 +36,7 @@ std::string Base64Wrapper::decode(const std::string& str) {
                 new CryptoPP::StringSink(decoded)
             ) // Base64Decoder
         ); // StringSource
-        
+
         return decoded;
     } catch (const std::exception& e) {
         std::cerr << "[ERROR] Base64Wrapper::decode failed: " << e.what() << std::endl;

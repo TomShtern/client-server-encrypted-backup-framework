@@ -70,7 +70,7 @@ add_executable(EncryptedBackupClient
     Client/deps/RSAWrapper.cpp
     Client/deps/AESWrapper.cpp
     Client/deps/Base64Wrapper.cpp
-    Client/deps/crc.cpp
+    Client/deps/shared/crc.cpp
 )
 
 target_include_directories(EncryptedBackupClient PRIVATE

@@ -41,24 +41,28 @@ using tcp = boost::asio::ip::tcp;
 #include <unistd.h>
 #endif
 
+// Function pointers for backup operations
+std::function<bool()> g_backup_callback = nullptr;  // Legacy callback
+std::function<bool(const WebServerBackend::BackupConfig&)> g_backup_callback_with_config = nullptr;  // New callback
+
 // Simple JSON object for responses
 class JsonObject {
 private:
     std::map<std::string, std::string> data_;
-    
+
 public:
     void set(const std::string& key, const std::string& value) {
         data_[key] = value;
     }
-    
+
     void set(const std::string& key, bool value) {
         data_[key] = value ? "true" : "false";
     }
-    
+
     void set(const std::string& key, int value) {
         data_[key] = std::to_string(value);
     }
-    
+
     std::string serialize() const {
         std::ostringstream ss;
         ss << "{";
@@ -93,53 +97,53 @@ public:
         std::lock_guard<std::mutex> lock(mutex_);
         return phase_;
     }
-    
+
     std::string getStatus() {
         std::lock_guard<std::mutex> lock(mutex_);
         return status_;
     }
-    
+
     int getProgress() {
         std::lock_guard<std::mutex> lock(mutex_);
         return progress_;
     }
-    
+
     bool isConnected() {
         std::lock_guard<std::mutex> lock(mutex_);
         return connected_;
     }
-    
+
     std::string getClientId() {
         std::lock_guard<std::mutex> lock(mutex_);
         return client_id_;
     }
-    
+
     // Thread-safe setters
     void setPhase(const std::string& phase) {
         std::lock_guard<std::mutex> lock(mutex_);
         phase_ = phase;
     }
-    
+
     void setStatus(const std::string& status) {
         std::lock_guard<std::mutex> lock(mutex_);
         status_ = status;
     }
-    
+
     void setProgress(int progress) {
         std::lock_guard<std::mutex> lock(mutex_);
         progress_ = progress;
     }
-    
+
     void setConnected(bool connected) {
         std::lock_guard<std::mutex> lock(mutex_);
         connected_ = connected;
     }
-    
+
     void setClientId(const std::string& id) {
         std::lock_guard<std::mutex> lock(mutex_);
         client_id_ = id;
     }
-    
+
     void addLog(const std::string& message) {
         std::lock_guard<std::mutex> lock(mutex_);
         logs_.push_back(message);
@@ -171,13 +175,13 @@ private:
     std::mutex cache_mutex_;
     std::string cached_html_;
     bool html_loaded_;
-    
+
 public:
     StaticFileCache() : html_loaded_(false) {}
-    
+
     std::string getHTML() {
         std::lock_guard<std::mutex> lock(cache_mutex_);
-        
+
         if (!html_loaded_) {
             try {
                 std::ifstream file("Client/Client-gui/NewGUIforClient.html");
@@ -193,10 +197,10 @@ public:
                 return "";
             }
         }
-        
+
         return cached_html_;
     }
-    
+
     void clearCache() {
         std::lock_guard<std::mutex> lock(cache_mutex_);
         cached_html_.clear();
@@ -250,14 +254,14 @@ http::response<http::string_body> serve_file(const std::string& path) {
     res.version(11); // HTTP/1.1
     res.set(http::field::server, "CyberBackup-WebAPI/1.0");
     res.set(http::field::content_type, get_content_type(path).c_str());
-    
+
     try {
         std::ifstream file(path, std::ios::binary);
         if (file.is_open()) {
             // Read file content
             std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
             file.close();
-            
+
             res.result(http::status::ok);
             res.body() = content;
         } else {
@@ -270,7 +274,7 @@ http::response<http::string_body> serve_file(const std::string& path) {
         res.result(http::status::internal_server_error);
         res.body() = "Error reading file: " + path + " - " + e.what();
     }
-    
+
     res.prepare_payload();
     return res;
 }
@@ -284,7 +288,7 @@ handle_request(http::request<Body, http::basic_fields<Allocator>>&& req) {
     res.version(req.version());
     res.set(http::field::server, "CyberBackup-WebAPI/1.0");
     add_cors_headers(res);
-    
+
     // Handle CORS preflight
     if (req.method() == http::verb::options) {
         res.result(http::status::ok);
@@ -292,13 +296,13 @@ handle_request(http::request<Body, http::basic_fields<Allocator>>&& req) {
         res.prepare_payload();
         return res;
     }
-    
+
     auto const target = req.target();
-    
+
     // Handle static file requests
     if (req.method() == http::verb::get) {
         std::string file_path;
-        
+
         // Determine the file path based on the request target
         std::string target_str(target);
         if (target_str == "/" || target_str == "/index.html" || target_str == "/NewGUIforClient.html") {
@@ -318,7 +322,7 @@ handle_request(http::request<Body, http::basic_fields<Allocator>>&& req) {
                 res.prepare_payload();
                 return res;
             }
-        } else if (target_str.length() >= 8 && target_str.substr(0, 8) == "/styles/" || 
+        } else if (target_str.length() >= 8 && target_str.substr(0, 8) == "/styles/" ||
                    target_str.length() >= 9 && target_str.substr(0, 9) == "/scripts/") {
             // Serve CSS and JS files
             file_path = "Client/Client-gui" + std::string(target);
@@ -351,14 +355,14 @@ handle_request(http::request<Body, http::basic_fields<Allocator>>&& req) {
             }
         }
     }
-    
+
     try {        // GET /api/status - Get current application state
         if (req.method() == http::verb::get && target == "/api/status") {
             auto state = g_state.getStateJson();
             res.result(http::status::ok);
             res.body() = state.serialize();
         }
-        
+
         // POST /api/connect - Connect to backup server
         else if (req.method() == http::verb::post && target == "/api/connect") {
             try {
@@ -405,7 +409,7 @@ handle_request(http::request<Body, http::basic_fields<Allocator>>&& req) {
                         filepath = body.substr(filepath_pos, end_pos - filepath_pos);
                     }
                 }
-                
+
                 // Parse the request body to get server config
                 // For now, we'll update the transfer.info file with the new config
                 // and let the backup operation handle the actual connection
@@ -442,12 +446,12 @@ handle_request(http::request<Body, http::basic_fields<Allocator>>&& req) {
                     g_state.addLog("Failed to update configuration: " + std::string(e.what()));
                     throw;
                 }
-                
+
                 JsonObject response;
                 response.set("success", true);
                 response.set("message", "Connected successfully");
                 response.set("client_id", g_state.getClientId());
-                
+
                 res.result(http::status::ok);
                 res.body() = response.serialize();
             } catch (const std::exception& e) {
@@ -479,7 +483,7 @@ handle_request(http::request<Body, http::basic_fields<Allocator>>&& req) {
                     config.serverIP = "127.0.0.1";
                     config.serverPort = 1256;
                     config.username = "testuser";
-                    
+
                     std::string filename = "uploaded_file.txt";
                     std::string file_data;
 
@@ -490,14 +494,14 @@ handle_request(http::request<Body, http::basic_fields<Allocator>>&& req) {
                         // Find next boundary
                         size_t boundary_start = body.find("Content-Disposition:", pos);
                         if (boundary_start == std::string::npos) break;
-                        
+
                         size_t name_start = body.find("name=\"", boundary_start);
                         if (name_start != std::string::npos) {
                             name_start += 6; // Skip 'name="'
                             size_t name_end = body.find("\"", name_start);
                             if (name_end != std::string::npos) {
                                 std::string field_name = body.substr(name_start, name_end - name_start);
-                                
+
                                 // Find data start (after double CRLF)
                                 size_t data_start = body.find("\r\n\r\n", boundary_start);
                                 if (data_start != std::string::npos) {
@@ -506,9 +510,9 @@ handle_request(http::request<Body, http::basic_fields<Allocator>>&& req) {
                                     if (data_end == std::string::npos) {
                                         data_end = body.size();
                                     }
-                                    
+
                                     std::string field_value = body.substr(data_start, data_end - data_start);
-                                    
+
                                     // Parse configuration fields
                                     if (field_name == "server" && !field_value.empty()) {
                                         config.serverIP = field_value;
@@ -565,13 +569,13 @@ handle_request(http::request<Body, http::basic_fields<Allocator>>&& req) {
                             g_state.setStatus("Starting backup...");
                             g_state.setProgress(0);
                             g_state.addLog("Backup operation started for " + filename);
-                            
+
                             // REMOVED: Progress simulation - using real progress only
 
                             // Start backup in a separate thread with configuration
                             std::thread backup_thread([config]() {
                                 bool success = false;
-                                
+
                                 // Prefer new config-based callback if available
                                 if (g_backup_callback_with_config != nullptr) {
                                     success = g_backup_callback_with_config(config);
@@ -587,7 +591,7 @@ handle_request(http::request<Body, http::basic_fields<Allocator>>&& req) {
                                     }
                                     success = g_backup_callback();
                                 }
-                                
+
                                  if (success) {
                                     g_state.setPhase("COMPLETED");
                                     g_state.setStatus("Backup completed successfully");
@@ -686,46 +690,46 @@ handle_request(http::request<Body, http::basic_fields<Allocator>>&& req) {
                 res.body() = response.serialize();
             }
         }
-        
+
         // POST /api/stop - Stop current operation
         else if (req.method() == http::verb::post && target == "/api/stop") {
             g_state.setPhase("STOPPED");
             g_state.setStatus("Operation stopped");
             g_state.setProgress(0);
             g_state.addLog("Operation stopped by user");
-            
+
             JsonObject response;
             response.set("success", true);
             response.set("message", "Operation stopped");
-            
+
             res.result(http::status::ok);
             res.body() = response.serialize();
         }
-        
+
         // POST /api/pause - Pause current operation
         else if (req.method() == http::verb::post && target == "/api/pause") {
             g_state.setPhase("PAUSED");
             g_state.setStatus("Operation paused");
             g_state.addLog("Operation paused by user");
-            
+
             JsonObject response;
             response.set("success", true);
             response.set("message", "Operation paused");
-            
+
             res.result(http::status::ok);
             res.body() = response.serialize();
         }
-        
+
         // POST /api/resume - Resume paused operation
         else if (req.method() == http::verb::post && target == "/api/resume") {
             g_state.setPhase("BACKUP_IN_PROGRESS");
             g_state.setStatus("Operation resumed");
             g_state.addLog("Operation resumed by user");
-            
+
             JsonObject response;
             response.set("success", true);
             response.set("message", "Operation resumed");
-            
+
             res.result(http::status::ok);
             res.body() = response.serialize();
         }
@@ -743,7 +747,7 @@ handle_request(http::request<Body, http::basic_fields<Allocator>>&& req) {
         res.result(http::status::internal_server_error);
         res.body() = response.serialize();
     }
-    
+
     res.prepare_payload();
     return res;
 }
@@ -757,11 +761,11 @@ private:
 
 public:
     explicit HttpSession(tcp::socket&& socket) : socket_(std::move(socket)) {}
-    
+
     void run() {
         do_read();
     }
-    
+
 private:
     void do_read() {
         auto self = shared_from_this();
@@ -773,11 +777,11 @@ private:
                 }
             });
     }
-    
+
     void handle_request() {
         auto response = ::handle_request(std::move(req_));
         auto sp = std::make_shared<http::response<http::string_body>>(std::move(response));
-        
+
         auto self = shared_from_this();
         http::async_write(socket_, *sp,
             [self, sp](beast::error_code ec, std::size_t bytes_transferred) {
@@ -794,41 +798,41 @@ private:
     tcp::acceptor acceptor_;
 
 public:
-    HttpListener(net::io_context& ioc, tcp::endpoint endpoint) 
+    HttpListener(net::io_context& ioc, tcp::endpoint endpoint)
         : ioc_(ioc), acceptor_(net::make_strand(ioc)) {
         beast::error_code ec;
-        
+
         acceptor_.open(endpoint.protocol(), ec);
         if (ec) {
             std::cerr << "Failed to open acceptor: " << ec.message() << std::endl;
             return;
         }
-        
+
         acceptor_.set_option(net::socket_base::reuse_address(true), ec);
         if (ec) {
             std::cerr << "Failed to set reuse_address: " << ec.message() << std::endl;
             return;
         }
-        
+
         acceptor_.bind(endpoint, ec);
         if (ec) {
             std::cerr << "Failed to bind: " << ec.message() << std::endl;
             return;
         }
-        
+
         acceptor_.listen(net::socket_base::max_listen_connections, ec);
         if (ec) {
             std::cerr << "Failed to listen: " << ec.message() << std::endl;
             return;
         }
-        
+
         std::cout << "HTTP API Server listening on " << endpoint << std::endl;
     }
-    
+
     void run() {
         do_accept();
     }
-    
+
 private:
     void do_accept() {
         auto self = shared_from_this();
@@ -845,9 +849,7 @@ private:
 // REMOVED: Progress simulation functions - these created fake progress
 // Real progress should come from actual backup operations, not simulation
 
-// Function pointers for backup operations
-std::function<bool()> g_backup_callback = nullptr;  // Legacy callback
-std::function<bool(const WebServerBackend::BackupConfig&)> g_backup_callback_with_config = nullptr;  // New callback
+// Function pointers moved to top of file
 
 // Implementation class for PIMPL idiom
 class WebServerBackend::Impl {

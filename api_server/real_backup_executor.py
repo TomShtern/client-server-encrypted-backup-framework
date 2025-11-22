@@ -6,6 +6,11 @@ It is responsible for configuring and launching the C++ subprocess.
 Progress monitoring and verification are handled by the UnifiedFileMonitor.
 """
 
+import sys
+import os
+# Add project root to path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
 import contextlib
 import json
 import logging
@@ -16,6 +21,17 @@ import tempfile
 import threading
 import time
 from collections.abc import Callable
+from typing import Any, IO
+
+from Shared.filesystem.utf8_solution import Popen_utf8
+from Shared.monitoring.unified_monitor import UnifiedFileMonitor
+from Shared.filesystem.file_lifecycle import SynchronizedFileManager
+from Shared.logging.logging_utils import Emojis
+from Shared.logging.enhanced_output import EmojiLogger
+from Shared.logging.error_handler import handle_subprocess_error, ErrorSeverity
+
+logger = logging.getLogger(__name__)
+enhanced_logger = EmojiLogger.get_logger(__name__)
 
 
 class RealBackupExecutor:
@@ -311,7 +327,10 @@ class RealBackupExecutor:
         self.backup_process = Popen_utf8(
             [str(self.client_exe), "--batch"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=client_cwd
         )
-        self.process_id = self.backup_process.pid
+        if self.backup_process:
+            self.process_id = self.backup_process.pid
+        else:
+            raise RuntimeError("Failed to start backup process")
 
         stdout, stderr = self.backup_process.communicate(timeout=timeout)
         return_code = self.backup_process.returncode
@@ -550,20 +569,22 @@ class RealBackupExecutor:
             try:
                 # Launch C++ client with UTF-8 environment and subprocess support
                 # Note: Popen_utf8 includes errors='replace' to handle invalid UTF-8 bytes from C++ client
-                self.backup_process = Popen_utf8(
+                process = Popen_utf8(
                     command,
                     stdin=subprocess.PIPE,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                     cwd=client_working_dir,
                 )
-                self.process_id = self.backup_process.pid
+                self.backup_process = process
+                self.process_id = process.pid
             except Exception as launch_err:
                 raise RuntimeError(f"Subprocess launch failed: {launch_err}") from launch_err
 
-            self._log_status(
-                "PROCESS", f"Started backup client (ID: {self.process_id}, PID: {self.backup_process.pid})"
-            )
+            if self.backup_process:
+                self._log_status(
+                    "PROCESS", f"Started backup client (ID: {self.process_id}, PID: {self.backup_process.pid})"
+                )
 
             # --- Monitoring Setup ---
             monitor = UnifiedFileMonitor(self.server_received_files)
@@ -605,9 +626,10 @@ class RealBackupExecutor:
             )
 
             # --- Process Execution (Non-blocking) ---
-            self._log_status(
-                "PROCESS", f"Waiting for C++ client (PID: {self.backup_process.pid}) to complete."
-            )
+            if self.backup_process:
+                self._log_status(
+                    "PROCESS", f"Waiting for C++ client (PID: {self.backup_process.pid}) to complete."
+                )
             try:
                 exec_result = self._execute_subprocess_nonblocking(timeout)
                 result["process_exit_code"] = exec_result["return_code"]
@@ -653,13 +675,14 @@ class RealBackupExecutor:
             else:
                 self._log_status("FAILURE", result["error"])
 
-            monitor.stop_monitoring()
+            if monitor is not None:
+                monitor.stop_monitoring()
 
         except Exception as e:
             result["error"] = str(e)
             self._log_status("ERROR", f"Backup execution failed: {e}")
             with contextlib.suppress(Exception):
-                if monitor:
+                if monitor is not None:
                     monitor.stop_monitoring()
         finally:
             # Stop progress simulation
