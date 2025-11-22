@@ -13,17 +13,20 @@
       "icon": "terminal-powershell"
     }
   },
-  "python.languageServer": "Pylance",
+  "python.languageServer": "Default",
   "python.linting.enabled": true,
   "python.linting.ruffEnabled": true,
   "python.linting.flake8Enabled": false,
+  "python.linting.pylintEnabled": false,
   "python.linting.isortEnabled": false,
+  "python.formatting.provider": "none",
   "python.formatting.blackEnabled": false,
   "python.terminal.activateEnvInCurrentTerminal": true,
   "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
     "editor.codeActionsOnSave": {
-      "source.fixAll.ruff": "explicit",
-      "source.organizeImports.ruff": "explicit"
+      "source.fixAll": "explicit",
+      "source.organizeImports": "explicit"
     },
     "editor.formatOnSave": true
   },
@@ -51,18 +54,19 @@
     "**/build": true,
     "**/node_modules": true
   },
-  "files.watcherExclude": {
-    "**/vcpkg/**": true,
-    "**/build/**": true,
-    "**/node_modules/**": true,
-    "**/.git/objects/**": true,
-    "**/.git/subtree-cache/**": true
-  },
+  "python.experiments.enabled": false,
+  "python.testing.pytestEnabled": true,
+  "python.testing.unittestEnabled": true,
+  "python.useEnvironmentsExtension": false,
+  "python.terminal.shellIntegration.enabled": true,
+  "python.terminal.integrated.enableREPLSmartSend": true,
   "python.analysis.exclude": [
     "**/vcpkg/**",
     "**/build/**",
     "**/node_modules/**",
-    "**/dist/**"
+    "**/dist/**",
+    "**/data/**",
+    "**/received_files/**"
   ],
   "python.analysis.extraPaths": [
     "${workspaceFolder}",
@@ -80,6 +84,15 @@
     "${workspaceFolder}/api_server",
     "${workspaceFolder}/flet_venv/Lib/site-packages"
   ],
+  "files.watcherExclude": {
+    "**/vcpkg/**": true,
+    "**/build/**": true,
+    "**/node_modules/**": true,
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/data/**": true,
+    "**/received_files/**": true
+  },
   "problems.exclude": {
     "**/scripts/cmake/vcpkg_buildpath_length_warning.cmake": true,
     "**/archive/**": true,
@@ -88,6 +101,10 @@
     "FletV2/**/archive/**": true,
     "**/_legacy/**": true,
     "_legacy/**": true
+  },
+  "sonarlint.connectedMode.project": {
+    "connectionId": "c-ares",
+    "projectKey": "c-ares_c-ares"
   },
   "github.copilot.nextEditSuggestions.enabled": true,
   "editor.experimentalGpuAcceleration": "on",
@@ -111,22 +128,13 @@
   "chat.edits2.enabled": true,
   "chat.extensionUnification.enabled": false,
   "accessibility.openChatEditedFiles": true,
-  "sonarlint.connectedMode.project": {
-    "connectionId": "c-ares",
-    "projectKey": "c-ares_c-ares"
-  },
   "[css]": {
-    "editor.semanticHighlighting.enabled": false
+    "editor.semanticHighlighting.enabled": true
   },
   "cmake.configureSettings": {
     "CMAKE_TOOLCHAIN_FILE": "${workspaceFolder}/vcpkg/scripts/buildsystems/vcpkg.cmake",
     "VCPKG_TARGET_TRIPLET": "x64-windows"
   },
   "cmake.generator": "Visual Studio 17 2022",
-  "cmake.platform": "x64",
-  "python.experiments.enabled": false,
-  "python.testing.pytestEnabled": true,
-  "python.testing.unittestEnabled": true,
-  "python.useEnvironmentsExtension": true,
-  "python.envFile": "c:/Users/tom7s/Desktopp/Claude_Folder_2/Client_Server_Encrypted_Backup_Framework/flet_venv"
+  "cmake.platform": "x64"
 }
