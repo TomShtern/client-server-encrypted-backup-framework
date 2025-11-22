@@ -108,6 +108,7 @@ downloads/
 eggs/
 .eggs/
 lib/
+.vscode/settings.json
 lib64/
 parts/
 sdist/
