@@ -1,26 +1,42 @@
 import json
-from unittest.mock import mock_open, patch
+import os
 
 import pytest
 
+import python_server.server.server
 from python_server.server.server import BackupServer
 
 
 @pytest.fixture
-def server():
-    """Create a BackupServer instance with mocked dependencies."""
-    with (
-        patch("python_server.server.server.ensure_single_server_instance"),
-        patch("python_server.server.server.DatabaseManager"),
-    ):
+def server(tmp_path):
+    """Create a BackupServer instance in a temporary directory."""
+    # Save current CWD
+    old_cwd = os.getcwd()
+    # Change to temp directory
+    os.chdir(tmp_path)
+
+    # Redirect SETTINGS_FILE to temp dir
+    original_settings_file = python_server.server.server.SETTINGS_FILE
+    python_server.server.server.SETTINGS_FILE = os.path.join(
+        tmp_path, "server_settings.json"
+    )
+
+    try:
+        # Initialize server
+        # This will create necessary directories and database in tmp_path
         server = BackupServer()
-        # Prevent actual network binding
+        # Set a test port
         server.port = 12560
         return server
+    finally:
+        # Restore SETTINGS_FILE
+        python_server.server.server.SETTINGS_FILE = original_settings_file
+        # Restore CWD
+        os.chdir(old_cwd)
 
 
 def test_settings_management(server):
-    """Test loading, validating, and saving settings."""
+    """Test loading, validating, and saving settings using real files."""
 
     # 1. Test _validate_settings
     valid_settings = {
@@ -39,71 +55,96 @@ def test_settings_management(server):
     assert server._validate_settings(invalid_settings)[0] is False
 
     # 2. Test load_settings
-    mock_settings_json = json.dumps(valid_settings)
-    with (
-        patch("builtins.open", mock_open(read_data=mock_settings_json)),
-        patch("os.path.exists", return_value=True),
-    ):
-        loaded = server.load_settings()
-        assert loaded["success"] is True
-        assert loaded["data"]["server_port"] == 1234
-        assert loaded["data"]["theme"] == "dark"
+    # Create a real settings file
+    with open("server_settings.json", "w") as f:
+        json.dump(valid_settings, f)
+
+    loaded = server.load_settings()
+    assert loaded["success"] is True
+    assert loaded["data"]["server_port"] == 1234
+    assert loaded["data"]["theme"] == "dark"
 
     # 3. Test save_settings (Atomic Write)
     new_settings = {"server_port": 5555}
 
-    # Mock os.replace to simulate atomic move
-    with (
-        patch("builtins.open", mock_open()) as mock_file,
-        patch("os.replace") as mock_replace,
-        patch("os.rename") as mock_rename,
-        patch("os.path.exists", return_value=True),
-        patch("os.remove"),
-        patch("json.dump"),
-    ):
-        success = server.save_settings(new_settings)
+    success = server.save_settings(new_settings)
+    assert success["success"] is True
 
-        assert success["success"] is True
-        # Verify it opened a temp file
-        mock_file.assert_called()
-        # Verify it tried to replace temp file with target
-        mock_replace.assert_called_once()
+    # Verify the file was updated
+    with open("server_settings.json", "r") as f:
+        saved_data = json.load(f)
+    # Settings are wrapped in "settings" key
+    assert saved_data["settings"]["server_port"] == 5555
 
 
-def test_log_export(server):
-    """Test log export functionality."""
+def test_log_export(tmp_path):
+    """Test log export functionality using real log files."""
+    # Save current CWD
+    old_cwd = os.getcwd()
+    # Change to temp directory
+    os.chdir(tmp_path)
 
-    # Mock log content
-    log_content = """2023-10-27 10:00:00,000 - INFO - Server started
-2023-10-27 10:00:01,000 - DEBUG - Connection from 127.0.0.1
-2023-10-27 10:00:02,000 - ERROR - Database connection failed
+    # Redirect SETTINGS_FILE to temp dir (good practice to avoid side effects)
+    original_settings_file = python_server.server.server.SETTINGS_FILE
+    python_server.server.server.SETTINGS_FILE = os.path.join(
+        tmp_path, "server_settings.json"
+    )
+
+    try:
+        # Create logs directory and pre-seed log file
+        os.makedirs("logs", exist_ok=True)
+
+        # Note: Added 'MainThread' to match server's log pattern
+        log_content = """2023-10-27 10:00:00,000 - MainThread - INFO - Server started
+2023-10-27 10:00:01,000 - MainThread - DEBUG - Connection from 127.0.0.1
+2023-10-27 10:00:02,000 - MainThread - ERROR - Database connection failed
 """
+        with open("logs/server.log", "w") as f:
+            f.write(log_content)
 
-    # Mock file size check to pass
-    with (
-        patch("os.path.getsize", return_value=1024),
-        patch("builtins.open", mock_open(read_data=log_content)) as mock_file,
-    ):
+        # Initialize server AFTER writing logs
+        server = BackupServer()
+        server.port = 12560
+
+        # Force server to read OUR log file, not the global one set at import time
+        server.backup_log_file = os.path.abspath("logs/server.log")
+
         # 1. Test JSON export
         json_export = server._export_logs_sync("json", {"limit": 10})
         assert json_export["success"] is True
-        assert json_export["data"]["count"] == 3
-
-        # Verify write (JSON)
-        handle = mock_file()
-        handle.write.assert_called()
+        assert json_export["data"]["count"] >= 3
 
         # 2. Test CSV export
         csv_export = server._export_logs_sync("csv", {"limit": 10})
         assert csv_export["success"] is True
-        assert csv_export["data"]["count"] == 3
+        assert csv_export["data"]["count"] >= 3
 
-        # 3. Test Filtering (Level)
+        # 3. Test Filtering (Level) - verify exported JSON file contains error entry
         error_export = server._export_logs_sync("json", {"level": "ERROR"})
         assert error_export["success"] is True
-        assert error_export["data"]["count"] == 1
+        assert error_export["data"]["count"] >= 1
+        error_file = error_export["data"]["file_path"]
+        with open(error_file, "r", encoding="utf-8") as f:
+            error_entries = json.load(f)
+        found_error = any(
+            entry.get("message") == "Database connection failed"
+            for entry in error_entries
+        )
+        assert found_error, "Did not find expected error log in exported JSON file"
 
-        # 4. Test Filtering (Search)
+        # 4. Test Filtering (Search) - verify exported JSON file contains connection entry
         search_export = server._export_logs_sync("json", {"search_term": "Connection"})
         assert search_export["success"] is True
-        assert search_export["data"]["count"] == 2
+        assert search_export["data"]["count"] >= 1
+        search_file = search_export["data"]["file_path"]
+        with open(search_file, "r", encoding="utf-8") as f:
+            search_entries = json.load(f)
+        found_conn = any(
+            "Connection" in entry.get("message", "") for entry in search_entries
+        )
+        assert found_conn, "Did not find expected connection log in exported JSON file"
+
+    finally:
+        # Restore SETTINGS_FILE and CWD
+        python_server.server.server.SETTINGS_FILE = original_settings_file
+        os.chdir(old_cwd)

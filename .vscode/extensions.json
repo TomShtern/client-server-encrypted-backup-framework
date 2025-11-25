@@ -25,6 +25,7 @@
         "google.gemini-cli-vscode-ide-companion",
         "dbaeumer.vscode-eslint",
         "trunk.io",
-        "charliermarsh.ruff"
+        "charliermarsh.ruff",
+        "ms-vscode.live-server"
     ]
 }

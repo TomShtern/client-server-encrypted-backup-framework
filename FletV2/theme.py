@@ -9,18 +9,26 @@ Achievement: 797 → ~200 lines (75% reduction) with superior visual quality.
 """
 
 import warnings
-from typing import Literal
+from typing import Literal, Union
 
 import flet as ft
 
 # Import Windows 11 integration utilities
 try:
-    from FletV2.utils.display_scaling import DisplayScaler, setup_display_scaling
-    from FletV2.utils.windows_integration import WindowsThemeProvider, setup_windows_11_integration
+    from .utils.display_scaling import DisplayScaler, setup_display_scaling
+    from .utils.windows_integration import (
+        WindowsThemeProvider,
+        setup_windows_11_integration,
+    )
 
     WINDOWS_INTEGRATION_AVAILABLE = True
 except ImportError:
     WINDOWS_INTEGRATION_AVAILABLE = False
+    # Define placeholder types for type checking when imports fail
+    DisplayScaler = None  # type: ignore[misc, assignment]
+    setup_display_scaling = None  # type: ignore[misc, assignment]
+    WindowsThemeProvider = None  # type: ignore[misc, assignment]
+    setup_windows_11_integration = None  # type: ignore[misc, assignment]
     print("Warning: Windows integration utilities not available")
 
 # ========================================================================================
@@ -37,7 +45,11 @@ def setup_sophisticated_theme(page: ft.Page, theme_mode: str = "system") -> None
     windows_theme_provider = None
     display_scaler = None
 
-    if WINDOWS_INTEGRATION_AVAILABLE:
+    if (
+        WINDOWS_INTEGRATION_AVAILABLE
+        and callable(setup_windows_11_integration)
+        and callable(setup_display_scaling)
+    ):
         try:
             # Setup Windows 11 theme detection and integration
             windows_theme_provider = setup_windows_11_integration(page)
@@ -53,11 +65,8 @@ def setup_sophisticated_theme(page: ft.Page, theme_mode: str = "system") -> None
         except Exception as e:
             print(f"⚠️ Windows integration setup failed: {e}")
 
-    # Setup base Flet theme
-    if windows_theme_provider:
-        # Windows integration will handle the theme
-        pass
-    else:
+    # Setup base Flet theme (when windows integration is not handling it)
+    if not windows_theme_provider:
         # Fallback to standard theme setup
         page.theme = ft.Theme(
             color_scheme_seed=ft.Colors.BLUE,
@@ -76,16 +85,18 @@ def setup_sophisticated_theme(page: ft.Page, theme_mode: str = "system") -> None
             ),
         )
         page.theme_mode = (
-            ft.ThemeMode.SYSTEM if theme_mode == "system" else getattr(ft.ThemeMode, theme_mode.upper())
+            ft.ThemeMode.SYSTEM
+            if theme_mode == "system"
+            else getattr(ft.ThemeMode, theme_mode.upper())
         )
 
     page.update()
 
     # Store Windows integration references on the page for later use without relying on page.data
     if windows_theme_provider is not None:
-        page._windows_theme_provider = windows_theme_provider
+        setattr(page, "_windows_theme_provider", windows_theme_provider)
     if display_scaler is not None:
-        page._display_scaler = display_scaler
+        setattr(page, "_display_scaler", display_scaler)
 
     # Optional compatibility: persist within page.data only when it is a dict
     page_data = getattr(page, "data", None)
@@ -96,28 +107,34 @@ def setup_sophisticated_theme(page: ft.Page, theme_mode: str = "system") -> None
             page_data["display_scaler"] = display_scaler
 
 
-def get_windows_theme_provider(page: ft.Page) -> WindowsThemeProvider | None:
-    """Get the Windows theme provider from page data"""
+def get_windows_theme_provider(page: ft.Page):  # type: ignore[return]
+    """Get the Windows theme provider from page data
+
+    Returns:
+        WindowsThemeProvider | None: The Windows theme provider if available
+    """
     provider = getattr(page, "_windows_theme_provider", None)
     if provider is not None:
         return provider
 
     page_data = getattr(page, "data", None)
-    if isinstance(page_data, dict):
-        return page_data.get("windows_theme_provider")
-    return None
+    return (
+        page_data.get("windows_theme_provider") if isinstance(page_data, dict) else None
+    )
 
 
-def get_display_scaler(page: ft.Page) -> DisplayScaler | None:
-    """Get the display scaler from page data"""
+def get_display_scaler(page: ft.Page):  # type: ignore[return]
+    """Get the display scaler from page data
+
+    Returns:
+        DisplayScaler | None: The display scaler if available
+    """
     scaler = getattr(page, "_display_scaler", None)
     if scaler is not None:
         return scaler
 
     page_data = getattr(page, "data", None)
-    if isinstance(page_data, dict):
-        return page_data.get("display_scaler")
-    return None
+    return page_data.get("display_scaler") if isinstance(page_data, dict) else None
 
 
 # ========================================================================================
@@ -176,8 +193,12 @@ def create_gradient(gradient_type: str = "primary") -> ft.LinearGradient:
 
 
 def create_gradient_button(
-    text: str, on_click, gradient_type: str = "primary", icon: str | None = None, variant: str = "filled"
-) -> ft.ElevatedButton:
+    text: str,
+    on_click,
+    gradient_type: str = "primary",
+    icon: str | None = None,
+    variant: str = "filled",
+) -> Union[ft.ElevatedButton, ft.OutlinedButton, ft.TextButton]:
     """Create enhanced button with gradients and multi-state animations."""
     gradient = create_gradient(gradient_type)
 
@@ -185,7 +206,10 @@ def create_gradient_button(
         style = ft.ButtonStyle(
             bgcolor=gradient.colors[0],
             color=ft.Colors.WHITE,
-            elevation={"": 2, "hovered": 6},
+            elevation={
+                ft.ControlState.DEFAULT: 2,
+                ft.ControlState.HOVERED: 6,
+            },
             animation_duration=300,
             shape=ft.RoundedRectangleBorder(radius=12),
             padding=ft.padding.symmetric(16, 24),
@@ -194,7 +218,7 @@ def create_gradient_button(
             content=ft.Row(
                 [
                     ft.Icon(icon, size=16) if icon else ft.Container(),
-                    ft.Text(text, weight=ft.FontWeight.MEDIUM),
+                    ft.Text(text, weight=ft.FontWeight.W_500),
                 ],
                 spacing=8 if icon else 0,
             ),
@@ -207,7 +231,8 @@ def create_gradient_button(
             icon=icon,
             on_click=on_click,
             style=ft.ButtonStyle(
-                shape=ft.RoundedRectangleBorder(radius=12), side=ft.BorderSide(1, gradient.colors[0])
+                shape=ft.RoundedRectangleBorder(radius=12),
+                side=ft.BorderSide(1, gradient.colors[0]),
             ),
         )
     else:  # text variant
@@ -215,12 +240,17 @@ def create_gradient_button(
             text=text,
             icon=icon,
             on_click=on_click,
-            style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=12), color=gradient.colors[0]),
+            style=ft.ButtonStyle(
+                shape=ft.RoundedRectangleBorder(radius=12), color=gradient.colors[0]
+            ),
         )
 
 
 def create_enhanced_card(
-    content: ft.Control, gradient_background: str = "surface", hover_effect: bool = True, elevation: int = 2
+    content: ft.Control,
+    gradient_background: str = "surface",
+    hover_effect: bool = True,
+    elevation: int = 2,
 ) -> ft.Container:
     """Create enhanced card with gradient backgrounds and hover effects."""
     gradient = create_gradient(gradient_background)
@@ -271,7 +301,9 @@ def create_metric_card_enhanced(
                             ],
                             spacing=4,
                         ),
-                        bgcolor=ft.Colors.with_opacity(0.1, create_gradient(color_type).colors[0]),
+                        bgcolor=ft.Colors.with_opacity(
+                            0.1, create_gradient(color_type).colors[0]
+                        ),
                         border_radius=8,
                         padding=ft.padding.symmetric(6, 8),
                     ),
@@ -283,7 +315,9 @@ def create_metric_card_enhanced(
         spacing=8,
     )
 
-    return create_enhanced_card(content, gradient_background=color_type, hover_effect=True)
+    return create_enhanced_card(
+        content, gradient_background=color_type, hover_effect=True
+    )
 
 
 # ========================================================================================
@@ -291,44 +325,62 @@ def create_metric_card_enhanced(
 # ========================================================================================
 
 
-def create_modern_card(content: ft.Control, elevation: int = 2, hover_effect: bool = True) -> ft.Container:
-    """Modern card using native Flet elevation."""
+def create_modern_card(
+    content: ft.Control, elevation: int = 2, hover_effect: bool = True
+) -> ft.Container:
+    """Modern card using native Flet shadow."""
     return ft.Container(
         content=content,
         bgcolor=ft.Colors.SURFACE,
         border_radius=16,
         padding=ft.padding.all(20),
-        elevation=elevation,
         shadow=ft.BoxShadow(
-            blur_radius=8, offset=ft.Offset(0, 2), color=ft.Colors.with_opacity(0.1, ft.Colors.BLACK)
+            spread_radius=1,
+            blur_radius=8 + elevation * 2,
+            offset=ft.Offset(0, elevation),
+            color=ft.Colors.with_opacity(0.1 + elevation * 0.02, ft.Colors.BLACK),
         ),
         animate=ft.Animation(150) if hover_effect else None,
     )
 
 
 def themed_button(
-    text: str, on_click=None, variant: str = "filled", icon: str | None = None, disabled: bool = False
+    text: str,
+    on_click=None,
+    variant: str = "filled",
+    icon: str | None = None,
+    disabled: bool = False,
 ):
     """Themed button using native Flet button types."""
     common = {"text": text, "icon": icon, "on_click": on_click, "disabled": disabled}
 
     if variant == "filled":
-        return ft.ElevatedButton(**common, style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=12)))
+        return ft.ElevatedButton(
+            **common, style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=12))
+        )
     elif variant == "outlined":
-        return ft.OutlinedButton(**common, style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=12)))
+        return ft.OutlinedButton(
+            **common, style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=12))
+        )
     else:
-        return ft.TextButton(**common, style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=12)))
+        return ft.TextButton(
+            **common, style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=12))
+        )
 
 
 def create_metric_card(
-    title: str, value: str, change: str | None = None, icon: str | None = None, color_type: str = "primary"
+    title: str,
+    value: str,
+    change: str | None = None,
+    icon: str | None = None,
+    color_type: str = "primary",
 ) -> ft.Container:
     """Metric card using semantic colors."""
     color_map = {
         "primary": ft.Colors.PRIMARY,
         "secondary": ft.Colors.SECONDARY,
-        "success": ft.Colors.SUCCESS,
-        "warning": ft.Colors.WARNING,
+        "success": ft.Colors.GREEN,
+        "warning": ft.Colors.ORANGE,
         "error": ft.Colors.ERROR,
         "info": ft.Colors.TERTIARY,
     }
@@ -344,7 +396,11 @@ def create_metric_card(
                     ],
                     alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                 ),
-                ft.Text(value, style=ft.TextThemeStyle.HEADLINE_MEDIUM, weight=ft.FontWeight.BOLD),
+                ft.Text(
+                    value,
+                    style=ft.TextThemeStyle.HEADLINE_MEDIUM,
+                    weight=ft.FontWeight.BOLD,
+                ),
                 ft.Text(change, style=ft.TextThemeStyle.BODY_SMALL, color=color)
                 if change
                 else ft.Container(),
@@ -358,11 +414,11 @@ def create_metric_card(
 def create_status_badge(status: str, variant: str = "filled") -> ft.Container:
     """Status badge using semantic colors."""
     status_map = {
-        "active": ft.Colors.SUCCESS,
-        "online": ft.Colors.SUCCESS,
-        "success": ft.Colors.SUCCESS,
-        "warning": ft.Colors.WARNING,
-        "pending": ft.Colors.WARNING,
+        "active": ft.Colors.GREEN,
+        "online": ft.Colors.GREEN,
+        "success": ft.Colors.GREEN,
+        "warning": ft.Colors.ORANGE,
+        "pending": ft.Colors.ORANGE,
         "error": ft.Colors.ERROR,
         "offline": ft.Colors.ERROR,
         "failed": ft.Colors.ERROR,
@@ -389,7 +445,10 @@ def create_loading_indicator(text: str = "Loading...") -> ft.Container:
     """Loading indicator using native ProgressRing."""
     return ft.Container(
         content=ft.Column(
-            [ft.ProgressRing(width=32, height=32), ft.Text(text, style=ft.TextThemeStyle.BODY_MEDIUM)],
+            [
+                ft.ProgressRing(width=32, height=32),
+                ft.Text(text, style=ft.TextThemeStyle.BODY_MEDIUM),
+            ],
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             spacing=8,
         ),
@@ -398,7 +457,9 @@ def create_loading_indicator(text: str = "Loading...") -> ft.Container:
     )
 
 
-def create_skeleton_loader(height: int = 20, width: int | None = None, radius: int = 8) -> ft.Container:
+def create_skeleton_loader(
+    height: int = 20, width: int | None = None, radius: int = 8
+) -> ft.Container:
     """Skeleton loader for loading states."""
     return ft.Container(
         height=height,
@@ -446,7 +507,9 @@ def create_neumorphic_metric_card(
         border_radius=16,
         padding=ft.padding.all(20),
         shadow=shadows,
-        animate_scale=ft.Animation(180, ft.AnimationCurve.EASE_OUT_CUBIC) if enable_hover else None,
+        animate_scale=ft.Animation(180, ft.AnimationCurve.EASE_OUT_CUBIC)
+        if enable_hover
+        else None,
     )
 
     if enable_hover:
@@ -481,7 +544,11 @@ def create_section_divider(title: str | None = None) -> ft.Container:
             content=ft.Row(
                 [
                     ft.Container(content=ft.Divider(height=1), expand=True),
-                    ft.Text(title, style=ft.TextThemeStyle.LABEL_LARGE, color=ft.Colors.OUTLINE),
+                    ft.Text(
+                        title,
+                        style=ft.TextThemeStyle.LABEL_LARGE,
+                        color=ft.Colors.OUTLINE,
+                    ),
                     ft.Container(content=ft.Divider(height=1), expand=True),
                 ],
                 alignment=ft.MainAxisAlignment.CENTER,
@@ -489,7 +556,9 @@ def create_section_divider(title: str | None = None) -> ft.Container:
             margin=ft.margin.symmetric(vertical=16),
         )
     else:
-        return ft.Container(content=ft.Divider(height=1), margin=ft.margin.symmetric(vertical=16))
+        return ft.Container(
+            content=ft.Divider(height=1), margin=ft.margin.symmetric(vertical=16)
+        )
 
 
 def get_design_tokens() -> dict:
@@ -519,12 +588,12 @@ def get_brand_color(name: str):
         "primary": ft.Colors.PRIMARY,
         "secondary": ft.Colors.SECONDARY,
         "tertiary": ft.Colors.TERTIARY,
-        "success": ft.Colors.SUCCESS,
-        "warning": ft.Colors.WARNING,
+        "success": ft.Colors.GREEN,
+        "warning": ft.Colors.ORANGE,
         "error": ft.Colors.ERROR,
         "info": ft.Colors.TERTIARY,
         "surface": ft.Colors.SURFACE,
-        "surface_variant": ft.Colors.SURFACE_VARIANT,
+        "surface_variant": ft.Colors.GREY_100,
         "outline": ft.Colors.OUTLINE,
     }
     return colors.get(name.lower(), ft.Colors.PRIMARY)
@@ -559,11 +628,15 @@ def _deprecation_warning(func_name: str, replacement: str | None = None) -> None
 
 def create_neumorphic_container(*args, **kwargs):
     _deprecation_warning("create_neumorphic_container", "create_modern_card")
-    return create_modern_card(args[0] if args else ft.Container(), elevation=4, **kwargs)
+    return create_modern_card(
+        args[0] if args else ft.Container(), elevation=4, **kwargs
+    )
 
 
 def create_glassmorphic_container(*args, **kwargs):
-    _deprecation_warning("create_glassmorphic_container", "create_enhanced_card with gradient")
+    _deprecation_warning(
+        "create_glassmorphic_container", "create_enhanced_card with gradient"
+    )
     content = args[0] if args else ft.Container()
     return create_enhanced_card(content, gradient_background="surface", **kwargs)
 
