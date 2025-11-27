@@ -1,15 +1,25 @@
 /**
- * Gets a DOM element by ID and throws if not found
+ * Gets a DOM element by ID with optional fallback
  * @param {string} id - The element ID to find
- * @returns {HTMLElement} The found element
- * @throws {Error} If the element is not found
+ * @param {boolean} required - Whether to throw if not found
+ * @returns {HTMLElement|null} The found element or null
+ * @throws {Error} If the element is not found and required is true
  */
-function getElement(id) {
+function getElement(id, required = true) {
   const el = document.getElementById(id);
-  if (!el) {
+  if (!el && required) {
     throw new Error(`Missing required element: #${id}`);
   }
   return el;
+}
+
+/**
+ * Gets a DOM element by ID, returns null if not found (no throw)
+ * @param {string} id - The element ID to find
+ * @returns {HTMLElement|null} The found element or null
+ */
+function getOptionalElement(id) {
+  return document.getElementById(id);
 }
 
 /**
@@ -45,19 +55,23 @@ export const dom = {
   serverHint: getElement('serverHint'),
   usernameHint: getElement('usernameHint'),
   fileDropZone: getElement('fileDropZone'),
-  fileSelectBtn: getElement('fileSelectBtn'),
   fileInput: getElement('fileInput'),
-  recentFilesBtn: getElement('recentFilesBtn'),
-  clearFileBtn: getElement('clearFileBtn'),
-  fileName: getElement('fileName'),
-  fileInfo: getElement('fileInfo'),
+  // Optional elements that may not exist in new design
+  fileSelectBtn: getOptionalElement('chooseFileBtn'),
+  recentFilesBtn: getOptionalElement('recentFilesBtn'),
+  clearFileBtn: getOptionalElement('clearFileBtn'),
+  fileName: getOptionalElement('fileName'),
+  fileInfo: getOptionalElement('fileInfo'),
   primaryActionBtn: getElement('primaryActionBtn'),
   pauseBtn: getElement('pauseBtn'),
   resumeBtn: getElement('resumeBtn'),
   stopBtn: getElement('stopBtn'),
-  advChunkSize: getElement('advChunkSize'),
-  advRetryLimit: getElement('advRetryLimit'),
-  advResetBtn: getElement('advResetBtn'),
+  advChunkSize: getOptionalElement('advChunkSize'),
+  advRetryLimit: getOptionalElement('advRetryLimit'),
+  advResetBtn: getOptionalElement('advResetBtn'),
+  // Advanced settings panel elements
+  advancedPanel: getOptionalElement('advancedPanel'),
+  advancedContent: getOptionalElement('advancedContent'),
   phaseText: getElement('phaseText'),
   progressRing: getElement('progressRing'),
   progressArc: getElement('progressArc'),
@@ -69,15 +83,24 @@ export const dom = {
     size: getElement('statSize'),
     elapsed: getElement('statElapsed'),
   },
+  // Log filter buttons
   logFilters: [
     getElement('filterAll'),
     getElement('filterInfo'),
     getElement('filterWarn'),
     getElement('filterError'),
   ],
-  logAutoscrollToggle: getElement('logAutoscrollToggle'),
-  logExportBtn: getElement('logExportBtn'),
+  // Log filter segment indicator (for sliding animation)
+  segmentIndicator: getOptionalElement('segmentIndicator'),
+  logAutoscrollToggle: getOptionalElement('logAutoscrollToggle'),
+  logExportBtn: getOptionalElement('logExportBtn'),
+  logClearBtn: getOptionalElement('logClearBtn'),
+  logDemoBtn: getOptionalElement('logDemoBtn'),
+  logSearchInput: getOptionalElement('logSearchInput'),
+  searchClearBtn: getOptionalElement('searchClearBtn'),
+  logEntryCount: getOptionalElement('logEntryCount'),
   logContainer: getElement('logContainer'),
+  logsEmptyState: getOptionalElement('logsEmptyState'),
   toastStack: getElement('toastStack'),
   modal: getElement('modalConfirm'),
   modalCancelBtn: getElement('modalCancelBtn'),

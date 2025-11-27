@@ -35,13 +35,20 @@ try:
     from ..utils.loading_states import (
         create_error_display,
     )
-    from ..utils.ui_builders import create_action_button, create_view_header
+    from ..utils.ui_builders import (
+        create_action_button,
+        create_status_chip,
+        create_view_header,
+    )
     from ..utils.ui_components import AppCard, create_pulsing_status_indicator
     from ..utils.user_feedback import show_error_message, show_success_message
 except Exception:  # pragma: no cover - fallback when executing directly
     from FletV2.theme import create_skeleton_loader
     from FletV2.utils.async_helpers import run_sync_in_executor
-    from FletV2.utils.data_export import export_to_csv, generate_export_filename  # type: ignore
+    from FletV2.utils.data_export import (  # type: ignore
+        export_to_csv,
+        generate_export_filename,
+    )
     from FletV2.utils.formatters import (
         as_float,
         as_int,
@@ -103,32 +110,32 @@ def _infer_severity(entry: dict[str, Any]) -> str:
         return "info"
 
     priority = ("severity", "level", "status", "type", "category")
+
+    severity_map = {
+        "critical": {"critical", "fatal"},
+        "error": {"error", "err", "failed", "failure"},
+        "warning": {"warn", "warning", "degraded", "maintenance"},
+        "success": {"success", "ok", "completed"},
+        "audit": {"audit", "policy"},
+        "info": {"info", "information", "event"},
+    }
+
     for key in priority:
-        raw = entry.get(key)
-        if raw is None:
-            continue
-        normalized = str(raw).strip().lower()
-        if not normalized:
-            continue
-        if normalized in {"critical", "fatal"}:
-            return "critical"
-        if normalized in {"error", "err", "failed", "failure"}:
-            return "error"
-        if normalized in {"warn", "warning", "degraded", "maintenance"}:
-            return "warning"
-        if normalized in {"success", "ok", "completed"}:
-            return "success"
-        if normalized in {"audit", "policy"}:
-            return "audit"
-        if normalized in {"info", "information", "event"}:
-            return "info"
+        if raw := entry.get(key):
+            normalized = str(raw).strip().lower()
+            if not normalized:
+                continue
 
-    if entry.get("success") is False:
-        return "error"
-    return "info"
+            for severity, keywords in severity_map.items():
+                if normalized in keywords:
+                    return severity
+
+    return "error" if entry.get("success") is False else "info"
 
 
-def _activity_palette(severity: str, scheme: ft.ColorScheme | None = None) -> dict[str, Any]:
+def _activity_palette(
+    severity: str, scheme: ft.ColorScheme | None = None
+) -> dict[str, Any]:
     base_palette = {
         "critical": {
             "accent": ft.Colors.RED_ACCENT_200,
@@ -163,12 +170,8 @@ def _activity_palette(severity: str, scheme: ft.ColorScheme | None = None) -> di
     }
 
     def _resolve(attr: str, fallback: str) -> str:
-        if scheme is None:
-            return fallback
-        value = getattr(scheme, attr, None)
-        if isinstance(value, str) and value.strip():
-            return value
-        return fallback
+        value = getattr(scheme, attr, None) if scheme else None
+        return value if isinstance(value, str) and value.strip() else fallback
 
     palette = {
         "critical": {
@@ -187,7 +190,9 @@ def _activity_palette(severity: str, scheme: ft.ColorScheme | None = None) -> di
             "text": _resolve("on_tertiary_container", base_palette["warning"]["text"]),
         },
         "success": {
-            "accent": _resolve("secondary_container", base_palette["success"]["accent"]),
+            "accent": _resolve(
+                "secondary_container", base_palette["success"]["accent"]
+            ),
             "icon": ft.Icons.CHECK_CIRCLE_OUTLINE,
             "text": _resolve("on_secondary_container", base_palette["success"]["text"]),
         },
@@ -212,7 +217,9 @@ def _activity_palette(severity: str, scheme: ft.ColorScheme | None = None) -> di
 # ============================================================================
 
 
-async def _call_bridge(server_bridge: Any | None, method_name: str, *args: Any) -> dict[str, Any]:
+async def _call_bridge(
+    server_bridge: Any | None, method_name: str, *args: Any
+) -> dict[str, Any]:
     DEBUG = os.environ.get("FLET_DASHBOARD_DEBUG") == "1"
     if not server_bridge:
         if DEBUG:
@@ -221,7 +228,11 @@ async def _call_bridge(server_bridge: Any | None, method_name: str, *args: Any) 
 
     method = getattr(server_bridge, method_name, None)
     if method is None:
-        return {"success": False, "data": None, "error": f"Method {method_name} not found"}
+        return {
+            "success": False,
+            "data": None,
+            "error": f"Method {method_name} not found",
+        }
 
     try:
         if DEBUG:
@@ -245,7 +256,9 @@ async def _call_bridge(server_bridge: Any | None, method_name: str, *args: Any) 
             )
         return result
     if DEBUG:
-        print(f"[DASH] _call_bridge('{method_name}') returned (raw): type={type(result)}")
+        print(
+            f"[DASH] _call_bridge('{method_name}') returned (raw): type={type(result)}"
+        )
     return {"success": True, "data": result, "error": None}
 
 
@@ -256,7 +269,9 @@ async def _fetch_snapshot(server_bridge: Any | None) -> DashboardSnapshot:
 
     # Gracefully handle GUI-only mode (no real server/bridge). In this case, don't
     # spam errors; return neutral, empty snapshot so the UI renders clean placeholders.
-    if not server_bridge or (hasattr(server_bridge, "real_server") and not server_bridge.real_server):
+    if not server_bridge or (
+        hasattr(server_bridge, "real_server") and not server_bridge.real_server
+    ):
         snapshot.server_status = "offline"
         snapshot.errors = None
         snapshot.recent_activity = []
@@ -272,7 +287,9 @@ async def _fetch_snapshot(server_bridge: Any | None) -> DashboardSnapshot:
         snapshot.total_files = int(payload.get("total_files") or 0)
         snapshot.uptime_seconds = float(payload.get("uptime") or 0.0)
         snapshot.server_status = str(payload.get("server_status") or "offline")
-        snapshot.server_version = str(payload.get("server_version") or snapshot.server_version)
+        snapshot.server_version = str(
+            payload.get("server_version") or snapshot.server_version
+        )
     else:
         issues.append(summary.get("error") or "Dashboard summary unavailable")
 
@@ -327,17 +344,16 @@ async def _fetch_snapshot(server_bridge: Any | None) -> DashboardSnapshot:
     activity = await _call_bridge(server_bridge, "get_recent_activity_async", 12)
     if not activity.get("success"):
         if DEBUG:
-            print("[DASH] _fetch_snapshot → async activity failed, trying sync get_recent_activity")
+            print(
+                "[DASH] _fetch_snapshot → async activity failed, trying sync get_recent_activity"
+            )
         activity = await _call_bridge(server_bridge, "get_recent_activity", 12)
 
-    if activity.get("success"):
-        data = activity.get("data")
-        if isinstance(data, list):
-            snapshot.recent_activity = data
-        else:
-            snapshot.recent_activity = []
-    else:
+    if not activity.get("success"):
         issues.append(activity.get("error") or "Recent activity unavailable")
+    else:
+        data = activity.get("data")
+        snapshot.recent_activity = data if isinstance(data, list) else []
 
     snapshot.errors = issues or None
     return snapshot
@@ -365,9 +381,15 @@ def _build_metric_block(
 
     # Create Text controls with refs
     value_text = ft.Text(
-        "—", size=30, weight=ft.FontWeight.W_700, color=ft.Colors.ON_SURFACE, ref=value_text_ref
+        "—",
+        size=30,
+        weight=ft.FontWeight.W_700,
+        color=ft.Colors.ON_SURFACE,
+        ref=value_text_ref,
     )
-    footnote_text = ft.Text(subtitle, size=12, color=ft.Colors.ON_SURFACE_VARIANT, ref=footnote_text_ref)
+    footnote_text = ft.Text(
+        subtitle, size=12, color=ft.Colors.ON_SURFACE_VARIANT, ref=footnote_text_ref
+    )
 
     body = ft.Column(
         [
@@ -410,13 +432,17 @@ def _build_metric_block(
 
     card_content.on_hover = on_hover
 
+    is_clickable = bool(route and navigate_callback)
+
+    def on_click_handler(_):
+        if navigate_callback and route:
+            navigate_callback(route)
+
     wrapper = ft.Container(
         content=card_content,
         col=column_span,
-        on_click=(lambda _, destination=route: navigate_callback(destination))
-        if route and navigate_callback
-        else None,
-        ink=True if route and navigate_callback else False,
+        on_click=on_click_handler if is_clickable else None,
+        ink=is_clickable,
     )
 
     # Return refs for direct access to controls
@@ -477,14 +503,27 @@ def create_dashboard_view(
             ft.Colors.BLUE,
             "files",
         ),
-        ("uptime", "Uptime", "Since last restart", ft.Icons.SCHEDULE, ft.Colors.GREEN, None),
+        (
+            "uptime",
+            "Uptime",
+            "Since last restart",
+            ft.Icons.SCHEDULE,
+            ft.Colors.GREEN,
+            None,
+        ),
     ]
 
     metric_blocks: dict[str, dict[str, ft.Control]] = {}
     metric_controls: list[ft.Control] = []
     for key, title, subtitle, icon, accent, route in metrics_config:
         block = _build_metric_block(
-            title, subtitle, icon, accent, {"xs": 12, "sm": 6, "md": 3}, navigate_callback, route
+            title,
+            subtitle,
+            icon,
+            accent,
+            {"xs": 12, "sm": 6, "md": 3},
+            navigate_callback,
+            route,
         )
         metric_blocks[key] = block
         metric_controls.append(block["wrapper"])
@@ -492,7 +531,9 @@ def create_dashboard_view(
     metrics_row = ft.ResponsiveRow(metric_controls, spacing=12, run_spacing=12)
 
     # --- Live-updated controls used in the header panel
-    status_chip_holder = ft.Container(content=create_pulsing_status_indicator("neutral", "Server: Unknown"))
+    status_chip_holder = ft.Container(
+        content=create_pulsing_status_indicator("neutral", "Server: Unknown")
+    )
     uptime_value_text = ft.Text("—", size=13, weight=ft.FontWeight.W_600)
 
     # Simple text displays for CPU and Memory
@@ -514,10 +555,16 @@ def create_dashboard_view(
             ft.Row(
                 [
                     create_status_chip(
-                        ft.Icons.HOURGLASS_BOTTOM, uptime_value_text, ft.Colors.PRIMARY, ft.Colors.ON_PRIMARY
+                        ft.Icons.HOURGLASS_BOTTOM,
+                        uptime_value_text,
+                        ft.Colors.PRIMARY,
+                        ft.Colors.ON_PRIMARY,
                     ),
                     create_status_chip(
-                        ft.Icons.HUB, connections_value_text, ft.Colors.SECONDARY, ft.Colors.ON_SECONDARY
+                        ft.Icons.HUB,
+                        connections_value_text,
+                        ft.Colors.SECONDARY,
+                        ft.Colors.ON_SECONDARY,
                     ),
                     create_status_chip(
                         ft.Icons.STORAGE,
@@ -538,7 +585,11 @@ def create_dashboard_view(
         [
             ft.Row(
                 [
-                    ft.Icon(ft.Icons.TRENDING_UP, size=16, color=ft.Colors.ON_SURFACE_VARIANT),
+                    ft.Icon(
+                        ft.Icons.TRENDING_UP,
+                        size=16,
+                        color=ft.Colors.ON_SURFACE_VARIANT,
+                    ),
                     ft.Text("CPU", size=11, color=ft.Colors.ON_SURFACE_VARIANT),
                     ft.Container(expand=True),
                     cpu_value_text,
@@ -549,7 +600,9 @@ def create_dashboard_view(
             cpu_bar,
             ft.Row(
                 [
-                    ft.Icon(ft.Icons.MEMORY, size=16, color=ft.Colors.ON_SURFACE_VARIANT),
+                    ft.Icon(
+                        ft.Icons.MEMORY, size=16, color=ft.Colors.ON_SURFACE_VARIANT
+                    ),
                     ft.Text("Memory", size=11, color=ft.Colors.ON_SURFACE_VARIANT),
                     ft.Container(expand=True),
                     memory_value_text,
@@ -560,7 +613,10 @@ def create_dashboard_view(
             ft.Row(
                 [
                     create_status_chip(
-                        ft.Icons.BUILD_OUTLINED, version_value_text, ft.Colors.PRIMARY, ft.Colors.ON_PRIMARY
+                        ft.Icons.BUILD_OUTLINED,
+                        version_value_text,
+                        ft.Colors.PRIMARY,
+                        ft.Colors.ON_PRIMARY,
                     ),
                     create_status_chip(
                         ft.Icons.SETTINGS_ETHERNET,
@@ -604,7 +660,9 @@ def create_dashboard_view(
     )
 
     refresh_button = create_action_button("Refresh", None, icon=ft.Icons.REFRESH)
-    export_button = create_action_button("Export activity", None, icon=ft.Icons.DOWNLOAD, primary=False)
+    export_button = create_action_button(
+        "Export activity", None, icon=ft.Icons.DOWNLOAD, primary=False
+    )
 
     header_actions: list[ft.Control] = [
         ft.Row(
@@ -633,17 +691,23 @@ def create_dashboard_view(
 
     activity_full_data: list[dict[str, Any]] = []
 
-    activity_summary_text = ft.Text("No activity", size=12, color=ft.Colors.ON_SURFACE_VARIANT)
+    activity_summary_text = ft.Text(
+        "No activity", size=12, color=ft.Colors.ON_SURFACE_VARIANT
+    )
 
     # Use ListView instead of Column for automatic scrolling and height management
-    activity_list = ft.ListView(spacing=12, padding=ft.padding.symmetric(vertical=6), expand=True)
+    activity_list = ft.ListView(
+        spacing=12, padding=ft.padding.symmetric(vertical=6), expand=True
+    )
 
     # Add skeleton loaders matching final content structure
     for _ in range(4):  # Show 4 skeleton tiles
         skeleton_tile = ft.Container(
             content=ft.Row(
                 [
-                    create_skeleton_loader(height=40, width=40, radius=20),  # Icon placeholder
+                    create_skeleton_loader(
+                        height=40, width=40, radius=20
+                    ),  # Icon placeholder
                     ft.Column(
                         [
                             create_skeleton_loader(height=16, width=200),  # Title
@@ -681,10 +745,14 @@ def create_dashboard_view(
         expand=True,
     )
 
-    footer_text = ft.Text("Last updated: —", size=12, color=ft.Colors.ON_SURFACE_VARIANT)
+    footer_text = ft.Text(
+        "Last updated: —", size=12, color=ft.Colors.ON_SURFACE_VARIANT
+    )
     # The footer should be part of the main content column, not a separate container that might cause layout issues.
     # It should also be aligned to the end of the column, not necessarily the bottom right of a separate container.
-    footer_container = ft.Container(content=footer_text, alignment=ft.alignment.center_right)
+    footer_container = ft.Container(
+        content=footer_text, alignment=ft.alignment.center_right
+    )
 
     error_panel = ft.Container(visible=False)
 
@@ -716,7 +784,9 @@ def create_dashboard_view(
     def _derive_status(snapshot: DashboardSnapshot) -> tuple[str, str]:
         # If there's no server bridge or no real server behind it, we're in GUI-only
         # standalone mode. Show a neutral banner instead of critical/offline.
-        if not server_bridge or (hasattr(server_bridge, "real_server") and not server_bridge.real_server):
+        if not server_bridge or (
+            hasattr(server_bridge, "real_server") and not server_bridge.real_server
+        ):
             return "neutral", "GUI: Standalone mode"
 
         # Check if bridge has real server instance (but DON'T call is_connected() - it blocks!)
@@ -783,7 +853,10 @@ def create_dashboard_view(
 
         def _cleanup(completed: asyncio.Task[Any]) -> None:
             background_tasks.discard(completed)
-            if os.environ.get("FLET_DASHBOARD_DEBUG") == "1" and not completed.cancelled():
+            if (
+                os.environ.get("FLET_DASHBOARD_DEBUG") == "1"
+                and not completed.cancelled()
+            ):
                 with contextlib.suppress(Exception):
                     exc = completed.exception()
                     if exc:
@@ -792,7 +865,9 @@ def create_dashboard_view(
         task.add_done_callback(_cleanup)
         return task
 
-    def _schedule_task(coro_func: Callable[[], Coroutine[Any, Any, Any]]) -> asyncio.Task[Any] | None:
+    def _schedule_task(
+        coro_func: Callable[[], Coroutine[Any, Any, Any]],
+    ) -> asyncio.Task[Any] | None:
         if disposed:
             return None
         try:
@@ -855,7 +930,10 @@ def create_dashboard_view(
             elif block.get("footnote_text"):
                 footnote_control = block.get("footnote_text")
 
-            if footnote_control and getattr(footnote_control, "value", None) != subtitle:
+            if (
+                footnote_control
+                and getattr(footnote_control, "value", None) != subtitle
+            ):
                 footnote_control.value = subtitle
                 _safe_update(footnote_control)
                 changed = True
@@ -927,7 +1005,9 @@ def create_dashboard_view(
         await asyncio.sleep(0)
 
         # Update status chip and header tokens
-        status_chip_holder.content = create_pulsing_status_indicator(status_level, status_label)
+        status_chip_holder.content = create_pulsing_status_indicator(
+            status_level, status_label
+        )
         _safe_update(status_chip_holder)
 
         _set_text(uptime_value_text, uptime_text, status_header_panel)
@@ -955,7 +1035,9 @@ def create_dashboard_view(
             db_display = f"{snapshot.db_response_ms} ms"
         _set_text(db_value_text, db_display, status_header_panel)
 
-        connections_display = str(max(snapshot.active_connections or 0, connected_clients))
+        connections_display = str(
+            max(snapshot.active_connections or 0, connected_clients)
+        )
         _set_text(connections_value_text, connections_display, status_header_panel)
 
         server_version = snapshot.server_version or "—"
@@ -974,7 +1056,9 @@ def create_dashboard_view(
             if DEBUG:
                 print(f"[DASH][WARN] activity filter failed: {exc}")
 
-        footer_text.value = f"Last updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+        footer_text.value = (
+            f"Last updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+        )
         _safe_update(footer_text)
 
         if snapshot.errors:
@@ -1046,9 +1130,15 @@ def create_dashboard_view(
                             continue
                         export_rows.append(
                             {
-                                "timestamp": format_timestamp(item.get("timestamp") or item.get("time")),
-                                "category": str(item.get("type") or item.get("level") or "info"),
-                                "message": str(item.get("message") or item.get("details") or ""),
+                                "timestamp": format_timestamp(
+                                    item.get("timestamp") or item.get("time")
+                                ),
+                                "category": str(
+                                    item.get("type") or item.get("level") or "info"
+                                ),
+                                "message": str(
+                                    item.get("message") or item.get("details") or ""
+                                ),
                             }
                         )
 
@@ -1057,7 +1147,11 @@ def create_dashboard_view(
                         return
 
                     filename = generate_export_filename("dashboard_activity", "csv")
-                    export_to_csv(export_rows, filename, fieldnames=["timestamp", "category", "message"])
+                    export_to_csv(
+                        export_rows,
+                        filename,
+                        fieldnames=["timestamp", "category", "message"],
+                    )
                     show_success_message(page, f"Activity exported to {filename}")
                 except Exception as exc:  # pragma: no cover - defensive guard
                     show_error_message(page, f"Export failed: {exc}")
@@ -1102,22 +1196,35 @@ def create_dashboard_view(
         severity = _infer_severity(entry)
         scheme = (
             page.theme.color_scheme
-            if getattr(page, "theme", None) and getattr(page.theme, "color_scheme", None)
+            if getattr(page, "theme", None)
+            and getattr(page.theme, "color_scheme", None)
             else None
         )
         palette = _activity_palette(severity, scheme)
 
         timestamp = format_timestamp(entry.get("timestamp") or entry.get("time"))
-        category = normalize_text(entry.get("type") or entry.get("category") or "event").title() or "Event"
+        category = (
+            normalize_text(
+                entry.get("type") or entry.get("category") or "event"
+            ).title()
+            or "Event"
+        )
         message = normalize_text(
-            entry.get("message") or entry.get("details") or entry.get("description") or "—"
+            entry.get("message")
+            or entry.get("details")
+            or entry.get("description")
+            or "—"
         )
 
         # Build subtitle with timestamp and metadata
         subtitle_parts = [timestamp]
-        if component := normalize_text(entry.get("component") or entry.get("origin") or ""):
+        if component := normalize_text(
+            entry.get("component") or entry.get("origin") or ""
+        ):
             subtitle_parts.append(f"Component: {component}")
-        if client_id := normalize_text(entry.get("client_id") or entry.get("client") or ""):
+        if client_id := normalize_text(
+            entry.get("client_id") or entry.get("client") or ""
+        ):
             subtitle_parts.append(f"Client: {client_id}")
 
         # Build tile with severity badge pill for quick visual scanning
@@ -1135,7 +1242,10 @@ def create_dashboard_view(
                     # Severity badge pill
                     ft.Container(
                         content=ft.Text(
-                            severity.upper(), size=10, weight=ft.FontWeight.W_700, color=palette["text"]
+                            severity.upper(),
+                            size=10,
+                            weight=ft.FontWeight.W_700,
+                            color=palette["text"],
                         ),
                         padding=ft.padding.symmetric(horizontal=6, vertical=2),
                         bgcolor=ft.Colors.with_opacity(0.2, palette["accent"]),
@@ -1146,13 +1256,21 @@ def create_dashboard_view(
             ),
             subtitle=ft.Column(
                 [
-                    ft.Text(message, size=13, max_lines=2, overflow=ft.TextOverflow.ELLIPSIS),
-                    ft.Text(" • ".join(subtitle_parts), size=11, color=ft.Colors.ON_SURFACE_VARIANT),
+                    ft.Text(
+                        message, size=13, max_lines=2, overflow=ft.TextOverflow.ELLIPSIS
+                    ),
+                    ft.Text(
+                        " • ".join(subtitle_parts),
+                        size=11,
+                        color=ft.Colors.ON_SURFACE_VARIANT,
+                    ),
                 ],
                 spacing=4,
                 tight=True,
             ),
-            trailing=ft.Icon(ft.Icons.CHEVRON_RIGHT, size=20, color=ft.Colors.ON_SURFACE_VARIANT),
+            trailing=ft.Icon(
+                ft.Icons.CHEVRON_RIGHT, size=20, color=ft.Colors.ON_SURFACE_VARIANT
+            ),
         )
 
         # Enhanced container with stronger colors, left border, hover animation, and click handling
@@ -1192,8 +1310,16 @@ def create_dashboard_view(
                 ft.Container(
                     content=ft.Column(
                         [
-                            ft.Icon(ft.Icons.HISTORY, size=48, color=ft.Colors.ON_SURFACE_VARIANT),
-                            ft.Text("No recent activity", size=16, weight=ft.FontWeight.W_600),
+                            ft.Icon(
+                                ft.Icons.HISTORY,
+                                size=48,
+                                color=ft.Colors.ON_SURFACE_VARIANT,
+                            ),
+                            ft.Text(
+                                "No recent activity",
+                                size=16,
+                                weight=ft.FontWeight.W_600,
+                            ),
                             ft.Text(
                                 "Operational events will appear here once the server receives requests.",
                                 size=12,
@@ -1219,7 +1345,9 @@ def create_dashboard_view(
                 activity_list.controls.append(_build_activity_tile(entry))
 
             # Update summary with severity counts
-            severity_counter = Counter(_infer_severity(entry) for entry in activity_full_data)
+            severity_counter = Counter(
+                _infer_severity(entry) for entry in activity_full_data
+            )
             summary_bits = [f"{len(activity_full_data)} events"]
             for key in ("critical", "error", "warning", "info"):
                 if severity_counter.get(key):
@@ -1372,7 +1500,9 @@ def create_dashboard_view(
                     cpu_usage=as_float(payload.get("cpu_usage_percent")),
                     memory_usage_mb=as_float(payload.get("memory_usage_mb")),
                     db_response_ms=as_int(payload.get("database_response_time_ms")),
-                    active_connections=max(0, as_int(payload.get("active_connections")) or 0),
+                    active_connections=max(
+                        0, as_int(payload.get("active_connections")) or 0
+                    ),
                     recent_activity=base.recent_activity,
                     errors=base.errors,
                 )
@@ -1395,12 +1525,16 @@ def create_dashboard_view(
             # Try async version first
             if DEBUG:
                 print("[DASH] _load_activity_data → calling get_recent_activity_async")
-            activity = await _call_bridge(server_bridge, "get_recent_activity_async", 12)
+            activity = await _call_bridge(
+                server_bridge, "get_recent_activity_async", 12
+            )
 
             if not activity or not activity.get("success"):
                 # Fallback to sync version
                 if DEBUG:
-                    print("[DASH] _load_activity_data → async failed, trying sync get_recent_activity")
+                    print(
+                        "[DASH] _load_activity_data → async failed, trying sync get_recent_activity"
+                    )
                 activity = await _call_bridge(server_bridge, "get_recent_activity", 12)
 
             if activity and activity.get("success"):
@@ -1470,10 +1604,16 @@ def create_dashboard_view(
         for key, title, subtitle, icon, accent, route in metrics_config:
             # Get the actual value to display
             if key == "total_clients":
-                display_value = f"{snapshot.total_clients:,}" if snapshot.total_clients else "0"
+                display_value = (
+                    f"{snapshot.total_clients:,}" if snapshot.total_clients else "0"
+                )
                 display_subtitle = subtitle
             elif key == "active_clients":
-                display_value = f"{snapshot.connected_clients:,}" if snapshot.connected_clients else "0"
+                display_value = (
+                    f"{snapshot.connected_clients:,}"
+                    if snapshot.connected_clients
+                    else "0"
+                )
                 ratio_text = (
                     f"{(snapshot.connected_clients / snapshot.total_clients) * 100:.0f}% online"
                     if snapshot.total_clients > 0
@@ -1481,7 +1621,9 @@ def create_dashboard_view(
                 )
                 display_subtitle = ratio_text
             elif key == "total_files":
-                display_value = f"{snapshot.total_files:,}" if snapshot.total_files else "0"
+                display_value = (
+                    f"{snapshot.total_files:,}" if snapshot.total_files else "0"
+                )
                 display_subtitle = subtitle
             elif key == "uptime":
                 display_value = format_uptime(display_uptime_seconds)
@@ -1493,10 +1635,15 @@ def create_dashboard_view(
 
             # Create Text control with the actual value (not placeholder)
             value_text = ft.Text(
-                display_value, size=30, weight=ft.FontWeight.W_700, color=ft.Colors.ON_SURFACE
+                display_value,
+                size=30,
+                weight=ft.FontWeight.W_700,
+                color=ft.Colors.ON_SURFACE,
             )
 
-            footnote_text = ft.Text(display_subtitle, size=12, color=ft.Colors.ON_SURFACE_VARIANT)
+            footnote_text = ft.Text(
+                display_subtitle, size=12, color=ft.Colors.ON_SURFACE_VARIANT
+            )
 
             # Build the metric block with real values
             body = ft.Column(
@@ -1559,7 +1706,9 @@ def create_dashboard_view(
             metric_blocks[key] = block_data
 
         # Create and return new ResponsiveRow
-        new_metrics_row = ft.ResponsiveRow(new_metric_controls, spacing=12, run_spacing=12)
+        new_metrics_row = ft.ResponsiveRow(
+            new_metric_controls, spacing=12, run_spacing=12
+        )
 
         if DEBUG:
             print(

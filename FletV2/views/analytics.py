@@ -30,17 +30,29 @@ for _path in (_flet_v2_root, _repo_root):
     if _path not in sys.path:
         sys.path.insert(0, _path)
 
-from FletV2.theme import create_skeleton_loader
-from FletV2.utils.async_helpers import run_sync_in_executor, safe_server_call
-from FletV2.utils.data_export import export_to_csv, generate_export_filename
-from FletV2.utils.loading_states import (
+from FletV2.theme import create_skeleton_loader  # noqa: E402
+from FletV2.utils.async_helpers import (  # noqa: E402
+    run_sync_in_executor,
+    safe_server_call,
+)
+from FletV2.utils.data_export import (  # noqa: E402
+    export_to_csv,
+    generate_export_filename,
+)
+from FletV2.utils.loading_states import (  # noqa: E402
     create_empty_state,
     create_error_display,
     create_loading_indicator,
 )
-from FletV2.utils.ui_builders import create_action_button, create_view_header
-from FletV2.utils.ui_components import AppCard
-from FletV2.utils.user_feedback import show_error_message, show_success_message
+from FletV2.utils.ui_builders import (  # noqa: E402
+    create_action_button,
+    create_view_header,
+)
+from FletV2.utils.ui_components import AppCard  # noqa: E402
+from FletV2.utils.user_feedback import (  # noqa: E402
+    show_error_message,
+    show_success_message,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -93,7 +105,9 @@ async def fetch_analytics_data(bridge: Any | None) -> AnalyticsData:
 # ============================================================================
 
 
-def _metric_card(title: str, value: str, subtitle: str, icon: str, color: str) -> ft.Control:
+def _metric_card(
+    title: str, value: str, subtitle: str, icon: str, color: str
+) -> ft.Control:
     """Create enhanced metric card with gradient accent and hover effects."""
     card_content = ft.Container(
         content=ft.Column(
@@ -165,7 +179,9 @@ def _metric_card(title: str, value: str, subtitle: str, icon: str, color: str) -
             ft.BoxShadow(
                 blur_radius=24 if e.data == "true" else 16,
                 spread_radius=0,
-                color=ft.Colors.with_opacity(0.10 if e.data == "true" else 0.06, ft.Colors.BLACK),
+                color=ft.Colors.with_opacity(
+                    0.10 if e.data == "true" else 0.06, ft.Colors.BLACK
+                ),
                 offset=ft.Offset(0, 4 if e.data == "true" else 2),
             )
         ]
@@ -285,7 +301,12 @@ def _create_bar_chart(
     return ft.Container(
         content=ft.Column(
             [
-                ft.Text(title, size=14, weight=ft.FontWeight.W_600, color=ft.Colors.ON_SURFACE),
+                ft.Text(
+                    title,
+                    size=14,
+                    weight=ft.FontWeight.W_600,
+                    color=ft.Colors.ON_SURFACE,
+                ),
                 ft.Container(content=chart, height=220, expand=True),
             ],
             spacing=12,
@@ -298,7 +319,9 @@ def _create_bar_chart(
     )
 
 
-def _create_pie_chart(data: list[dict[str, Any]], label_key: str, value_key: str, title: str) -> ft.Control:
+def _create_pie_chart(
+    data: list[dict[str, Any]], label_key: str, value_key: str, title: str
+) -> ft.Control:
     """Create colorful pie chart with interactive legend."""
     if not data:
         return create_empty_state(NO_DATA_TITLE, NO_CHART_DATA_MSG)
@@ -335,7 +358,9 @@ def _create_pie_chart(data: list[dict[str, Any]], label_key: str, value_key: str
                 color=colors[idx % len(colors)],
                 radius=85,
                 badge=ft.Container(
-                    content=ft.Icon(ft.Icons.INSERT_DRIVE_FILE, size=18, color=ft.Colors.WHITE),
+                    content=ft.Icon(
+                        ft.Icons.INSERT_DRIVE_FILE, size=18, color=ft.Colors.WHITE
+                    ),
                     bgcolor=colors[idx % len(colors)],
                     padding=6,
                     border_radius=16,
@@ -357,7 +382,11 @@ def _create_pie_chart(data: list[dict[str, Any]], label_key: str, value_key: str
     for idx, item in enumerate(data[:8]):
         raw_label = str(item.get(label_key, "Unknown"))
         # Format file extensions nicely (e.g., ".txt" -> "TXT")
-        label = raw_label.upper().replace(".", "") if raw_label.startswith(".") else raw_label[:12]
+        label = (
+            raw_label.upper().replace(".", "")
+            if raw_label.startswith(".")
+            else raw_label[:12]
+        )
         value = item.get(value_key, 0)
         percentage = (float(value) / total) * 100
 
@@ -372,7 +401,12 @@ def _create_pie_chart(data: list[dict[str, Any]], label_key: str, value_key: str
                     ),
                     ft.Column(
                         [
-                            ft.Text(label, size=12, weight=ft.FontWeight.W_600, color=ft.Colors.ON_SURFACE),
+                            ft.Text(
+                                label,
+                                size=12,
+                                weight=ft.FontWeight.W_600,
+                                color=ft.Colors.ON_SURFACE,
+                            ),
                             ft.Text(
                                 f"{value} files ({percentage:.1f}%)",
                                 size=10,
@@ -394,7 +428,11 @@ def _create_pie_chart(data: list[dict[str, Any]], label_key: str, value_key: str
 
         def on_legend_hover(e, target=legend_item):
             target.scale = 1.05 if e.data == "true" else 1.0
-            target.bgcolor = ft.Colors.with_opacity(0.08, ft.Colors.PRIMARY) if e.data == "true" else None
+            target.bgcolor = (
+                ft.Colors.with_opacity(0.08, ft.Colors.PRIMARY)
+                if e.data == "true"
+                else None
+            )
             target.update()
 
         legend_item.on_hover = on_legend_hover
@@ -403,7 +441,12 @@ def _create_pie_chart(data: list[dict[str, Any]], label_key: str, value_key: str
     return ft.Container(
         content=ft.Column(
             [
-                ft.Text(title, size=14, weight=ft.FontWeight.W_600, color=ft.Colors.ON_SURFACE),
+                ft.Text(
+                    title,
+                    size=14,
+                    weight=ft.FontWeight.W_600,
+                    color=ft.Colors.ON_SURFACE,
+                ),
                 ft.Row(
                     [
                         ft.Container(
@@ -413,7 +456,9 @@ def _create_pie_chart(data: list[dict[str, Any]], label_key: str, value_key: str
                             padding=10,
                         ),
                         ft.Container(
-                            content=ft.Column(legend_items, spacing=6, scroll=ft.ScrollMode.AUTO),
+                            content=ft.Column(
+                                legend_items, spacing=6, scroll=ft.ScrollMode.AUTO
+                            ),
                             expand=True,
                         ),
                     ],
@@ -438,7 +483,10 @@ def _create_line_chart(
     if not data:
         return create_empty_state(NO_DATA_TITLE, NO_TREND_DATA_MSG)
 
-    data_points = [ft.LineChartDataPoint(idx, float(item.get(y_key, 0))) for idx, item in enumerate(data)]
+    data_points = [
+        ft.LineChartDataPoint(idx, float(item.get(y_key, 0)))
+        for idx, item in enumerate(data)
+    ]
 
     max_y = max((p.y for p in data_points), default=1)
 
@@ -515,7 +563,12 @@ def _create_line_chart(
     return ft.Container(
         content=ft.Column(
             [
-                ft.Text(title, size=14, weight=ft.FontWeight.W_600, color=ft.Colors.ON_SURFACE),
+                ft.Text(
+                    title,
+                    size=14,
+                    weight=ft.FontWeight.W_600,
+                    color=ft.Colors.ON_SURFACE,
+                ),
                 ft.Container(content=chart, height=220, expand=True),
             ],
             spacing=12,
@@ -634,7 +687,11 @@ def create_analytics_view(
 
         # Update charts with real data visualizations
         trend_panel.content = _create_line_chart(
-            data.backup_trend or [], "date", "count", "7-Day Backup Trend", ft.Colors.BLUE_400
+            data.backup_trend or [],
+            "date",
+            "count",
+            "7-Day Backup Trend",
+            ft.Colors.BLUE_400,
         )
 
         storage_panel.content = _create_bar_chart(
@@ -675,7 +732,9 @@ def create_analytics_view(
                         content=ft.ElevatedButton(
                             "Retry",
                             icon=ft.Icons.REFRESH,
-                            on_click=lambda _: schedule_task(lambda: refresh_data(toast=False)),
+                            on_click=lambda _: schedule_task(
+                                lambda: refresh_data(toast=False)
+                            ),
                         ),
                         padding=ft.padding.only(top=12),
                         alignment=ft.alignment.center,
@@ -794,7 +853,11 @@ def create_analytics_view(
 
             # Export to CSV
             filename = generate_export_filename("analytics", "csv")
-            export_to_csv(export_rows, filename, fieldnames=["Category", "Metric", "Value", "Unit"])
+            export_to_csv(
+                export_rows,
+                filename,
+                fieldnames=["Category", "Metric", "Value", "Unit"],
+            )
             show_success_message(page, f"Analytics exported to {filename}")
 
         except Exception as exc:
@@ -802,7 +865,9 @@ def create_analytics_view(
             show_error_message(page, f"Export failed: {exc}")
 
     header_actions: list[ft.Control] = [
-        create_action_button("Export", on_export, icon=ft.Icons.DOWNLOAD, primary=False),
+        create_action_button(
+            "Export", on_export, icon=ft.Icons.DOWNLOAD, primary=False
+        ),
         create_action_button("Refresh", on_refresh, icon=ft.Icons.REFRESH),
     ]
     # Note: Global search is in the app-level header (main.py), not view-level
@@ -866,7 +931,9 @@ def create_analytics_view(
                 except TimeoutError:
                     # Double-check disposal state before attempting refresh
                     if disposed or stop_event.is_set():
-                        logger.debug("Analytics view disposed during refresh cycle - stopping auto-refresh")
+                        logger.debug(
+                            "Analytics view disposed during refresh cycle - stopping auto-refresh"
+                        )
                         break
                     try:
                         await refresh_data()
@@ -877,7 +944,10 @@ def create_analytics_view(
                     except Exception as exc:
                         logger.debug("Auto-refresh encountered error: %s", exc)
                         # Continue loop for transient errors, break for shutdown
-                        if "shutdown" in str(exc).lower() or "executor" in str(exc).lower():
+                        if (
+                            "shutdown" in str(exc).lower()
+                            or "executor" in str(exc).lower()
+                        ):
                             break
         except asyncio.CancelledError:
             # Expected during shutdown - exit cleanly

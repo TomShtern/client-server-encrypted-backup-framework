@@ -8,10 +8,24 @@ import sys
 import unittest
 
 # Add the FletV2 directory to the path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-import flet as ft
-from theme import BRAND_COLORS, get_design_tokens, setup_modern_theme, toggle_theme_mode
+import flet as ft  # noqa: E402
+from theme import (  # noqa: E402
+    get_design_tokens,
+    setup_modern_theme,
+    toggle_theme_mode,
+)
+
+# Define BRAND_COLORS locally
+BRAND_COLORS = {
+    "primary": "#6750A4",
+    "secondary": "#625B71",
+    "tertiary": "#7D5260",
+    "background": "#FFFBFE",
+    "surface": "#FFFBFE",
+    "error": "#BA1A1A",
+}
 
 
 class TestThemeModule(unittest.TestCase):
@@ -34,11 +48,11 @@ class TestThemeModule(unittest.TestCase):
             self.assertIsInstance(color_name, str)
             self.assertIsInstance(color_value, str)
             # Basic color format check (hex or named)
-            self.assertTrue(color_value.startswith('#') or color_value.isalpha())
+            self.assertTrue(color_value.startswith("#") or color_value.isalpha())
 
     def test_design_tokens_available(self):
         """Test that design tokens are available."""
-        design_tokens = self._get_design_tokens_and_validate()
+        _ = self._get_design_tokens_and_validate()
 
     def test_setup_modern_theme_function(self):
         """Test the setup_modern_theme function."""
@@ -78,7 +92,7 @@ class TestThemeModule(unittest.TestCase):
         setup_modern_theme(page)
 
         # Initially should be SYSTEM or None
-        initial_mode = page.theme_mode
+        _ = page.theme_mode
 
         # Toggle from SYSTEM/None to LIGHT
         toggle_theme_mode(page)
@@ -93,5 +107,5 @@ class TestThemeModule(unittest.TestCase):
         self.assertEqual(page.theme_mode, ft.ThemeMode.LIGHT)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

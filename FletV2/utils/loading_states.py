@@ -8,7 +8,12 @@ This module provides consistent UI components for:
 - Snackbar notifications
 """
 
+from dataclasses import dataclass
+from typing import Any
+
 import flet as ft
+
+from FletV2.utils.debug_setup import get_logger
 
 
 def create_loading_indicator(message="Loading..."):
@@ -23,7 +28,10 @@ def create_loading_indicator(message="Loading..."):
     """
     return ft.Container(
         content=ft.Column(
-            [ft.ProgressRing(), ft.Text(message, size=14, color=ft.Colors.ON_SURFACE_VARIANT)],
+            [
+                ft.ProgressRing(),
+                ft.Text(message, size=14, color=ft.Colors.ON_SURFACE_VARIANT),
+            ],
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
         ),
         alignment=ft.alignment.center,
@@ -45,9 +53,14 @@ def create_error_display(error_message):
         content=ft.Column(
             [
                 ft.Icon(ft.Icons.ERROR_OUTLINE, color=ft.Colors.ERROR, size=48),
-                ft.Text("Error", size=20, weight=ft.FontWeight.BOLD, color=ft.Colors.ERROR),
                 ft.Text(
-                    error_message, size=14, color=ft.Colors.ON_SURFACE_VARIANT, text_align=ft.TextAlign.CENTER
+                    "Error", size=20, weight=ft.FontWeight.BOLD, color=ft.Colors.ERROR
+                ),
+                ft.Text(
+                    error_message,
+                    size=14,
+                    color=ft.Colors.ON_SURFACE_VARIANT,
+                    text_align=ft.TextAlign.CENTER,
                 ),
             ],
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
@@ -77,7 +90,12 @@ def create_empty_state(title, message, icon=None):
             [
                 ft.Icon(resolved_icon, color=ft.Colors.ON_SURFACE_VARIANT, size=64),
                 ft.Text(title, size=20, weight=ft.FontWeight.BOLD),
-                ft.Text(message, size=14, color=ft.Colors.ON_SURFACE_VARIANT, text_align=ft.TextAlign.CENTER),
+                ft.Text(
+                    message,
+                    size=14,
+                    color=ft.Colors.ON_SURFACE_VARIANT,
+                    text_align=ft.TextAlign.CENTER,
+                ),
             ],
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             spacing=10,
@@ -104,11 +122,6 @@ unified loading state management with automatic cleanup via context managers.
 This consolidates 30-40 lines of duplicated loading state code per view
 into a single 5-8 line pattern.
 """
-
-from dataclasses import dataclass
-from typing import Any
-
-from FletV2.utils.debug_setup import get_logger
 
 logger = get_logger(__name__)
 

@@ -7,15 +7,16 @@ including memory usage monitoring, CPU usage benchmarks, response time validatio
 Compatible with Flet 0.28.3 and Windows 11 desktop applications.
 """
 
-import time
-import psutil
-import threading
-import logging
-from typing import Dict, List, Any, Callable, Optional, Tuple
-from dataclasses import dataclass, field
-from contextlib import contextmanager
 import gc
+import logging
+import threading
+import time
 import tracemalloc
+from contextlib import contextmanager
+from dataclasses import dataclass, field
+from typing import Any, Callable, Dict, List, Optional, Tuple
+
+import psutil
 
 logger = logging.getLogger(__name__)
 
@@ -23,15 +24,16 @@ logger = logging.getLogger(__name__)
 @dataclass
 class PerformanceMetrics:
     """Performance metrics data"""
+
     test_name: str
     start_time: float
-    end_time: float
-    duration: float = field(init=False)
-    memory_usage_mb: float = field(init=False)
-    peak_memory_mb: float = field(init=False)
-    cpu_usage_percent: float = field(init=False)
-    gc_collections: int = field(init=False)
-    operations_per_second: float = field(init=False)
+    end_time: float = 0.0
+    duration: float = field(init=False, default=0.0)
+    memory_usage_mb: float = field(init=False, default=0.0)
+    peak_memory_mb: float = field(init=False, default=0.0)
+    cpu_usage_percent: float = field(init=False, default=0.0)
+    gc_collections: int = field(init=False, default=0)
+    operations_per_second: float = field(init=False, default=0.0)
     passed: bool = True
     error_message: Optional[str] = None
 
@@ -39,6 +41,7 @@ class PerformanceMetrics:
 @dataclass
 class MemorySnapshot:
     """Memory usage snapshot"""
+
     rss_mb: float  # Resident Set Size in MB
     vms_mb: float  # Virtual Memory Size in MB
     percent: float  # Memory percentage
@@ -86,7 +89,7 @@ class PerformanceMonitor:
                         rss_mb=memory_info.rss / 1024 / 1024,
                         vms_mb=memory_info.vms / 1024 / 1024,
                         percent=memory_percent,
-                        timestamp=time.time()
+                        timestamp=time.time(),
                     )
 
                     self.metrics_history.append(snapshot)
@@ -118,7 +121,9 @@ class PerformanceMonitor:
 
         # Calculate statistics
         memory_values = [s.rss_mb for s in self.metrics_history]
-        cpu_samples = [self.process.cpu_percent() for _ in range(3)]  # Quick CPU sampling
+        cpu_samples = [
+            self.process.cpu_percent() for _ in range(3)
+        ]  # Quick CPU sampling
 
         return {
             "duration_seconds": time.time() - self.start_time if self.start_time else 0,
@@ -126,10 +131,12 @@ class PerformanceMonitor:
                 "avg_mb": sum(memory_values) / len(memory_values),
                 "min_mb": min(memory_values),
                 "max_mb": max(memory_values),
-                "current_mb": memory_values[-1] if memory_values else 0
+                "current_mb": memory_values[-1] if memory_values else 0,
             },
-            "cpu_avg_percent": sum(cpu_samples) / len(cpu_samples) if cpu_samples else 0,
-            "samples_collected": len(self.metrics_history)
+            "cpu_avg_percent": sum(cpu_samples) / len(cpu_samples)
+            if cpu_samples
+            else 0,
+            "samples_collected": len(self.metrics_history),
         }
 
     def get_current_memory_usage(self) -> MemorySnapshot:
@@ -142,7 +149,7 @@ class PerformanceMonitor:
                 rss_mb=memory_info.rss / 1024 / 1024,
                 vms_mb=memory_info.vms / 1024 / 1024,
                 percent=memory_percent,
-                timestamp=time.time()
+                timestamp=time.time(),
             )
         except Exception as e:
             logger.error(f"Error getting memory usage: {e}")
@@ -186,7 +193,7 @@ class PerformanceTestSuite:
         self.monitor.start_monitoring(interval=0.5)
 
         # Get initial memory
-        initial_memory = self.monitor.get_current_memory_usage()
+        _ = self.monitor.get_current_memory_usage()
         gc.collect()  # Clean up before test
         gc.collect()
 
@@ -194,20 +201,16 @@ class PerformanceTestSuite:
         tracemalloc.start()
 
         start_time = time.time()
+        metrics = PerformanceMetrics(test_name=test_name, start_time=start_time)
+
         try:
-            metrics = PerformanceMetrics(test_name=test_name, start_time=start_time)
             yield metrics
         except Exception as e:
             # Handle test failure
-            end_time = time.time()
-            metrics = PerformanceMetrics(
-                test_name=test_name,
-                start_time=start_time,
-                end_time=end_time,
-                passed=False,
-                error_message=str(e)
-            )
-            yield metrics
+            metrics.passed = False
+            metrics.error_message = str(e)
+            # Log the error but suppress it so the test suite continues
+            logger.error(f"Test {test_name} failed: {e}")
         finally:
             # Calculate metrics
             end_time = time.time()
@@ -237,10 +240,12 @@ class PerformanceTestSuite:
         self,
         data_generator: Callable[[], List[Dict[str, Any]]],
         operations: List[str],
-        max_response_time_ms: float = 100.0
+        max_response_time_ms: float = 100.0,
     ) -> List[PerformanceMetrics]:
         """Test DataTable performance with large datasets"""
-        logger.info(f"Starting DataTable performance test with {len(operations)} operations")
+        logger.info(
+            f"Starting DataTable performance test with {len(operations)} operations"
+        )
 
         results = []
 
@@ -256,9 +261,20 @@ class PerformanceTestSuite:
                     if operation == "create":
                         # Test DataTable creation
                         import flet as ft
+
                         dt = ft.DataTable(
-                            columns=[ft.DataColumn(ft.Text(f"Col {i}")) for i in range(10)],
-                            rows=[ft.DataRow(cells=[ft.DataCell(ft.Text(f"Data {i}-{j}")) for j in range(10)]) for i in range(len(data))]
+                            columns=[
+                                ft.DataColumn(ft.Text(f"Col {i}")) for i in range(10)
+                            ],
+                            rows=[
+                                ft.DataRow(
+                                    cells=[
+                                        ft.DataCell(ft.Text(f"Data {i}-{j}"))
+                                        for j in range(10)
+                                    ]
+                                )
+                                for i in range(len(data))
+                            ],
                         )
 
                         # Simulate rendering
@@ -266,16 +282,20 @@ class PerformanceTestSuite:
 
                     elif operation == "sort":
                         # Test sorting performance
-                        sorted_data = sorted(data, key=lambda x: x.get('id', 0))
+                        _ = sorted(data, key=lambda x: x.get("id", 0))
 
                     elif operation == "filter":
                         # Test filtering performance
-                        filtered_data = [item for item in data if item.get('value', 0) > 50]
+                        _ = [item for item in data if item.get("value", 0) > 50]
 
                     elif operation == "search":
                         # Test search performance
                         search_term = "test"
-                        results_found = [item for item in data if search_term in str(item.get('name', '')).lower()]
+                        _ = [
+                            item
+                            for item in data
+                            if search_term in str(item.get("name", "")).lower()
+                        ]
 
                     end_operation = time.time()
 
@@ -301,7 +321,7 @@ class PerformanceTestSuite:
         self,
         dataset_sizes: List[int],
         create_function: Callable[[int], Any],
-        memory_threshold_mb: float = 500.0
+        memory_threshold_mb: float = 500.0,
     ) -> List[PerformanceMetrics]:
         """Test memory usage with progressively larger datasets"""
         logger.info(f"Starting memory usage test with dataset sizes: {dataset_sizes}")
@@ -316,10 +336,10 @@ class PerformanceTestSuite:
                     # Create dataset
                     start_time = time.time()
                     obj = create_function(size)
-                    creation_time = time.time() - start_time
+                    _ = time.time() - start_time
 
                     # Force garbage collection to see what's retained
-                    initial_gc = gc.collect()
+                    _ = gc.collect()
 
                     # Get memory usage after creation
                     current_memory = self.monitor.get_current_memory_usage()
@@ -332,7 +352,7 @@ class PerformanceTestSuite:
 
                     # Test object cleanup
                     del obj
-                    cleanup_gc = gc.collect()
+                    _ = gc.collect()
 
                 except Exception as e:
                     logger.error(f"Error in memory test for size {size}: {e}")
@@ -347,10 +367,12 @@ class PerformanceTestSuite:
         self,
         duration_minutes: int = 10,
         operation_interval: float = 1.0,
-        operation_function: Callable[[], Any] = None
+        operation_function: Optional[Callable[[], Any]] = None,
     ) -> PerformanceMetrics:
         """Test application stability over long sessions"""
-        logger.info(f"Starting long session stability test for {duration_minutes} minutes")
+        logger.info(
+            f"Starting long session stability test for {duration_minutes} minutes"
+        )
 
         with self.measure_performance("long_session_stability") as metrics:
             try:
@@ -368,7 +390,9 @@ class PerformanceTestSuite:
                     # Check for memory leaks periodically
                     if operation_count % 10 == 0:
                         if self.monitor.check_memory_leak(threshold_mb=20.0):
-                            logger.warning(f"Potential memory leak detected at operation {operation_count}")
+                            logger.warning(
+                                f"Potential memory leak detected at operation {operation_count}"
+                            )
 
                     time.sleep(operation_interval)
 
@@ -391,10 +415,12 @@ class PerformanceTestSuite:
     def test_cpu_usage_benchmarks(
         self,
         cpu_intensive_tasks: List[Tuple[str, Callable[[], Any]]],
-        max_cpu_percent: float = 80.0
+        max_cpu_percent: float = 80.0,
     ) -> List[PerformanceMetrics]:
         """Test CPU usage with various tasks"""
-        logger.info(f"Starting CPU usage benchmark test with {len(cpu_intensive_tasks)} tasks")
+        logger.info(
+            f"Starting CPU usage benchmark test with {len(cpu_intensive_tasks)} tasks"
+        )
 
         results = []
 
@@ -405,14 +431,20 @@ class PerformanceTestSuite:
                 try:
                     # Monitor CPU usage during task
                     start_cpu = psutil.cpu_percent(interval=1.0)
+                    # Ensure start_cpu is a float, not a list
+                    if isinstance(start_cpu, list):
+                        start_cpu = sum(start_cpu) / len(start_cpu)
 
                     # Execute task
-                    start_time = time.time()
+                    _ = time.time()
                     task_function()
-                    end_time = time.time()
+                    _ = time.time()
 
                     # Get CPU usage after task
                     end_cpu = psutil.cpu_percent(interval=1.0)
+                    # Ensure end_cpu is a float, not a list
+                    if isinstance(end_cpu, list):
+                        end_cpu = sum(end_cpu) / len(end_cpu)
 
                     metrics.cpu_usage_percent = (start_cpu + end_cpu) / 2
 
@@ -440,33 +472,42 @@ class PerformanceTestSuite:
 
         # Calculate statistics
         durations = [r.duration for r in self.test_results]
-        memory_usage = [r.memory_usage_mb for r in self.test_results if r.memory_usage_mb > 0]
-        cpu_usage = [r.cpu_usage_percent for r in self.test_results if r.cpu_usage_percent > 0]
+        memory_usage = [
+            r.memory_usage_mb for r in self.test_results if r.memory_usage_mb > 0
+        ]
+        cpu_usage = [
+            r.cpu_usage_percent for r in self.test_results if r.cpu_usage_percent > 0
+        ]
 
         return {
             "summary": {
                 "total_tests": total_tests,
                 "passed_tests": passed_tests,
                 "failed_tests": total_tests - passed_tests,
-                "success_rate": (passed_tests / total_tests * 100) if total_tests > 0 else 0
+                "success_rate": (passed_tests / total_tests * 100)
+                if total_tests > 0
+                else 0,
             },
             "performance_stats": {
                 "avg_duration": sum(durations) / len(durations) if durations else 0,
                 "min_duration": min(durations) if durations else 0,
                 "max_duration": max(durations) if durations else 0,
-                "avg_memory_mb": sum(memory_usage) / len(memory_usage) if memory_usage else 0,
+                "avg_memory_mb": sum(memory_usage) / len(memory_usage)
+                if memory_usage
+                else 0,
                 "max_memory_mb": max(memory_usage) if memory_usage else 0,
                 "avg_cpu_percent": sum(cpu_usage) / len(cpu_usage) if cpu_usage else 0,
-                "max_cpu_percent": max(cpu_usage) if cpu_usage else 0
+                "max_cpu_percent": max(cpu_usage) if cpu_usage else 0,
             },
             "failed_tests": [
                 {
                     "test_name": r.test_name,
                     "error": r.error_message,
                     "duration": r.duration,
-                    "memory_mb": r.memory_usage_mb
+                    "memory_mb": r.memory_usage_mb,
                 }
-                for r in self.test_results if not r.passed
+                for r in self.test_results
+                if not r.passed
             ],
             "all_results": [
                 {
@@ -475,10 +516,10 @@ class PerformanceTestSuite:
                     "duration": r.duration,
                     "memory_mb": r.memory_usage_mb,
                     "cpu_percent": r.cpu_usage_percent,
-                    "ops_per_second": r.operations_per_second
+                    "ops_per_second": r.operations_per_second,
                 }
                 for r in self.test_results
-            ]
+            ],
         }
 
 
@@ -492,13 +533,13 @@ def generate_test_data(size: int) -> List[Dict[str, Any]]:
             "value": i * 10,
             "description": f"Description for test item {i}",
             "category": f"Category {(i % 5) + 1}",
-            "timestamp": time.time() - (size - i)
+            "timestamp": time.time() - (size - i),
         }
         for i in range(size)
     ]
 
 
-def create_large_datatable(size: int) -> ft.DataTable:
+def create_large_datatable(size: int) -> Any:
     """Create a large DataTable for testing"""
     import flet as ft
 
@@ -509,10 +550,7 @@ def create_large_datatable(size: int) -> ft.DataTable:
 
     rows = []
     for i in range(size):
-        cells = [
-            ft.DataCell(ft.Text(f"Row {i}, Col {j}"))
-            for j in range(10)
-        ]
+        cells = [ft.DataCell(ft.Text(f"Row {i}, Col {j}")) for j in range(10)]
         rows.append(ft.DataRow(cells=cells))
 
     return ft.DataTable(columns=columns, rows=rows)
@@ -539,12 +577,17 @@ def run_desktop_performance_tests() -> Dict[str, Any]:
     operations = ["create", "sort", "filter", "search"]
 
     for size in dataset_sizes:
-        data_gen = lambda: generate_test_data(size)
+
+        def data_gen():
+            return generate_test_data(size)
+
         results = suite.test_datatable_performance(data_gen, operations)
 
         for result in results:
             status = "✅ PASS" if result.passed else "❌ FAIL"
-            print(f"   {status} {result.test_name}: {result.duration:.3f}s, {result.memory_usage_mb:.1f}MB")
+            print(
+                f"   {status} {result.test_name}: {result.duration:.3f}s, {result.memory_usage_mb:.1f}MB"
+            )
 
     # Test 2: Memory usage with large datasets
     print("\n💾 Testing Memory Usage...")
@@ -553,7 +596,9 @@ def run_desktop_performance_tests() -> Dict[str, Any]:
     def create_dataset(size):
         return generate_test_data(size)
 
-    memory_results = suite.test_memory_usage_with_large_datasets(memory_sizes, create_dataset)
+    memory_results = suite.test_memory_usage_with_large_datasets(
+        memory_sizes, create_dataset
+    )
 
     for result in memory_results:
         status = "✅ PASS" if result.passed else "❌ FAIL"
@@ -564,7 +609,7 @@ def run_desktop_performance_tests() -> Dict[str, Any]:
     cpu_tasks = [
         ("calculation", lambda: cpu_intensive_calculation(50000)),
         ("sorting", lambda: sorted([i % 1000 for i in range(10000)], reverse=True)),
-        ("string_processing", lambda: ["test".upper() for i in range(10000)])
+        ("string_processing", lambda: ["test".upper() for i in range(10000)]),
     ]
 
     cpu_results = suite.test_cpu_usage_benchmarks(cpu_tasks)
@@ -579,17 +624,19 @@ def run_desktop_performance_tests() -> Dict[str, Any]:
     def simple_operation():
         # Simple operation to simulate user activity
         data = generate_test_data(100)
-        sorted(data)
-        len(data)
+        _ = sorted(data, key=lambda x: x.get("id", 0))
+        _ = len(data)
 
     stability_result = suite.test_long_session_stability(
         duration_minutes=1,  # Shortened for demo
         operation_interval=0.1,
-        operation_function=simple_operation
+        operation_function=simple_operation,
     )
 
     status = "✅ PASS" if stability_result.passed else "❌ FAIL"
-    print(f"   {status} Long session test: {stability_result.duration:.1f}s, {stability_result.operations_per_second:.1f} ops/sec")
+    print(
+        f"   {status} Long session test: {stability_result.duration:.1f}s, {stability_result.operations_per_second:.1f} ops/sec"
+    )
 
     # Generate final report
     print("\n" + "=" * 50)
@@ -608,9 +655,9 @@ def run_desktop_performance_tests() -> Dict[str, Any]:
     print(f"Average Memory: {report['performance_stats']['avg_memory_mb']:.1f}MB")
     print(f"Average CPU: {report['performance_stats']['avg_cpu_percent']:.1f}%")
 
-    if report['failed_tests']:
+    if report["failed_tests"]:
         print("\n❌ Failed Tests:")
-        for failed in report['failed_tests']:
+        for failed in report["failed_tests"]:
             print(f"   - {failed['test_name']}: {failed['error']}")
 
     return report

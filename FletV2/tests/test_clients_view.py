@@ -10,12 +10,12 @@ from contextlib import suppress
 from unittest.mock import MagicMock, Mock
 
 # Add the FletV2 directory to the path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 # Mock flet for testing
-sys.modules['flet'] = MagicMock()
+sys.modules["flet"] = MagicMock()
 
-from views.clients import create_clients_view
+from views.clients import create_clients_view  # noqa: E402
 
 
 class TestClientsView(unittest.TestCase):
@@ -37,15 +37,15 @@ class TestClientsView(unittest.TestCase):
                 "address": "192.168.1.101:54321",
                 "status": "Connected",
                 "connected_at": "2025-09-03 10:30:15",
-                "last_activity": "2025-09-03 14:45:30"
+                "last_activity": "2025-09-03 14:45:30",
             },
             {
                 "client_id": "client_002",
                 "address": "192.168.1.102:54322",
                 "status": "Registered",
                 "connected_at": "2025-09-02 09:15:22",
-                "last_activity": "2025-09-03 12:20:45"
-            }
+                "last_activity": "2025-09-03 12:20:45",
+            },
         ]
 
     def test_create_clients_view(self):
@@ -55,7 +55,9 @@ class TestClientsView(unittest.TestCase):
         with suppress(Exception):
             # Create a mock state manager
             mock_state_manager = Mock()
-            view = create_clients_view(self.mock_server_bridge, self.mock_page, mock_state_manager)
+            view = create_clients_view(
+                self.mock_server_bridge, self.mock_page, mock_state_manager
+            )
             # If we get here without exception, the function executed
             self.assertIsNotNone(view)
 
@@ -72,5 +74,5 @@ class TestClientsView(unittest.TestCase):
         pass
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

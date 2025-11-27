@@ -37,9 +37,12 @@ export class FileManager {
   }
 
   #attachEvents() {
+    // Select button click (optional - may not exist in new design)
     if (this.selectButton) {
       this.selectButton.addEventListener('click', () => this.fileInput?.click());
     }
+
+    // File input change
     if (this.fileInput) {
       this.fileInput.addEventListener('change', (event) => {
         const input = event.target;
@@ -49,15 +52,21 @@ export class FileManager {
         }
       });
     }
+
+    // Clear button (optional)
     if (this.clearButton) {
       this.clearButton.addEventListener('click', () => {
         this.clear();
         this.announcer?.announce('File cleared');
       });
     }
+
+    // Recent files button (optional)
     if (this.recentButton) {
       this.recentButton.addEventListener('click', () => this.#showRecent());
     }
+
+    // Drop zone drag and drop + click to select
     if (this.dropZone) {
       const onDragOver = (event) => {
         event.preventDefault();
@@ -71,9 +80,18 @@ export class FileManager {
           this.#handleFile(event.dataTransfer.files[0]);
         }
       };
+
+      // Click on drop zone to open file picker
+      const onClick = (event) => {
+        // Don't trigger if clicking on a button inside
+        if (event.target.tagName === 'BUTTON') return;
+        this.fileInput?.click();
+      };
+
       this.dropZone.addEventListener('dragover', onDragOver);
       this.dropZone.addEventListener('dragleave', onDragLeave);
       this.dropZone.addEventListener('drop', onDrop);
+      this.dropZone.addEventListener('click', onClick);
     }
   }
 
@@ -91,33 +109,53 @@ export class FileManager {
   }
 
   #updateUI() {
-    if (!this.nameLabel || !this.infoLabel) {
-      return;
-    }
-    const namePlaceholder = this.nameLabel.dataset.placeholder || 'Drag & drop a file here or choose above';
-    const infoPlaceholder = this.infoLabel.dataset.placeholder || 'Size — • Type —';
+    // Update drop zone text if using new design
+    const dropZoneText = this.dropZone?.querySelector('.drop-zone-text');
+
     if (!this.currentFileMeta) {
-      this.nameLabel.textContent = namePlaceholder;
-      this.nameLabel.classList.add('placeholder');
-      this.infoLabel.textContent = infoPlaceholder;
-      this.infoLabel.classList.add('placeholder');
+      // Reset to placeholder state
+      if (dropZoneText) {
+        dropZoneText.textContent = 'Drag & drop a file here';
+        dropZoneText.classList.remove('file-selected');
+      }
+      if (this.nameLabel) {
+        const namePlaceholder = this.nameLabel.dataset.placeholder || 'Drag & drop a file here';
+        this.nameLabel.textContent = namePlaceholder;
+        this.nameLabel.classList.add('placeholder');
+      }
+      if (this.infoLabel) {
+        const infoPlaceholder = this.infoLabel.dataset.placeholder || 'Size — • Type —';
+        this.infoLabel.textContent = infoPlaceholder;
+        this.infoLabel.classList.add('placeholder');
+      }
       if (this.clearButton) {
         this.clearButton.disabled = true;
       }
-      // Remove file-selected class when no file
       this.dropZone?.classList.remove('file-selected', 'file-invalid');
       return;
     }
+
     const { name, size, type } = this.currentFileMeta;
 
     // Add file-selected class with animation
     this.dropZone?.classList.add('file-selected');
     this.dropZone?.classList.remove('file-invalid');
 
-    this.nameLabel.textContent = name;
-    this.nameLabel.classList.remove('placeholder');
-    this.infoLabel.textContent = `${formatBytes(size)} • ${type}`;
-    this.infoLabel.classList.remove('placeholder');
+    // Update drop zone text for new design
+    if (dropZoneText) {
+      dropZoneText.textContent = `${name} (${formatBytes(size)})`;
+      dropZoneText.classList.add('file-selected');
+    }
+
+    // Update old-style labels if they exist
+    if (this.nameLabel) {
+      this.nameLabel.textContent = name;
+      this.nameLabel.classList.remove('placeholder');
+    }
+    if (this.infoLabel) {
+      this.infoLabel.textContent = `${formatBytes(size)} • ${type}`;
+      this.infoLabel.classList.remove('placeholder');
+    }
 
     // Add animation to file icon
     const fileIcon = this.dropZone?.querySelector('.file-icon');

@@ -15,7 +15,7 @@ from typing import Any
 
 import psutil
 
-from .error_handler import ErrorSeverity, handle_subprocess_error
+from Shared.logging.error_handler import ErrorSeverity, handle_subprocess_error
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +66,9 @@ class ProcessInfo:
     max_restarts: int = 3
     auto_restart: bool = False
     health_check_interval: float = 2.0
-    metrics_history: deque[ProcessMetrics] = field(default_factory=lambda: deque(maxlen=100))
+    metrics_history: deque[ProcessMetrics] = field(
+        default_factory=lambda: deque(maxlen=100)
+    )
     last_health_check: datetime | None = None
     error_count: int = 0
     last_error: str | None = None
@@ -83,7 +85,9 @@ class ProcessRegistry:
         self.running = True
 
         # Start the main monitoring loop
-        self.monitor_thread = threading.Thread(target=self._monitoring_loop, daemon=True)
+        self.monitor_thread = threading.Thread(
+            target=self._monitoring_loop, daemon=True
+        )
         self.monitor_thread.start()
 
         logger.info("Process registry initialized")
@@ -135,7 +139,9 @@ class ProcessRegistry:
                 default_kwargs.update(popen_kwargs)
 
                 # Start the subprocess
-                popen: subprocess.Popen[str] = subprocess.Popen(process_info.command, **default_kwargs)
+                popen: subprocess.Popen[str] = subprocess.Popen(
+                    process_info.command, **default_kwargs
+                )
 
                 self.subprocess_handles[process_id] = popen
                 process_info.pid = popen.pid
@@ -189,19 +195,25 @@ class ProcessRegistry:
                     process_info.state = ProcessState.STOPPED
                     process_info.end_time = datetime.now()
 
-                    logger.info(f"Process {process_id} terminated gracefully (exit code: {exit_code})")
+                    logger.info(
+                        f"Process {process_id} terminated gracefully (exit code: {exit_code})"
+                    )
                     return True
 
                 except subprocess.TimeoutExpired:
                     # Force kill if graceful termination fails
-                    logger.warning(f"Process {process_id} did not terminate gracefully, forcing kill")
+                    logger.warning(
+                        f"Process {process_id} did not terminate gracefully, forcing kill"
+                    )
                     popen.kill()
                     exit_code = popen.wait(timeout=5.0)
                     process_info.exit_code = exit_code
                     process_info.state = ProcessState.STOPPED
                     process_info.end_time = datetime.now()
 
-                    logger.info(f"Process {process_id} force killed (exit code: {exit_code})")
+                    logger.info(
+                        f"Process {process_id} force killed (exit code: {exit_code})"
+                    )
                     return True
 
             except Exception as e:
@@ -232,7 +244,11 @@ class ProcessRegistry:
     def get_running_processes(self) -> dict[str, ProcessInfo]:
         """Get only running processes"""
         with self.lock:
-            return {pid: info for pid, info in self.processes.items() if info.state == ProcessState.RUNNING}
+            return {
+                pid: info
+                for pid, info in self.processes.items()
+                if info.state == ProcessState.RUNNING
+            }
 
     def _monitor_process(self, process_id: str):
         """Monitor a specific process in a dedicated thread"""
@@ -267,7 +283,9 @@ class ProcessRegistry:
                         process_info.exit_code = popen.poll()
                         process_info.end_time = datetime.now()
 
-                        logger.info(f"Process {process_id} ended with exit code: {popen.poll()}")
+                        logger.info(
+                            f"Process {process_id} ended with exit code: {popen.poll()}"
+                        )
 
                         # Handle auto-restart if enabled
                         if (
@@ -317,7 +335,9 @@ class ProcessRegistry:
             return metrics
 
         except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
-            logger.warning(f"Failed to collect metrics for process {process_info.name}: {e}")
+            logger.warning(
+                f"Failed to collect metrics for process {process_info.name}: {e}"
+            )
             return None
 
     def _detect_process_warnings(self, metrics: ProcessMetrics) -> list[str]:
@@ -427,10 +447,16 @@ class ProcessRegistry:
         """Log overall registry status"""
         with self.lock:
             total = len(self.processes)
-            running = len([p for p in self.processes.values() if p.state == ProcessState.RUNNING])
-            failed = len([p for p in self.processes.values() if p.state == ProcessState.FAILED])
+            running = len(
+                [p for p in self.processes.values() if p.state == ProcessState.RUNNING]
+            )
+            failed = len(
+                [p for p in self.processes.values() if p.state == ProcessState.FAILED]
+            )
 
-            logger.debug(f"Process registry status: {running} running, {failed} failed, {total} total")
+            logger.debug(
+                f"Process registry status: {running} running, {failed} failed, {total} total"
+            )
 
     def shutdown(self):
         """Shutdown the process registry"""
@@ -459,7 +485,9 @@ def get_process_registry() -> ProcessRegistry:
     return _process_registry
 
 
-def register_process(process_id: str, name: str, command: list[str], **kwargs) -> ProcessInfo:
+def register_process(
+    process_id: str, name: str, command: list[str], **kwargs
+) -> ProcessInfo:
     """Convenience function to register a process"""
     return get_process_registry().register_process(process_id, name, command, **kwargs)
 

@@ -12,7 +12,7 @@ import sys
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 sys.path.insert(0, project_root)
 
-import Shared.filesystem.utf8_solution as utf8
+import Shared.filesystem.utf8_solution as utf8  # noqa: E402
 
 
 def demo_basic_functionality():
@@ -85,7 +85,12 @@ def demo_table_formatting():
         ["config.txt", "1.2 KB", "✅ Ready", "Basic config"],
         ["שלום.doc", "0.8 MB", "🔄 Processing", "Hebrew document"],
         ["emoji_🎉_test.png", "2.1 MB", "❌ Failed", "Image with emoji"],
-        ["very_long_filename_that_needs_truncation.xlsx", "15.7 MB", "⏳ Queued", "Will be shortened"],
+        [
+            "very_long_filename_that_needs_truncation.xlsx",
+            "15.7 MB",
+            "⏳ Queued",
+            "Will be shortened",
+        ],
     ]
 
     for row_data in test_data:
@@ -122,7 +127,9 @@ def demo_framework_integration():
     progress_widths = [30, 10, 15, 8]
 
     utf8.safe_print(utf8.format_table_row(progress_headers, progress_widths))
-    utf8.safe_print(utf8.format_table_row(["-" * w for w in progress_widths], progress_widths))
+    utf8.safe_print(
+        utf8.format_table_row(["-" * w for w in progress_widths], progress_widths)
+    )
 
     for filename, size, progress, status in files:
         display_name = utf8.truncate_text(filename, 27)
@@ -145,7 +152,9 @@ def test_library_status():
     # Display basic environment info
     utf8.safe_print("🖥️ Environment:")
     utf8.safe_print(f"   Platform: {diagnosis['platform']}")
-    utf8.safe_print(f"   UTF-8 Test: {'✅ Pass' if diagnosis['utf8_test'] else '❌ Fail'}")
+    utf8.safe_print(
+        f"   UTF-8 Test: {'✅ Pass' if diagnosis['utf8_test'] else '❌ Fail'}"
+    )
 
     # Display library status
     utf8.safe_print("\n📚 Optional Libraries:")
@@ -164,13 +173,17 @@ def test_library_status():
     # Test specific features if available
     if "bidi_test" in diagnosis:
         result = diagnosis["bidi_test"]
-        utf8.safe_print(f"\n🔤 BiDi Test: {'✅ Pass' if result['success'] else '❌ Fail'}")
+        utf8.safe_print(
+            f"\n🔤 BiDi Test: {'✅ Pass' if result['success'] else '❌ Fail'}"
+        )
         if result["success"]:
             utf8.safe_print(f"   Result: '{result['result']}'")
 
     if "wcwidth_test" in diagnosis:
         result = diagnosis["wcwidth_test"]
-        utf8.safe_print(f"📏 Width Test: {'✅ Pass' if result['success'] else '❌ Fail'}")
+        utf8.safe_print(
+            f"📏 Width Test: {'✅ Pass' if result['success'] else '❌ Fail'}"
+        )
         if result["success"]:
             utf8.safe_print(f"   Width calculation: {result['width']}")
 
@@ -183,7 +196,12 @@ def test_text_processing():
 
     # Test BiDi processing
     utf8.safe_print("🔤 Bidirectional Text Processing:")
-    test_texts = ["שלום עולם", "Hello שלום World", "בדיקה test 123 ✅", "English and זה עברית mixed"]
+    test_texts = [
+        "שלום עולם",
+        "Hello שלום World",
+        "בדיקה test 123 ✅",
+        "English and זה עברית mixed",
+    ]
 
     for text in test_texts:
         processed = utf8.process_bidirectional_text(text)
@@ -209,12 +227,8 @@ def installation_guide():
 
     diagnosis = utf8.diagnose_utf8_environment()
     libraries = diagnosis["optional_libraries"]
-    missing = [lib for lib, available in libraries.items() if not available]
 
-    if not missing:
-        utf8.safe_print("🎉 [bold green]Perfect! All enhancements are available![/bold green]")
-        utf8.safe_print("✨ You have the full enhanced utf8_solution experience!")
-    else:
+    if missing := [lib for lib, available in libraries.items() if not available]:
         utf8.safe_print("🔧 Some enhancements are missing:")
         for lib in missing:
             utf8.safe_print(f"   ❌ {lib}")
@@ -224,8 +238,15 @@ def installation_guide():
         utf8.safe_print("\n   Or install individually:")
         for lib in missing:
             utf8.safe_print(f"   pip install {lib}")
+    else:
+        utf8.safe_print(
+            "🎉 [bold green]Perfect! All enhancements are available![/bold green]"
+        )
+        utf8.safe_print("✨ You have the full enhanced utf8_solution experience!")
 
-    utf8.safe_print(f"\n📊 Enhancement Status: {sum(libraries.values())}/{len(libraries)} active")
+    utf8.safe_print(
+        f"\n📊 Enhancement Status: {sum(libraries.values())}/{len(libraries)} active"
+    )
 
 
 def main():

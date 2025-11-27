@@ -11,15 +11,18 @@ from typing import Any
 
 # Add the project root to the Python path
 script_dir = os.path.dirname(__file__)
-project_root = os.path.abspath(os.path.join(script_dir, '..', '..'))
+project_root = os.path.abspath(os.path.join(script_dir, "..", ".."))
 sys.path.insert(0, project_root)
 
 # Setup standardized import paths
-from Shared.path_utils import setup_imports
+from Shared.path_utils import setup_imports  # noqa: E402
 
 setup_imports()
 
-def check_syntax_and_incomplete_methods(content: str, filepath: str) -> dict[str, list[str]]:
+
+def check_syntax_and_incomplete_methods(
+    content: str, filepath: str
+) -> dict[str, list[str]]:
     # sourcery skip: low-code-quality
     """Check syntax and find incomplete methods"""
     syntax_errors: list[str] = []
@@ -34,20 +37,30 @@ def check_syntax_and_incomplete_methods(content: str, filepath: str) -> dict[str
                 if len(node.body) == 1:
                     first_stmt = node.body[0]
                     if isinstance(first_stmt, ast.Pass):
-                        incomplete_methods.append(f"Line {node.lineno}: {node.name} - Only pass statement")
+                        incomplete_methods.append(
+                            f"Line {node.lineno}: {node.name} - Only pass statement"
+                        )
                     elif isinstance(first_stmt, ast.Expr):
                         if isinstance(first_stmt.value, ast.Constant):
                             if first_stmt.value.value in [Ellipsis, "..."]:
-                                incomplete_methods.append(f"Line {node.lineno}: {node.name} - Only ellipsis")
-                        elif hasattr(ast, 'Str') and isinstance(first_stmt.value, ast.Str):
+                                incomplete_methods.append(
+                                    f"Line {node.lineno}: {node.name} - Only ellipsis"
+                                )
+                        elif hasattr(ast, "Str") and isinstance(
+                            first_stmt.value, ast.Str
+                        ):
                             if first_stmt.value.s in ["...", "TODO", "FIXME"]:
-                                incomplete_methods.append(f"Line {node.lineno}: {node.name} - Placeholder: {first_stmt.value.s}")
+                                incomplete_methods.append(
+                                    f"Line {node.lineno}: {node.name} - Placeholder: {first_stmt.value.s}"
+                                )
                 elif len(node.body) == 0:
-                    incomplete_methods.append(f"Line {node.lineno}: {node.name} - Empty method body")
+                    incomplete_methods.append(
+                        f"Line {node.lineno}: {node.name} - Empty method body"
+                    )
     except SyntaxError as e:
         syntax_errors.append(f"Line {e.lineno}: {e.msg}")
 
-    return {'syntax_errors': syntax_errors, 'incomplete_methods': incomplete_methods}
+    return {"syntax_errors": syntax_errors, "incomplete_methods": incomplete_methods}
 
 
 def check_imports(content: str, filepath: str) -> list[str]:
@@ -55,18 +68,20 @@ def check_imports(content: str, filepath: str) -> list[str]:
     missing_imports: list[str] = []
 
     # Test key imports for ServerGUI.py
-    if 'ServerGUI.py' in filepath:
+    if "ServerGUI.py" in filepath:
         test_imports = [
-            'import tkinter as tk',
-            'from tkinter import ttk, messagebox, filedialog',
-            'import threading',
-            'import queue',
-            'from datetime import datetime',
-            'from typing import Dict, List, Optional, Any, Union, Tuple',
-            'from collections import deque'
+            "import tkinter as tk",
+            "from tkinter import ttk, messagebox, filedialog",
+            "import threading",
+            "import queue",
+            "from datetime import datetime",
+            "from typing import Dict, List, Optional, Any, Union, Tuple",
+            "from collections import deque",
         ]
 
-        missing_imports.extend(f"Missing: {imp}" for imp in test_imports if imp not in content)
+        missing_imports.extend(
+            f"Missing: {imp}" for imp in test_imports if imp not in content
+        )
 
     return missing_imports
 
@@ -74,34 +89,35 @@ def check_imports(content: str, filepath: str) -> list[str]:
 def analyze_python_file(filepath: str) -> dict[str, Any]:
     """Analyze a Python file for various issues"""
     results: dict[str, Any] = {
-        'file': filepath,
-        'syntax_errors': [],
-        'import_errors': [],
-        'incomplete_methods': [],
-        'runtime_errors': [],
-        'missing_imports': []
+        "file": filepath,
+        "syntax_errors": [],
+        "import_errors": [],
+        "incomplete_methods": [],
+        "runtime_errors": [],
+        "missing_imports": [],
     }
 
     try:
         # Read file content
-        with open(filepath, encoding='utf-8') as f:
+        with open(filepath, encoding="utf-8") as f:
             content = f.read()
 
         # Check syntax and incomplete methods
         syntax_results = check_syntax_and_incomplete_methods(content, filepath)
-        results['syntax_errors'] = syntax_results['syntax_errors']
-        results['incomplete_methods'] = syntax_results['incomplete_methods']
+        results["syntax_errors"] = syntax_results["syntax_errors"]
+        results["incomplete_methods"] = syntax_results["incomplete_methods"]
 
         # Test imports
         try:
-            results['missing_imports'] = check_imports(content, filepath)
+            results["missing_imports"] = check_imports(content, filepath)
         except Exception as e:
-            results['import_errors'].append(f"Import analysis error: {e}")
+            results["import_errors"].append(f"Import analysis error: {e}")
 
     except Exception as e:
-        results['runtime_errors'].append(f"File analysis error: {e}")
+        results["runtime_errors"].append(f"File analysis error: {e}")
 
     return results
+
 
 def test_functionality() -> list[str]:
     """Test actual functionality"""
@@ -109,7 +125,7 @@ def test_functionality() -> list[str]:
 
     print("Testing ServerGUI functionality...")
     try:
-        from python_server.server_gui import ServerGUI
+        from python_server.server_gui import ServerGUI  # type: ignore
         # Note: ModernCard, ModernProgressBar, ModernStatusIndicator not available in current codebase
 
         # Test basic instantiation
@@ -118,11 +134,14 @@ def test_functionality() -> list[str]:
 
         # Test widget creation
         import tkinter as tk
+
         root = tk.Tk()
         root.withdraw()
 
         # Skipping tests for components not available in current codebase
-        results.append("ℹ ModernCard, ModernProgressBar, ModernStatusIndicator tests skipped (components not available)")
+        results.append(
+            "ℹ ModernCard, ModernProgressBar, ModernStatusIndicator tests skipped (components not available)"
+        )
 
         # try:
         #     _card = ModernCard(root, title="Test")  # type: ignore
@@ -166,19 +185,26 @@ def test_functionality() -> list[str]:
 # TODO Rename this here and in `test_functionality`
 def _extracted_from_test_functionality_45(gui, results):
     # Use safe method calls for GUI testing
-    if hasattr(gui, 'update_server_status') and callable(getattr(gui, 'update_server_status', None)):
+    if hasattr(gui, "update_server_status") and callable(
+        getattr(gui, "update_server_status", None)
+    ):
         gui.update_server_status(True, "127.0.0.1", 1256)  # type: ignore
-    if hasattr(gui, 'update_client_stats') and callable(getattr(gui, 'update_client_stats', None)):
+    if hasattr(gui, "update_client_stats") and callable(
+        getattr(gui, "update_client_stats", None)
+    ):
         gui.update_client_stats(5, 10, 2)  # type: ignore
-    if hasattr(gui, 'update_transfer_stats') and callable(getattr(gui, 'update_transfer_stats', None)):
+    if hasattr(gui, "update_transfer_stats") and callable(
+        getattr(gui, "update_transfer_stats", None)
+    ):
         gui.update_transfer_stats(1024, "now")  # type: ignore
-    if hasattr(gui, 'show_error') and callable(getattr(gui, 'show_error', None)):
+    if hasattr(gui, "show_error") and callable(getattr(gui, "show_error", None)):
         gui.show_error("test error")  # type: ignore
-    if hasattr(gui, 'show_success') and callable(getattr(gui, 'show_success', None)):
+    if hasattr(gui, "show_success") and callable(getattr(gui, "show_success", None)):
         gui.show_success("test success")  # type: ignore
-    if hasattr(gui, 'show_info') and callable(getattr(gui, 'show_info', None)):
+    if hasattr(gui, "show_info") and callable(getattr(gui, "show_info", None)):
         gui.show_info("test info")  # type: ignore
     results.append("✓ All GUI methods work")  # type: ignore
+
 
 def main() -> None:
     print("DEEP ERROR ANALYSIS")
@@ -186,22 +212,22 @@ def main() -> None:
 
     # Find all Python files
     python_files: list[str] = []
-    for root, _dirs, files in os.walk('.'):
+    for root, _dirs, files in os.walk("."):
         python_files.extend(
-            os.path.join(root, file) for file in files if file.endswith('.py')
+            os.path.join(root, file) for file in files if file.endswith(".py")
         )
     print(f"Found {len(python_files)} Python files")
 
     # Analyze each file
     all_issues: list[dict[str, Any]] = []
     for filepath in python_files:
-        if '__pycache__' in filepath or '.git' in filepath:
+        if "__pycache__" in filepath or ".git" in filepath:
             continue
 
         print(f"\nAnalyzing: {filepath}")
         results = analyze_python_file(filepath)
 
-        issues_found = sum(len(results[key]) for key in results if key != 'file')
+        issues_found = sum(len(results[key]) for key in results if key != "file")
         if issues_found > 0:
             all_issues.append(results)
             print(f"  Issues found: {issues_found}")
@@ -219,7 +245,7 @@ def main() -> None:
         for issue in all_issues:
             print(f"\nFile: {issue['file']}:")
             for category, problems in issue.items():
-                if category != 'file' and problems:
+                if category != "file" and problems:
                     print(f"  {category}: {len(problems)} issues")
                     for problem in problems[:3]:  # Show first 3
                         print(f"    • {problem}")
@@ -228,15 +254,18 @@ def main() -> None:
     else:
         print("No static analysis issues found")
 
-    print(f"\nFunctionality test results: {len([r for r in func_results if r.startswith('✓')])} passed, {len([r for r in func_results if r.startswith('✗')])} failed")
+    print(
+        f"\nFunctionality test results: {len([r for r in func_results if r.startswith('✓')])} passed, {len([r for r in func_results if r.startswith('✗')])} failed"
+    )
 
 
 # TODO Rename this here and in `main`
 def _extracted_from_main_30(arg0):
     # Test functionality
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(arg0)
     print("=" * 60)
+
 
 if __name__ == "__main__":
     main()

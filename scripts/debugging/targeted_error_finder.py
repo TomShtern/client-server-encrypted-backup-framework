@@ -12,6 +12,7 @@ from Shared.path_utils import setup_imports
 
 setup_imports()
 
+
 def test_server_gui_import() -> bool:
     """Test ServerGUI imports"""
     print("Testing ServerGUI imports...")
@@ -21,15 +22,17 @@ def test_server_gui_import() -> bool:
     except Exception as e:
         print(f"✗ ServerGUI import error: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def test_other_files() -> list[str]:
     """Test other Python files for import issues"""
     files_to_test = [
-        'config_manager.py',
-        'comprehensive_test_suite.py',
-        'quick_validation.py'
+        "config_manager.py",
+        "comprehensive_test_suite.py",
+        "quick_validation.py",
     ]
 
     results: list[str] = []
@@ -55,15 +58,18 @@ def test_other_files() -> list[str]:
 
     return results
 
+
 def test_gui_methods(gui: Any) -> None:
     """Test basic GUI methods"""
     cast(Any, gui).update_server_status(True, "127.0.0.1", 1256)
     print("✓ update_server_status works")
-    cast(Any, gui).update_client_stats({'connected': 5, 'total': 10, 'active_transfers': 2})
+    cast(Any, gui).update_client_stats(
+        {"connected": 5, "total": 10, "active_transfers": 2}
+    )
     print("✓ update_client_stats works")
-    cast(Any, gui).update_transfer_stats({'bytes_transferred': 1024})
+    cast(Any, gui).update_transfer_stats({"bytes_transferred": 1024})
     print("✓ update_transfer_stats works")
-    toast = getattr(gui, 'toast_system', None)
+    toast = getattr(gui, "toast_system", None)
     if toast is not None:
         cast(Any, toast).show_toast("test error", "error")
         cast(Any, toast).show_toast("test success", "success")
@@ -74,7 +80,8 @@ def test_minimal_functionality() -> bool:
     """Test minimal ServerGUI functionality"""
     print("\nTesting minimal ServerGUI functionality...")
     try:
-        from python_server.server_gui import ServerGUI
+        from python_server.server_gui import ServerGUI  # type: ignore
+
         gui: Any = ServerGUI()
         print("✓ ServerGUI instance created")
         # Test basic methods
@@ -86,8 +93,10 @@ def test_minimal_functionality() -> bool:
     except Exception as e:
         print(f"✗ Functionality test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def check_syntax_errors() -> list[str]:
     """Check for syntax errors in Python files"""
@@ -95,14 +104,14 @@ def check_syntax_errors() -> list[str]:
     import py_compile
 
     python_files = [
-        'python_server/server_gui/ServerGUI.py',
-        'config_manager.py',
-        'comprehensive_test_suite.py',
-        'comprehensive_test_gui.py',
-        'demo_server_gui.py',
-        'find_gui_errors.py',
-        'validate_server_gui.py',
-        'test_server_gui.py'
+        "python_server/server_gui/ServerGUI.py",
+        "config_manager.py",
+        "comprehensive_test_suite.py",
+        "comprehensive_test_gui.py",
+        "demo_server_gui.py",
+        "find_gui_errors.py",
+        "validate_server_gui.py",
+        "test_server_gui.py",
     ]
 
     results: list[str] = []
@@ -120,6 +129,7 @@ def check_syntax_errors() -> list[str]:
             results.append(f"? {file} not found")
 
     return results
+
 
 def print_results_list(title: str, results: list[str]) -> None:
     """Print a formatted list of results"""
@@ -158,15 +168,21 @@ def main() -> None:
     print(f"\nFunctionality test: {'✓ SUCCESS' if func_success else '✗ FAILED'}")
 
     # Count issues
-    syntax_errors = len([r for r in syntax_results if r.startswith('✗')])
-    other_errors = len([r for r in other_results if r.startswith('✗')])
+    syntax_errors = len([r for r in syntax_results if r.startswith("✗")])
+    other_errors = len([r for r in other_results if r.startswith("✗")])
 
-    total_errors = syntax_errors + other_errors + (0 if import_success else 1) + (0 if func_success else 1)
+    total_errors = (
+        syntax_errors
+        + other_errors
+        + (0 if import_success else 1)
+        + (0 if func_success else 1)
+    )
 
     if total_errors == 0:
         print("\n🎉 NO ERRORS FOUND! All tests passed.")
     else:
         print(f"\n❌ FOUND {total_errors} ERRORS that need to be fixed.")
+
 
 if __name__ == "__main__":
     main()

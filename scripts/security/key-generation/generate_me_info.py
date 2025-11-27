@@ -18,7 +18,7 @@ def generate_me_info():
     for f in ["client/me.info", "client/priv.key", "client/pub.key"]:
         try:
             os.remove(f)
-        except:
+        except Exception:
             pass
 
     print("1. Starting client for key generation...")
@@ -32,8 +32,8 @@ def generate_me_info():
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
-            encoding='utf-8',
-            errors='ignore'  # Ignore encoding errors
+            encoding="utf-8",
+            errors="ignore",  # Ignore encoding errors
         )
 
         # Wait for up to 20 seconds, checking for me.info creation
@@ -58,12 +58,15 @@ def generate_me_info():
             print("✅ me.info file generated!")
             return True
         else:
-            print("⚠️  me.info not generated yet (RSA key generation may still be in progress)")
+            print(
+                "⚠️  me.info not generated yet (RSA key generation may still be in progress)"
+            )
             return False
 
     except Exception as e:
         print(f"❌ Error during key generation: {e}")
         return False
+
 
 def check_file_format():
     """Check if generated me.info has proper format"""
@@ -71,7 +74,7 @@ def check_file_format():
         return False
 
     try:
-        with open("client/me.info", encoding='utf-8', errors='ignore') as f:
+        with open("client/me.info", encoding="utf-8", errors="ignore") as f:
             lines = f.readlines()
 
         if len(lines) >= 3:
@@ -93,6 +96,7 @@ def check_file_format():
         print(f"❌ Error reading me.info: {e}")
         return False
 
+
 def main():
     success = generate_me_info()
 
@@ -109,6 +113,7 @@ def main():
         print("\n⚠️  Key generation in progress or needs more time")
         print("   This is normal for 1024-bit RSA keys")
         return True  # Not necessarily a failure
+
 
 if __name__ == "__main__":
     success = main()

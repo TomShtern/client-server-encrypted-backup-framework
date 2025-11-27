@@ -261,20 +261,75 @@ class App {
       this.#validateInput(dom.usernameInput, dom.usernameValidIcon);
     });
 
-    dom.logAutoscrollToggle.addEventListener('change', (event) => {
-      const enabled = event.currentTarget.checked;
-      this.logs.setAutoScroll(enabled);
-      this.toast.show(`Autoscroll ${enabled ? 'enabled' : 'disabled'}`, 'info', 1800);
-    });
+    if (dom.logAutoscrollToggle) {
+      dom.logAutoscrollToggle.addEventListener('change', (event) => {
+        const enabled = event.currentTarget.checked;
+        this.logs.setAutoScroll(enabled);
+        this.toast.show(`Autoscroll ${enabled ? 'enabled' : 'disabled'}`, 'info', 1800);
+      });
+    }
 
-    dom.logExportBtn.addEventListener('click', () => this.#exportLogs());
+    if (dom.logExportBtn) {
+      dom.logExportBtn.addEventListener('click', () => this.#exportLogs());
+    }
 
-    for (const button of dom.logFilters) {
-      button.addEventListener('click', () => {
-        for (const other of dom.logFilters) {
-          other.classList.toggle('active', other === button);
-          other.setAttribute('aria-pressed', other === button ? 'true' : 'false');
+    // Log clear button
+    if (dom.logClearBtn) {
+      dom.logClearBtn.addEventListener('click', () => {
+        this.logs.clear();
+        this.toast.show('Logs cleared', 'info', 1800);
+      });
+    }
+
+    // Log demo button - adds sample log entries for testing
+    if (dom.logDemoBtn) {
+      dom.logDemoBtn.addEventListener('click', () => {
+        this.#generateDemoLogs();
+      });
+    }
+
+    // Log search functionality
+    if (dom.logSearchInput) {
+      dom.logSearchInput.addEventListener('input', (event) => {
+        const query = event.target.value.trim().toLowerCase();
+        this.#filterLogsBySearch(query);
+
+        // Show/hide clear button
+        if (dom.searchClearBtn) {
+          dom.searchClearBtn.hidden = !query;
         }
+      });
+    }
+
+    if (dom.searchClearBtn) {
+      dom.searchClearBtn.addEventListener('click', () => {
+        if (dom.logSearchInput) {
+          dom.logSearchInput.value = '';
+          dom.searchClearBtn.hidden = true;
+          this.#filterLogsBySearch('');
+        }
+      });
+    }
+
+    // Segmented filter control with sliding indicator
+    for (let i = 0; i < dom.logFilters.length; i++) {
+      const button = dom.logFilters[i];
+      button.addEventListener('click', () => {
+        // Update active state for all buttons
+        for (const other of dom.logFilters) {
+          const isActive = other === button;
+          other.classList.toggle('active', isActive);
+          other.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        }
+
+        // Animate segment indicator
+        if (dom.segmentIndicator) {
+          const segmentWidth = 100 / dom.logFilters.length;
+          dom.segmentIndicator.style.width = `calc(${segmentWidth}% - 3px)`;
+          dom.segmentIndicator.style.left = `calc(${i * segmentWidth}% + 4px)`;
+        }
+
+        // Apply filter
         this.logs.setFilter(button.dataset.level || 'all');
       });
     }
@@ -1180,6 +1235,11 @@ class App {
       dom.stats.elapsed.textContent = elapsedText;
       setTimeout(() => dom.stats.elapsed.classList.remove('updating'), 400);
     }
+
+    // Update speed chart if available
+    if (window.Enhancements && typeof window.Enhancements.updateSpeedChart === 'function') {
+      window.Enhancements.updateSpeedChart(state.speed);
+    }
   }
 
   #renderButtons(state) {
@@ -1259,6 +1319,71 @@ class App {
     link.remove();
     setTimeout(() => URL.revokeObjectURL(url), 5000);
     this.toast.show('Logs exported', 'success');
+  }
+
+  #filterLogsBySearch(query) {
+    const entries = dom.logContainer.querySelectorAll('.log-entry');
+    let visibleCount = 0;
+
+    for (const entry of entries) {
+      const message = entry.querySelector('.log-message');
+      const text = message ? message.textContent.toLowerCase() : '';
+
+      if (!query || text.includes(query)) {
+        entry.style.display = '';
+        visibleCount++;
+      } else {
+        entry.style.display = 'none';
+      }
+    }
+
+    // Update visible count
+    if (dom.logEntryCount) {
+      dom.logEntryCount.textContent = visibleCount.toString();
+    }
+
+    // Show/hide empty state
+    if (dom.logsEmptyState) {
+      dom.logsEmptyState.style.display = visibleCount === 0 ? 'flex' : 'none';
+    }
+  }
+
+  #generateDemoLogs() {
+    const demoMessages = [
+      { message: 'Application initialized successfully', level: 'info' },
+      { message: 'Connected to backup server at 127.0.0.1:1256', level: 'info' },
+      { message: 'RSA key exchange completed', level: 'info' },
+      { message: 'AES-256-CBC session key established', level: 'info' },
+      { message: 'Starting file transfer: backup_data.zip', level: 'info' },
+      { message: 'Chunk 1/10 transferred (10%)', level: 'info' },
+      { message: 'Chunk 2/10 transferred (20%)', level: 'info' },
+      { message: 'Network latency spike detected: 245ms', level: 'warn' },
+      { message: 'Chunk 3/10 transferred (30%)', level: 'info' },
+      { message: 'Chunk 4/10 transferred (40%)', level: 'info' },
+      { message: 'Connection timeout - retrying...', level: 'warn' },
+      { message: 'Reconnected successfully', level: 'info' },
+      { message: 'Chunk 5/10 transferred (50%)', level: 'info' },
+      { message: 'CRC32 verification failed for chunk 6', level: 'error' },
+      { message: 'Retransmitting chunk 6...', level: 'warn' },
+      { message: 'Chunk 6/10 transferred (60%)', level: 'info' },
+      { message: 'Chunk 7/10 transferred (70%)', level: 'info' },
+      { message: 'Chunk 8/10 transferred (80%)', level: 'info' },
+      { message: 'Chunk 9/10 transferred (90%)', level: 'info' },
+      { message: 'Chunk 10/10 transferred (100%)', level: 'info' },
+      { message: 'File integrity verified', level: 'info' },
+      { message: 'Backup completed successfully', level: 'info' },
+    ];
+
+    // Add messages with staggered timing for animation effect
+    let delay = 0;
+    for (const { message, level } of demoMessages) {
+      setTimeout(() => {
+        this.logs.add(message, { level, phase: 'DEMO' });
+      }, delay);
+      delay += 150; // 150ms between each log
+    }
+
+    this.toast.show('Adding demo log entries...', 'info', 2000);
   }
 }
 

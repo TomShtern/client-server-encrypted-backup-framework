@@ -42,37 +42,74 @@
         <header role="banner">
             <div class="header-row">
                 <div class="brand">
+                    <svg class="brand-logo" width="40" height="40" viewBox="0 0 40 40" fill="none">
+                        <circle cx="20" cy="20" r="18" stroke="url(#logoGrad)" stroke-width="2" fill="none"/>
+                        <path d="M12 20 L18 26 L28 14" stroke="url(#logoGrad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                        <defs>
+                            <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#58a6ff"/>
+                                <stop offset="100%" stop-color="#a78bfa"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
                     <div class="name" id="appLogo">CyberBackup</div>
                     <div class="tag">Client</div>
                 </div>
                 <div class="status-bar">
                     <output id="statusOutput" class="status-output" aria-live="polite">
-                        <span id="connStatus" class="badge disconnected" title="Connection state" style="cursor: pointer;">Disconnected</span>
-                        <span id="connHealth" class="muted" title="Round-trip latency">Latency —</span>
-                        <span id="connQuality" class="chip quality-offline" title="Connection quality">● Offline</span>
+                        <span id="connStatus" class="status-indicator ready" title="Connection state">
+                            <span class="status-dot"></span>
+                            <span class="status-text">Ready</span>
+                        </span>
+                        <span class="separator">•</span>
+                        <span id="connHealth" class="latency-indicator" title="Round-trip latency">
+                            <span class="latency-label">Latency</span>
+                            <svg class="latency-graph" width="24" height="16" viewBox="0 0 24 16" fill="none">
+                                <path d="M2 12L6 8L10 10L14 4L18 8L22 6" stroke="url(#latencyGrad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <defs>
+                                    <linearGradient id="latencyGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                        <stop offset="0%" stop-color="#f59e0b"/>
+                                        <stop offset="100%" stop-color="#ef4444"/>
+                                    </linearGradient>
+                                </defs>
+                            </svg>
+                        </span>
+                        <span class="separator">•</span>
+                        <span id="connQuality" class="connection-badge offline" title="Connection quality">
+                            <span class="badge-dot"></span>
+                            <span class="badge-text">Offline</span>
+                        </span>
                     </output>
                     <div id="connectionDetails" class="connection-details">
                         <h4>Connection Details</h4>
                         <div class="connection-metric">
-                            <span class="connection-metric-label">Status:</span>
-                            <span class="connection-metric-value" id="detailStatus">Offline</span>
+                            <span class="connection-metric-label">Status</span>
+                            <span class="connection-metric-value" id="detailStatus">Disconnected</span>
                         </div>
                         <div class="connection-metric">
-                            <span class="connection-metric-label">Latency:</span>
+                            <span class="connection-metric-label">Latency</span>
                             <span class="connection-metric-value" id="detailLatency">—</span>
                         </div>
                         <div class="connection-metric">
-                            <span class="connection-metric-label">Server:</span>
-                            <span class="connection-metric-value" id="detailServer">Not connected</span>
+                            <span class="connection-metric-label">Server</span>
+                            <span class="connection-metric-value" id="detailServer">—</span>
                         </div>
                         <div class="connection-metric">
-                            <span class="connection-metric-label">Uptime:</span>
+                            <span class="connection-metric-label">Uptime</span>
                             <span class="connection-metric-value" id="detailUptime">—</span>
                         </div>
                     </div>
-                    <button id="themeToggle" class="interactive ghost" title="Toggle Theme" aria-label="Toggle theme">
-                        <span class="theme-icon">🌙</span>
-                    </button>
+                    <div class="theme-toggle-wrapper">
+                        <svg class="theme-icon sun-icon" width="16" height="16" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="4" fill="currentColor"/>
+                            <path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        <label class="theme-switch" for="themeToggle">
+                            <input type="checkbox" id="themeToggle" aria-label="Toggle theme">
+                            <span class="theme-slider"></span>
+                        </label>
+                        <span class="theme-label">Light mode</span>
+                    </div>
                 </div>
             </div>
         </header>
@@ -112,116 +149,249 @@
                 </label>
 
                 <div id="fileDropZone" class="file-drop-zone interactive" aria-label="File selection area" title="Drag & drop a file or use Choose File">
-                    <div class="row">
-                        <button id="fileSelectBtn" class="interactive ghost ripple" aria-controls="fileInput" aria-haspopup="dialog">
-                            Choose File
-                        </button>
-                        <input id="fileInput" type="file" hidden />
-                        <button id="recentFilesBtn" class="interactive ghost" title="Recent Files">Recent</button>
+                    <div class="drop-zone-wave"></div>
+
+                    <!-- Default State -->
+                    <div class="drop-zone-content" id="defaultDropContent">
+                        <svg class="cloud-upload-icon" width="64" height="64" viewBox="0 0 80 80" fill="none">
+                            <defs>
+                                <linearGradient id="cloudGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#58a6ff"/>
+                                    <stop offset="50%" stop-color="#22d3ee"/>
+                                    <stop offset="100%" stop-color="#a78bfa"/>
+                                </linearGradient>
+                            </defs>
+                            <path d="M64 42C64 32 56 24 46 24C44 18 38 14 32 14C22 14 14 22 14 32C14 33 14 34 14.5 35C8 37 4 43 4 50C4 59 11 66 20 66H60C69 66 76 59 76 50C76 43 71 37 64 42Z" stroke="url(#cloudGrad)" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M40 36V56M40 36L32 44M40 36L48 44" stroke="url(#cloudGrad)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <div class="drop-zone-text">Drag &amp; drop a file here</div>
+                        <span class="drop-zone-or">or</span>
+                        <button type="button" class="choose-file-btn" id="chooseFileBtn">Choose File</button>
                     </div>
-                    <div class="file-card" aria-live="polite">
-                        <div class="file-icon" aria-hidden="true">📄</div>
+
+                    <!-- Selected State -->
+                    <div class="file-card" id="filePreviewCard">
+                        <div class="file-icon" id="fileIcon"></div>
                         <div class="file-meta">
-                            <div
-                                class="file-name placeholder"
-                                id="fileName"
-                                data-placeholder="Drag & drop a file here or choose above"
-                            >
-                                Drag & drop a file here or choose above
-                            </div>
-                            <div
-                                class="file-sub text-caption placeholder"
-                                id="fileInfo"
-                                data-placeholder="Size — • Type —"
-                            >
-                                Size — • Type —
+                            <div class="file-name" id="fileNameDisplay"></div>
+                            <div class="file-metadata" id="fileMetadata">
+                                <span class="file-badge" id="fileTypeBadge"></span>
+                                <span class="file-modified" id="fileModified"></span>
                             </div>
                         </div>
                         <div class="file-actions">
-                            <button id="clearFileBtn" class="interactive ghost" disabled>Clear</button>
+                            <button type="button" id="clearFileBtn" class="action-btn" title="Remove file">✕</button>
+                        </div>
+                    </div>
+
+                    <input id="fileInput" type="file" hidden />
+                </div>
+
+                <div id="advancedPanel" class="advanced-settings-panel expanded">
+                    <button class="advanced-toggle" aria-expanded="true" aria-controls="advancedContent">
+                        <span class="advanced-title">Advanced Settings</span>
+                        <svg class="advanced-chevron" width="20" height="20" viewBox="0 0 20 20">
+                            <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                        </svg>
+                    </button>
+                    <div id="advancedContent" class="advanced-content">
+                        <div class="settings-tabs" role="tablist">
+                            <button class="tab-btn active" role="tab" data-tab="network" aria-selected="true" aria-controls="tab-network">Network</button>
+                            <button class="tab-btn" role="tab" data-tab="schedule" aria-selected="false" aria-controls="tab-schedule">Schedule</button>
+                            <button class="tab-btn" role="tab" data-tab="compression" aria-selected="false" aria-controls="tab-compression">Compression</button>
+                            <button class="tab-btn" role="tab" data-tab="encryption" aria-selected="false" aria-controls="tab-encryption">Encryption</button>
+                        </div>
+                        <div class="tab-panels">
+                            <div id="tab-network" class="tab-panel active" role="tabpanel">
+                                <div class="setting-row">
+                                    <label for="advProxy">Proxy</label>
+                                    <select id="advProxy" class="setting-select">
+                                        <option value="">None</option>
+                                        <option value="http">HTTP</option>
+                                        <option value="socks5">SOCKS5</option>
+                                    </select>
+                                </div>
+                                <div class="setting-row">
+                                    <label for="advPolycene">Exists Polycene</label>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="advPolycene">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <div class="setting-row">
+                                    <label for="advBandwidth">Bandwidth Limit</label>
+                                    <div class="input-with-unit">
+                                        <input id="advBandwidth" type="text" placeholder="0" class="interactive" value="0 B"/>
+                                        <span class="unit">B/s</span>
+                                    </div>
+                                </div>
+                                <div class="setting-row">
+                                    <label for="advPort">Port</label>
+                                    <input id="advPort" type="text" placeholder="1000" class="interactive" value="1000"/>
+                                </div>
+                            </div>
+                            <div id="tab-schedule" class="tab-panel" role="tabpanel" hidden>
+                                <div class="setting-row">
+                                    <label for="advScheduleType">Schedule Type</label>
+                                    <select id="advScheduleType" class="setting-select">
+                                        <option value="manual">Manual</option>
+                                        <option value="hourly">Hourly</option>
+                                        <option value="daily">Daily</option>
+                                        <option value="weekly">Weekly</option>
+                                    </select>
+                                </div>
+                                <div class="setting-row">
+                                    <label for="advAutoRetry">Auto Retry</label>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="advAutoRetry" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div id="tab-compression" class="tab-panel" role="tabpanel" hidden>
+                                <div class="setting-row">
+                                    <label for="advCompression">Compression</label>
+                                    <select id="advCompression" class="setting-select">
+                                        <option value="none">None</option>
+                                        <option value="gzip">GZIP</option>
+                                        <option value="lz4">LZ4 (Fast)</option>
+                                        <option value="zstd">ZSTD (Balanced)</option>
+                                    </select>
+                                </div>
+                                <div class="setting-row">
+                                    <label for="advChunkSize">Chunk Size (MB)</label>
+                                    <input id="advChunkSize" type="text" placeholder="8" class="interactive" value="8"/>
+                                </div>
+                            </div>
+                            <div id="tab-encryption" class="tab-panel" role="tabpanel" hidden>
+                                <div class="setting-row">
+                                    <label for="advEncryption">Encryption</label>
+                                    <select id="advEncryption" class="setting-select">
+                                        <option value="aes256" selected>AES-256-CBC</option>
+                                        <option value="aes128">AES-128-CBC</option>
+                                        <option value="chacha">ChaCha20-Poly1305</option>
+                                    </select>
+                                </div>
+                                <div class="setting-row">
+                                    <label for="advVerify">Verify Integrity</label>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="advVerify" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <div class="setting-row">
+                                    <label for="advRetryLimit">Retry Limit</label>
+                                    <input id="advRetryLimit" type="text" placeholder="3" class="interactive" value="3"/>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-
-                <details id="advancedPanel" class="interactive">
-                    <summary>Advanced Settings</summary>
-                    <div class="adv-body">
-                        <div class="split">
-                            <label class="floating-label">
-                                Chunk Size (MB)
-                                <input id="advChunkSize" type="text" placeholder="8" class="interactive" />
-                                <span class="label-text">Chunk Size</span>
-                            </label>
-                            <label class="floating-label">
-                                Retry Limit
-                                <input id="advRetryLimit" type="text" placeholder="3" class="interactive" />
-                                <span class="label-text">Retry Limit</span>
-                            </label>
-                        </div>
-                        <div class="row">
-                            <button id="advResetBtn" class="interactive ghost">Reset to defaults</button>
-                        </div>
-                    </div>
-                </details>
             </aside>
 
             <!-- STATUS PANEL -->
-            <section class="stack stagger-in" aria-labelledby="statusTitle">
-                <div id="statusTitle" class="phase" aria-hidden="true">Status</div>
+            <section class="stack stagger-in status-panel" aria-labelledby="statusTitle">
+                <!-- Animated background -->
+                <div class="status-bg-animation">
+                    <div class="wave-layer wave-1"></div>
+                    <div class="wave-layer wave-2"></div>
+                    <div class="particles-layer" id="statusParticles"></div>
+                    <div class="grid-overlay"></div>
+                </div>
 
-                <div id="phaseText" class="phase liquid-text">Idle</div>
+                <div id="statusTitle" class="phase" aria-hidden="true">Status</div>
 
                 <div class="center">
                     <div class="progress-glow"></div>
+                    <div class="ring-decoration"></div>
                     <svg id="progressRing" viewBox="0 0 100 100" aria-hidden="true">
                         <defs>
                             <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" stop-color="#60a5fa" />
-                                <stop offset="50%" stop-color="#a78bfa" />
-                                <stop offset="100%" stop-color="#ec4899" />
+                                <stop offset="0%" stop-color="#00f2ff" />
+                                <stop offset="50%" stop-color="#7000ff" />
+                                <stop offset="100%" stop-color="#ff0055" />
                             </linearGradient>
+                            <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+                                <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+                                <feMerge>
+                                    <feMergeNode in="coloredBlur"/>
+                                    <feMergeNode in="SourceGraphic"/>
+                                </feMerge>
+                            </filter>
                         </defs>
-                        <circle cx="50" cy="50" r="45" stroke="var(--bg-tertiary)" stroke-width="4" fill="none" />
+                        <circle cx="50" cy="50" r="45" stroke="rgba(88, 166, 255, 0.1)" stroke-width="4" fill="none" />
                         <circle id="progressArc" cx="50" cy="50" r="45" stroke="url(#progressGradient)" stroke-width="4" fill="none"
                                 stroke-linecap="round" stroke-dasharray="282.743" stroke-dashoffset="282.743"
-                                class="progress-fill" />
+                                class="progress-fill" filter="url(#glow)" />
                     </svg>
                     <div class="kpi">
                         <div id="progressPct" class="pct">0%</div>
-                        <div class="eta">⏱ <span id="etaText">ETA —</span></div>
+                        <div id="phaseText" class="phase-status">Idle</div>
+                        <div class="eta">ETA <span id="etaText">—</span></div>
                     </div>
                 </div>
 
                 <div class="actions" aria-label="Transfer actions">
                     <button id="primaryActionBtn" class="interactive primary ripple" type="button">
                         <span id="primaryBtnSpinner" class="loading-spinner"></span>
-                        <span id="primaryBtnText">Connect & Start</span>
+                        <span id="primaryBtnText">CONNECT</span>
                     </button>
-                    <button id="pauseBtn" class="interactive ripple" type="button" disabled>Pause</button>
-                    <button id="resumeBtn" class="interactive ripple" type="button" disabled>Resume</button>
-                    <button id="stopBtn" class="interactive ripple" type="button" disabled>Stop</button>
+                    <button id="pauseBtn" class="interactive ripple action-btn" type="button" disabled>PAUSE</button>
+                    <button id="resumeBtn" class="interactive ripple action-btn" type="button" disabled>RESUME</button>
+                    <button id="stopBtn" class="interactive ripple action-btn" type="button" disabled>STOP</button>
                 </div>
 
                 <div id="statsGrid" aria-label="Transfer statistics">
                     <div class="stat interactive">
-                        <div class="label">Bytes Sent</div>
-                        <div class="value" id="statBytes">—</div>
+                        <div class="stat-icon">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M3 8L8 3L13 8M8 3V13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <div class="stat-content">
+                            <div class="label">Bytes Sent</div>
+                            <div class="value" id="statBytes">0 B</div>
+                        </div>
                     </div>
                     <div class="stat interactive">
-                        <div class="label">Speed</div>
-                        <div class="value" id="statSpeed">—</div>
+                        <div class="stat-icon">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/>
+                                <path d="M8 4V8L11 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                        <div class="stat-content">
+                            <div class="label">Speed</div>
+                            <div class="value" id="statSpeed">0 B/s</div>
+                        </div>
                     </div>
                     <div class="stat interactive">
-                        <div class="label">File Size</div>
-                        <div class="value" id="statSize">—</div>
+                        <div class="stat-icon">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <rect x="3" y="2" width="10" height="12" rx="1" stroke="currentColor" stroke-width="1.5"/>
+                                <path d="M6 5H10M6 8H10M6 11H8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                        <div class="stat-content">
+                            <div class="label">File Size</div>
+                            <div class="value" id="statSize">0 B</div>
+                        </div>
                     </div>
                     <div class="stat interactive">
-                        <div class="label">Elapsed</div>
-                        <div class="value" id="statElapsed">—</div>
+                        <div class="stat-icon">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/>
+                                <path d="M8 5V8H11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <div class="stat-content">
+                            <div class="label">Elapsed</div>
+                            <div class="value" id="statElapsed">--</div>
+                        </div>
                     </div>
                 </div>
 
-                <div id="speedChartContainer" class="speed-chart-container">
+                <div id="speedChartContainer" class="speed-chart-container" hidden>
                     <div class="speed-chart-header">
                         <span class="speed-chart-title">Transfer Speed (Last 30s)</span>
                         <button id="toggleSpeedChart" class="ghost speed-chart-toggle" type="button">Hide</button>
@@ -231,39 +401,65 @@
             </section>
 
             <!-- Activity Logs - Grid Row 2 -->
-            <section class="logs" aria-labelledby="logTitle">
-            <div id="logTitle" class="phase heading-centered" aria-hidden="true">Activity Logs</div>
-            <div class="card">
-                <div class="toolbar">
-                    <div class="log-search">
+            <section class="logs stack" aria-labelledby="logTitle">
+                <!-- Phase Title - matches Configuration and Status panels -->
+                <div id="logTitle" class="phase">Activity Logs</div>
+
+                <!-- Toolbar Row -->
+                <div class="logs-toolbar">
+                    <!-- Search Input -->
+                    <div class="logs-search-wrapper">
+                        <svg class="search-icon" width="14" height="14" viewBox="0 0 16 16" fill="none">
+                            <circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.5"/>
+                            <path d="M11 11L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                        </svg>
                         <input
                             id="logSearchInput"
                             type="text"
                             placeholder="Search logs..."
                             aria-label="Search logs"
-                            class="interactive"
+                            class="logs-search-input"
                         />
-                    </div>
-                    <fieldset class="filter-group" aria-label="Log filters">
-                        <legend class="sr-only">Log filters</legend>
-                        <button id="filterAll" class="filter-btn interactive active" type="button" data-level="all" aria-pressed="true">
-                            All
+                        <button type="button" class="search-clear-btn" id="searchClearBtn" hidden>
+                            <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                                <path d="M2 2L10 10M10 2L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                            </svg>
                         </button>
-                        <button id="filterInfo" class="filter-btn interactive" type="button" data-level="info">Info</button>
-                        <button id="filterWarn" class="filter-btn interactive" type="button" data-level="warn">Warn</button>
-                        <button id="filterError" class="filter-btn interactive" type="button" data-level="error">Error</button>
-                    </fieldset>
-                    <div class="row">
-                        <label class="row interactive label-autoscroll" for="logAutoscrollToggle" title="Autoscroll new lines">
-                            <input id="logAutoscrollToggle" type="checkbox" checked />
-                            <span>Autoscroll</span>
-                        </label>
-                        <button id="logExportBtn" class="interactive ripple" type="button">Export</button>
+                    </div>
+
+                    <!-- Filter Pills -->
+                    <div class="logs-filter-pills" role="group" aria-label="Log level filter">
+                        <button id="filterAll" class="filter-pill active" type="button" data-level="all" aria-pressed="true">All</button>
+                        <button id="filterInfo" class="filter-pill" type="button" data-level="info" aria-pressed="false">
+                            <span class="pill-dot info"></span>Info
+                        </button>
+                        <button id="filterWarn" class="filter-pill" type="button" data-level="warn" aria-pressed="false">
+                            <span class="pill-dot warn"></span>Warn
+                        </button>
+                        <button id="filterError" class="filter-pill" type="button" data-level="error" aria-pressed="false">
+                            <span class="pill-dot error"></span>Error
+                        </button>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="logs-actions">
+                        <span class="logs-count"><span id="logEntryCount">0</span> entries</span>
+                        <button id="logClearBtn" class="logs-btn" type="button" title="Clear logs">Clear</button>
+                        <button id="logDemoBtn" class="logs-btn" type="button" title="Add demo logs">Demo</button>
                     </div>
                 </div>
-                <pre id="logContainer" aria-live="polite"></pre>
-            </div>
-        </section>
+
+                <!-- Log Entries -->
+                <div id="logContainer" class="logs-container" aria-live="polite">
+                    <div class="logs-empty" id="logsEmptyState">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <rect x="3" y="3" width="18" height="18" rx="2"/>
+                            <path d="M7 8h10M7 12h8M7 16h6" opacity="0.5"/>
+                        </svg>
+                        <span>No activity yet</span>
+                    </div>
+                </div>
+            </section>
         </main>
     </div>
 

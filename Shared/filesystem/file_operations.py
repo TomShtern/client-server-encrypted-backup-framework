@@ -9,7 +9,9 @@ import os
 logger = logging.getLogger(__name__)
 
 
-def resolve_file_path_for_client(client_id: str, filename: str, base_directory: str) -> str | None:
+def resolve_file_path_for_client(
+    client_id: str, filename: str, base_directory: str
+) -> str | None:
     """
     Resolve the full file path for a client's file with security checks.
 
@@ -23,7 +25,7 @@ def resolve_file_path_for_client(client_id: str, filename: str, base_directory: 
     """
     try:
         # Validate filename using the shared validation utility
-        from Shared.utils.validation_utils import is_valid_filename_for_storage
+        from Shared.validation.validation_utils import is_valid_filename_for_storage
 
         if not is_valid_filename_for_storage(filename):
             logger.warning(f"Invalid filename for client {client_id}: {filename}")
@@ -37,12 +39,16 @@ def resolve_file_path_for_client(client_id: str, filename: str, base_directory: 
         expected_prefix = os.path.abspath(client_dir)
 
         if not full_path.startswith(expected_prefix):
-            logger.error(f"Directory traversal attempt detected for client {client_id}, file {filename}")
+            logger.error(
+                f"Directory traversal attempt detected for client {client_id}, file {filename}"
+            )
             return None
 
         return full_path
     except Exception as e:
-        logger.error(f"Error resolving file path for client {client_id}, file {filename}: {e}")
+        logger.error(
+            f"Error resolving file path for client {client_id}, file {filename}: {e}"
+        )
         return None
 
 
@@ -89,7 +95,9 @@ def read_file_content_secure(
         # Check file size
         file_size = os.path.getsize(file_path)
         if file_size > max_size:
-            logger.warning(f"File too large: {file_path} ({file_size} bytes, max {max_size})")
+            logger.warning(
+                f"File too large: {file_path} ({file_size} bytes, max {max_size})"
+            )
             return None
 
         # Read file content safely
@@ -103,7 +111,9 @@ def read_file_content_secure(
         return None
 
 
-def write_file_content_secure(file_path: str, content: bytes, base_directory: str) -> bool:
+def write_file_content_secure(
+    file_path: str, content: bytes, base_directory: str
+) -> bool:
     """
     Securely write file content with path validation.
 

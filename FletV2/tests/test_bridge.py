@@ -7,12 +7,12 @@ import os
 import sys
 
 # Add proper paths
-repo_root = os.path.dirname(os.path.abspath('.'))
+repo_root = os.path.dirname(os.path.abspath("."))
 sys.path.insert(0, repo_root)
 
 # Import required modules
-from FletV2.utils.server_bridge import create_server_bridge
-from python_server.server.server import BackupServer
+from FletV2.utils.server_bridge import create_server_bridge  # noqa: E402
+from python_server.server.server import BackupServer  # noqa: E402
 
 
 def test_database_access(real_server):
@@ -21,7 +21,7 @@ def test_database_access(real_server):
     Extracts database testing logic for better modularity and error handling.
     """
     print("5. Testing direct server database access...")
-    if not hasattr(real_server, 'db_manager') or not real_server.db_manager:
+    if not hasattr(real_server, "db_manager") or not real_server.db_manager:
         print("   - No db_manager available on real_server.")
         return
 
@@ -29,32 +29,39 @@ def test_database_access(real_server):
     print(f"   - db_manager type: {type(db_manager)}")
 
     # Inspect available methods for debugging
-    available_methods = [method for method in dir(db_manager) if not method.startswith('_')]
+    available_methods = [
+        method for method in dir(db_manager) if not method.startswith("_")
+    ]
     print(f"   - Available db_manager methods: {available_methods}")
 
     # Safely attempt to get clients (check if method exists first)
-    if hasattr(db_manager, 'get_clients'):
+    if hasattr(db_manager, "get_clients"):
         try:
             clients = db_manager.get_clients()
             print(f"   Direct clients: {len(clients) if clients else 0} clients")
             if clients:
-                print(f"   First client: {clients[0] if isinstance(clients, list) else clients}")
+                print(
+                    f"   First client: {clients[0] if isinstance(clients, list) else clients}"
+                )
         except Exception as e:
             print(f"   Error accessing clients: {e}")
     else:
         print("   - get_clients method not available on db_manager.")
 
     # Safely attempt to get files (check if method exists first)
-    if hasattr(db_manager, 'get_files'):
+    if hasattr(db_manager, "get_files"):
         try:
             files = db_manager.get_files()
             print(f"   Direct files: {len(files) if files else 0} files")
             if files:
-                print(f"   First file: {files[0] if isinstance(files, list) else files}")
+                print(
+                    f"   First file: {files[0] if isinstance(files, list) else files}"
+                )
         except Exception as e:
             print(f"   Error accessing files: {e}")
     else:
         print("   - get_files method not available on db_manager.")
+
 
 def test_bridge():
     print("=== Testing BackupServer + ServerBridge Integration ===")
@@ -90,7 +97,9 @@ def test_bridge():
 
     # Test what methods the real server actually has
     print("4. Checking real server methods...")
-    server_methods = [method for method in dir(real_server) if not method.startswith('_')]
+    server_methods = [
+        method for method in dir(real_server) if not method.startswith("_")
+    ]
     print(f"   Available methods: {server_methods}")
 
     # 5. Testing direct BackupServer get_clients method...
@@ -99,8 +108,8 @@ def test_bridge():
         clients_result = real_server.get_clients()
         print(f"   Direct get_clients result: {clients_result}")
         print(f"   Result type: {type(clients_result)}")
-        if isinstance(clients_result, dict) and 'data' in clients_result:
-            clients_data = clients_result['data']
+        if isinstance(clients_result, dict) and "data" in clients_result:
+            clients_data = clients_result["data"]
             if isinstance(clients_data, list):
                 print(f"   Number of clients: {len(clients_data)}")
                 if clients_data:
@@ -110,8 +119,8 @@ def test_bridge():
         files_result = real_server.get_files()
         print(f"   Direct get_files result: {files_result}")
         print(f"   Files result type: {type(files_result)}")
-        if isinstance(files_result, dict) and 'data' in files_result:
-            files_data = files_result['data']
+        if isinstance(files_result, dict) and "data" in files_result:
+            files_data = files_result["data"]
             if isinstance(files_data, list):
                 print(f"   Number of files: {len(files_data)}")
                 if files_data:
@@ -122,6 +131,7 @@ def test_bridge():
 
     # Call the extracted database testing function
     test_database_access(real_server)
+
 
 if __name__ == "__main__":
     test_bridge()

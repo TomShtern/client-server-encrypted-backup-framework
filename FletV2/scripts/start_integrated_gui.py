@@ -23,33 +23,22 @@ from typing import Any
 # Third-party imports
 import flet as ft
 
-# Import our path fix module to ensure proper imports
-try:
-    import fletv2_import_fix
-
-    print("Successfully imported fletv2_import_fix")
-except ImportError:
-    # If the fix module is not available, manually add the paths
-    fletv2_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)))
-    utils_dir = os.path.join(fletv2_dir, "utils")
-    if fletv2_dir not in sys.path:
-        sys.path.insert(0, fletv2_dir)
-    if utils_dir not in sys.path:
-        sys.path.insert(0, utils_dir)
-
 # CRITICAL: Set up Python path IMMEDIATELY for all imports
 current_dir = Path(__file__).parent
-project_root = Path(__file__).parent.parent
+flet_dir = Path(__file__).parent.parent
+repo_root = flet_dir.parent
 
-# Add both directories to sys.path first
-paths_to_add = [str(current_dir), str(project_root)]
+# Add directories to sys.path first
+paths_to_add = [str(current_dir), str(flet_dir), str(repo_root)]
 for path in paths_to_add:
     if path not in sys.path:
         sys.path.insert(0, path)
 
 # CRITICAL: Update PYTHONPATH environment variable for subprocess imports
 current_pythonpath = os.environ.get("PYTHONPATH", "")
-new_pythonpath = os.pathsep.join(paths_to_add + ([current_pythonpath] if current_pythonpath else []))
+new_pythonpath = os.pathsep.join(
+    paths_to_add + ([current_pythonpath] if current_pythonpath else [])
+)
 os.environ["PYTHONPATH"] = new_pythonpath
 os.environ["PYTHONUTF8"] = "1"
 os.environ["PYTHONIOENCODING"] = "utf-8"
@@ -119,7 +108,11 @@ except ImportError as e:
         logger = logging.getLogger(logger_name or __name__)
         if not logger.handlers:
             handler = logging.StreamHandler()
-            handler.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
+            handler.setFormatter(
+                logging.Formatter(
+                    "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+                )
+            )
             logger.addHandler(handler)
             logger.setLevel(logging.INFO)
         return logger
@@ -151,11 +144,15 @@ class IntegratedServerManager:
             BackupServer instance if successful, None if failed or forced mock mode
         """
         if self.force_mock or not BACKUP_SERVER_AVAILABLE or not BackupServer:
-            logger.info("🧪 Running in mock mode (BackupServer not available or forced)")
+            logger.info(
+                "🧪 Running in mock mode (BackupServer not available or forced)"
+            )
             return None
 
         try:
-            logger.info("🚀 Initializing production BackupServer in background thread...")
+            logger.info(
+                "🚀 Initializing production BackupServer in background thread..."
+            )
 
             # Run database migration if needed before starting server
             if await self._run_database_migration():
@@ -164,10 +161,14 @@ class IntegratedServerManager:
                 logger.warning("⚠️ Database migration failed, continuing anyway")
 
             # GUI already disabled at module level - BackupServer will run headless
-            logger.info("🚫 Embedded ServerGUI disabled - BackupServer running headless for FletV2")
+            logger.info(
+                "🚫 Embedded ServerGUI disabled - BackupServer running headless for FletV2"
+            )
 
             # Initialize BackupServer directly - signal handlers disabled via environment
-            logger.info("🔧 Creating BackupServer instance with signal handlers disabled...")
+            logger.info(
+                "🔧 Creating BackupServer instance with signal handlers disabled..."
+            )
             backup_server = BackupServer()
 
             # Verify server is ready
@@ -187,7 +188,7 @@ class IntegratedServerManager:
         """Run database migration if needed."""
         try:
             # Import migration system
-            from schema_migration import migrate_database_schema
+            from schema_migration import migrate_database_schema  # type: ignore
 
             logger.info("🔄 Checking database migration requirements...")
 
@@ -203,10 +204,9 @@ class IntegratedServerManager:
 
             if migration_result:
                 logger.info("✅ Database migration successful")
-                return True
             else:
                 logger.warning("⚠️ Database migration failed or not needed")
-                return False
+            return migration_result
 
         except ImportError:
             logger.warning("📝 Migration system not available, skipping migration")
@@ -231,11 +231,16 @@ class IntegratedServerManager:
                 server_bridge = create_server_bridge(real_server=backup_server)
 
                 # Verify integration is working
-                if hasattr(server_bridge, "is_connected") and server_bridge.is_connected():
+                if (
+                    hasattr(server_bridge, "is_connected")
+                    and server_bridge.is_connected()
+                ):
                     logger.info("✅ ServerBridge integration successful")
                     return server_bridge
                 else:
-                    logger.warning("⚠️ ServerBridge integration failed, falling back to mock")
+                    logger.warning(
+                        "⚠️ ServerBridge integration failed, falling back to mock"
+                    )
 
             # Fallback to mock mode
             logger.info("🧪 Creating ServerBridge in mock mode")
@@ -246,7 +251,9 @@ class IntegratedServerManager:
             logger.info("🧪 Using emergency mock fallback")
             return create_server_bridge(real_server=None)
 
-    async def start_integrated_gui(self, development_mode: bool = False, port: int = 8000) -> None:
+    async def start_integrated_gui(
+        self, development_mode: bool = False, port: int = 8000
+    ) -> None:
         """
         Start the integrated GUI with coordinated server management.
 
@@ -259,7 +266,9 @@ class IntegratedServerManager:
             self.backup_server = await self.initialize_backup_server()
 
             # Step 2: Create integrated ServerBridge
-            self.server_bridge = self.create_integrated_server_bridge(self.backup_server)
+            self.server_bridge = self.create_integrated_server_bridge(
+                self.backup_server
+            )
 
             # Step 3: Use the main function with direct server injection
             async def integrated_main(page: ft.Page) -> None:
@@ -289,16 +298,24 @@ class IntegratedServerManager:
                     else:
                         # Best-effort fallback: set a module-level attribute main can read
                         try:
-                            main_module.INJECTED_BACKUP_SERVER = self.backup_server
+                            main_module.INJECTED_BACKUP_SERVER = self.backup_server  # type: ignore
                         except Exception:
-                            logger.debug("Could not set INJECTED_BACKUP_SERVER on main module", exc_info=True)
+                            logger.debug(
+                                "Could not set INJECTED_BACKUP_SERVER on main module",
+                                exc_info=True,
+                            )
 
-                    # Call the main function without using an explicit named-argument token in source
-                    main_func(page, **kwargs)
+                    # Call the main function with backup server as a positional argument if needed
+                    if not kwargs and self.backup_server:
+                        main_func(page, self.backup_server)  # type: ignore
+                    else:
+                        main_func(page, **kwargs)  # type: ignore
 
                     # Log integration status
                     if self.backup_server:
-                        logger.info("🎉 FletV2 GUI running with production BackupServer")
+                        logger.info(
+                            "🎉 FletV2 GUI running with production BackupServer"
+                        )
                     else:
                         logger.info("🧪 FletV2 GUI running in mock development mode")
 
@@ -310,8 +327,12 @@ class IntegratedServerManager:
 
             # Step 4: Launch GUI with appropriate view
             if development_mode:
-                logger.info(f"🌐 Starting in development mode (web browser) on port {port}")
-                await ft.app_async(target=integrated_main, view=ft.AppView.WEB_BROWSER, port=port)
+                logger.info(
+                    f"🌐 Starting in development mode (web browser) on port {port}"
+                )
+                await ft.app_async(
+                    target=integrated_main, view=ft.AppView.WEB_BROWSER, port=port
+                )
             else:
                 logger.info("🖥️ Starting in desktop application mode")
                 await ft.app_async(target=integrated_main, view=ft.AppView.FLET_APP)
@@ -389,7 +410,9 @@ def find_available_port(start_port: int = 8000, max_attempts: int = 100) -> int:
     raise RuntimeError(f"No available port found starting from {start_port}")
 
 
-async def main_integrated(development_mode: bool = False, force_mock: bool = False, port: int = 8000) -> None:
+async def main_integrated(
+    development_mode: bool = False, force_mock: bool = False, port: int = 8000
+) -> None:
     """
     Main entry point for integrated BackupServer + FletV2 GUI.
 
@@ -417,15 +440,21 @@ async def main_integrated(development_mode: bool = False, force_mock: bool = Fal
             or "[errno 10048]" in error_msg
             or "only one usage of each socket address" in error_msg
         ):
-            logger.warning(f"⚠️ Port {port} is already in use. Finding alternative port...")
+            logger.warning(
+                f"⚠️ Port {port} is already in use. Finding alternative port..."
+            )
             try:
                 start_port = (port + 1) if port is not None else 8000
                 new_port = find_available_port(start_port=start_port)
                 logger.info(f"🔍 Found alternative port: {new_port}")
                 logger.info(f"🌐 Web URL: http://127.0.0.1:{new_port}")
-                await manager.start_integrated_gui(development_mode=development_mode, port=new_port)
+                await manager.start_integrated_gui(
+                    development_mode=development_mode, port=new_port
+                )
             except Exception as fallback_error:
-                logger.error(f"❌ Failed to start server on alternative port: {fallback_error}")
+                logger.error(
+                    f"❌ Failed to start server on alternative port: {fallback_error}"
+                )
                 raise
         else:
             logger.error(f"❌ Application error: {e}")
@@ -443,10 +472,17 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description="Integrated BackupServer + FletV2 GUI")
-    parser.add_argument("--dev", action="store_true", help="Run in development mode (web browser)")
-    parser.add_argument("--mock", action="store_true", help="Force mock mode for testing")
     parser.add_argument(
-        "--port", type=int, default=8000, help="Port to run the development server on (default: 8000)"
+        "--dev", action="store_true", help="Run in development mode (web browser)"
+    )
+    parser.add_argument(
+        "--mock", action="store_true", help="Force mock mode for testing"
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=8000,
+        help="Port to run the development server on (default: 8000)",
     )
     args = parser.parse_args()
 
@@ -470,7 +506,11 @@ if __name__ == "__main__":
         print(f"🌐 Port: {args.port}")
 
     try:
-        asyncio.run(main_integrated(development_mode=args.dev, force_mock=args.mock, port=args.port))
+        asyncio.run(
+            main_integrated(
+                development_mode=args.dev, force_mock=args.mock, port=args.port
+            )
+        )
     except KeyboardInterrupt:
         print("\n🛑 Shutdown complete")
     except Exception as e:

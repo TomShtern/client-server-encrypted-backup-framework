@@ -3,18 +3,19 @@
 Unit tests for the settings view.
 """
 
+import contextlib
 import os
 import sys
 import unittest
 from unittest.mock import MagicMock, Mock
 
 # Add the FletV2 directory to the path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 # Mock flet for testing
-sys.modules['flet'] = MagicMock()
+sys.modules["flet"] = MagicMock()
 
-from views.settings import create_settings_view
+from views.settings import create_settings_view  # noqa: E402
 
 
 class TestSettingsView(unittest.TestCase):
@@ -33,13 +34,10 @@ class TestSettingsView(unittest.TestCase):
         """Test that the settings view is created correctly."""
         # This test would require more complex mocking of flet components
         # For now, we'll just verify the function can be called without error
-        try:
+        with contextlib.suppress(Exception):
             view = create_settings_view(self.mock_server_bridge, self.mock_page)
             # If we get here without exception, the function executed
             self.assertIsNotNone(view)
-        except Exception:
-            # This is expected since we're mocking flet
-            pass
 
     def test_load_settings(self):
         """Test loading settings."""
@@ -54,5 +52,5 @@ class TestSettingsView(unittest.TestCase):
         pass
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

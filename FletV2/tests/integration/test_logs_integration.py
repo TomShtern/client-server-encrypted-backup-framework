@@ -26,19 +26,20 @@ def setup_fletv2_path():
         sys.path.insert(0, parent_dir)
         print(f"Added {parent_dir} to Python path")
 
+
 # Set up the path before any other imports
 setup_fletv2_path()
 
-import flet as ft
+import flet as ft  # noqa: E402
 
 os.environ.setdefault("FLET_V2_DEBUG", "true")
 
 # Try to import the modules
 try:
-    from tests.integration_utils import FakePage
-    from utils.server_bridge import create_server_bridge
-    from utils.state_manager import StateManager
-    from views.logs import create_logs_view
+    from tests.integration_utils import FakePage  # noqa: E402
+    from utils.server_bridge import create_server_bridge  # noqa: E402
+    from utils.state_manager import StateManager  # noqa: E402
+    from views.logs import create_logs_view  # noqa: E402
 except ImportError as e:
     print(f"Import error: {e}")
     print("\nCurrent Python path:")
@@ -58,7 +59,9 @@ class TestLogsIntegration(unittest.TestCase):
         self.state_manager = StateManager(self.page, self.bridge)
 
     def test_logs_view_loads_and_filters(self):
-        view, dispose, setup = create_logs_view(self.bridge, self.page, self.state_manager)
+        view, dispose, setup = create_logs_view(
+            self.bridge, self.page, self.state_manager
+        )
         self.assertIsInstance(view, ft.Control)
         setup()
 

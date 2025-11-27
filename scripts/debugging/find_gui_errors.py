@@ -7,12 +7,14 @@ from Shared.path_utils import setup_imports
 
 setup_imports()
 
+
 def find_errors() -> bool:
     print("=== ServerGUI Error Detection ===")
     try:
         # Test imports
         print("Testing imports...")
-        from python_server.server_gui import ServerGUI
+        from python_server.server_gui import ServerGUI  # type: ignore
+
         # Note: ModernCard, ModernProgressBar, ModernStatusIndicator not available in current codebase
         print("✓ All imports successful")
 
@@ -24,13 +26,16 @@ def find_errors() -> bool:
         # Test widget creation
         print("Testing widget creation...")
         import tkinter as tk
+
         root = tk.Tk()
         root.withdraw()
         container = tk.Frame(root)
         container.pack_forget()
 
         # Components not available in current codebase - skipping tests
-        print("ℹ ModernCard, ModernProgressBar, ModernStatusIndicator tests skipped (components not available)")
+        print(
+            "ℹ ModernCard, ModernProgressBar, ModernStatusIndicator tests skipped (components not available)"
+        )
 
         # try:
         #     card: Any = ModernCard(container, title="Test")
@@ -77,14 +82,15 @@ def find_errors() -> bool:
 # TODO Rename this here and in `find_errors`
 def _extracted_from_find_errors_50(gui):
     gui.update_server_status(True, "127.0.0.1", 1256)  # type: ignore
-    gui.update_client_stats({'connected': 5, 'total': 10, 'active_transfers': 2})  # type: ignore
-    gui.update_transfer_stats({'bytes_transferred': 1024})  # type: ignore
-    toast = getattr(gui, 'toast_system', None)
+    gui.update_client_stats({"connected": 5, "total": 10, "active_transfers": 2})  # type: ignore
+    gui.update_transfer_stats({"bytes_transferred": 1024})  # type: ignore
+    toast = getattr(gui, "toast_system", None)
     if toast is not None:
         cast(Any, toast).show_toast("test error", "error")
         cast(Any, toast).show_toast("test success", "success")
         cast(Any, toast).show_toast("test info", "info")
     print("✓ All GUI methods work")
+
 
 if __name__ == "__main__":
     find_errors()

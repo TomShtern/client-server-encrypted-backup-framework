@@ -1,14 +1,20 @@
 const STORAGE_KEY = 'cyberbackup-theme';
 
 export class ThemeManager {
-  constructor(toggleButton) {
-    this.toggleButton = toggleButton;
+  constructor(toggleElement) {
+    this.toggleElement = toggleElement;
     this.root = document.documentElement;
     this.current = this.#load() || 'theme-dark';
     this.apply(this.current);
 
-    if (this.toggleButton) {
-      this.toggleButton.addEventListener('click', () => this.toggle());
+    if (this.toggleElement) {
+      // Check if it's a checkbox (new design) or button (old design)
+      if (this.toggleElement.type === 'checkbox') {
+        this.toggleElement.checked = this.current === 'theme-light';
+        this.toggleElement.addEventListener('change', () => this.toggle());
+      } else {
+        this.toggleElement.addEventListener('click', () => this.toggle());
+      }
       this.#updateLabel();
     }
   }
@@ -26,10 +32,23 @@ export class ThemeManager {
   }
 
   #updateLabel() {
-    if (!this.toggleButton) return;
+    if (!this.toggleElement) return;
     const isLight = this.current === 'theme-light';
-    this.toggleButton.textContent = isLight ? '🌙 Dark mode' : '☀️ Light mode';
-    this.toggleButton.setAttribute('aria-label', `Switch to ${isLight ? 'dark' : 'light'} mode`);
+
+    // Handle checkbox (new design)
+    if (this.toggleElement.type === 'checkbox') {
+      this.toggleElement.checked = isLight;
+      this.toggleElement.setAttribute('aria-label', `Switch to ${isLight ? 'dark' : 'light'} mode`);
+    } else {
+      // Handle button (old design)
+      const iconSpan = this.toggleElement.querySelector('.theme-icon');
+      if (iconSpan) {
+        iconSpan.textContent = isLight ? '🌙' : '☀️';
+      } else {
+        this.toggleElement.textContent = isLight ? '🌙 Dark mode' : '☀️ Light mode';
+      }
+      this.toggleElement.setAttribute('aria-label', `Switch to ${isLight ? 'dark' : 'light'} mode`);
+    }
   }
 
   #save(theme) {

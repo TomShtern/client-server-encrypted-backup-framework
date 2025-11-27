@@ -3,18 +3,19 @@
 Unit tests for the analytics view.
 """
 
+import contextlib
 import os
 import sys
 import unittest
 from unittest.mock import MagicMock, Mock
 
 # Add the FletV2 directory to the path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 # Mock flet for testing
-sys.modules['flet'] = MagicMock()
+sys.modules["flet"] = MagicMock()
 
-from views.analytics import create_analytics_view
+from views.analytics import create_analytics_view  # noqa: E402
 
 
 class TestAnalyticsView(unittest.TestCase):
@@ -31,30 +32,27 @@ class TestAnalyticsView(unittest.TestCase):
 
         # Mock system metrics
         self.mock_server_bridge.get_system_status.return_value = {
-            'cpu_usage': 45.2,
-            'memory_usage': 67.8,
-            'disk_usage': 34.1,
-            'memory_total_gb': 16,
-            'memory_used_gb': 11,
-            'disk_total_gb': 500,
-            'disk_used_gb': 170,
-            'network_sent_mb': 2048,
-            'network_recv_mb': 4096,
-            'active_connections': 12,
-            'cpu_cores': 8
+            "cpu_usage": 45.2,
+            "memory_usage": 67.8,
+            "disk_usage": 34.1,
+            "memory_total_gb": 16,
+            "memory_used_gb": 11,
+            "disk_total_gb": 500,
+            "disk_used_gb": 170,
+            "network_sent_mb": 2048,
+            "network_recv_mb": 4096,
+            "active_connections": 12,
+            "cpu_cores": 8,
         }
 
     def test_create_analytics_view(self):
         """Test that the analytics view is created correctly."""
         # This test would require more complex mocking of flet components
         # For now, we'll just verify the function can be called without error
-        try:
+        with contextlib.suppress(Exception):
             view = create_analytics_view(self.mock_server_bridge, self.mock_page)
             # If we get here without exception, the function executed
             self.assertIsNotNone(view)
-        except Exception:
-            # This is expected since we're mocking flet
-            pass
 
     def test_get_system_metrics_with_server_bridge(self):
         """Test getting system metrics with server bridge."""
@@ -69,5 +67,5 @@ class TestAnalyticsView(unittest.TestCase):
         pass
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

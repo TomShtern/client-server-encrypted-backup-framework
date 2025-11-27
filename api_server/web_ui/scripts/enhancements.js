@@ -2,6 +2,7 @@
  * Professional Desktop Web GUI Enhancements
  * JavaScript enhancements for improved user experience
  */
+console.log('Enhancements module loaded');
 
 class ProfessionalGUIEnhancements {
     constructor() {
@@ -10,11 +11,114 @@ class ProfessionalGUIEnhancements {
 
     init() {
         this.setupSidebarEnhancements();
-        this.setupProgressEnhancements();
-        this.setupButtonHierarchy();
-        this.setupBrowserBehavior();
-        this.setupAccessibility();
-        this.setupProfessionalInteractions();
+        // Visual effects only
+        ProfessionalGUIEnhancements.initDataParticles();
+        ProfessionalGUIEnhancements.initRippleEffects();
+        ProfessionalGUIEnhancements.initFloatingLabels();
+        ProfessionalGUIEnhancements.addEnhancementStyles();
+
+        // Setup advanced settings UI
+        this.setupAdvancedSettingsAccordion();
+        this.setupAdvancedSettingsTabs();
+
+        // Setup non-conflicting enhancements
+        ProfessionalGUIEnhancements.setupConnectionDropdown();
+        ProfessionalGUIEnhancements.setupLogSearch();
+        ProfessionalGUIEnhancements.setupSpeedChart();
+    }
+
+    // Static method: Initialize data particles
+    static initDataParticles() {
+        const container = document.getElementById('dataParticles');
+        if (!container) return;
+
+        // Clear existing
+        container.innerHTML = '';
+
+        // Create particles
+        const particleCount = window.innerWidth < 768 ? 20 : 50;
+
+        for (let i = 0; i < particleCount; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+
+            // Random positioning and sizing
+            const size = Math.random() * 3 + 1;
+            particle.style.width = `${size}px`;
+            particle.style.height = `${size}px`;
+            particle.style.left = `${Math.random() * 100}%`;
+            particle.style.top = `${Math.random() * 100}%`;
+
+            // Random animation properties
+            const duration = Math.random() * 20 + 10;
+            const delay = Math.random() * 5;
+            particle.style.animationDuration = `${duration}s`;
+            particle.style.animationDelay = `-${delay}s`;
+            particle.style.opacity = Math.random() * 0.5 + 0.1;
+
+            container.appendChild(particle);
+        }
+    }
+
+    // Static method: Initialize ripple effects
+    static initRippleEffects() {
+        document.addEventListener('click', (e) => {
+            const target = e.target.closest('.ripple');
+            if (!target) return;
+
+            const rect = target.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            const circle = document.createElement('span');
+            const diameter = Math.max(rect.width, rect.height);
+            const radius = diameter / 2;
+
+            circle.style.width = circle.style.height = `${diameter}px`;
+            circle.style.left = `${x - radius}px`;
+            circle.style.top = `${y - radius}px`;
+            circle.classList.add('ripple-effect');
+
+            const ripple = target.getElementsByClassName('ripple-effect')[0];
+            if (ripple) {
+                ripple.remove();
+            }
+
+            target.appendChild(circle);
+
+            // Clean up
+            setTimeout(() => {
+                circle.remove();
+            }, 600);
+        });
+    }
+
+    // Static method: Initialize floating labels
+    static initFloatingLabels() {
+        const inputs = document.querySelectorAll('.floating-label .interactive');
+
+        inputs.forEach(input => {
+            // Initial check
+            if (input.value) {
+                input.classList.add('has-value');
+            }
+
+            input.addEventListener('input', () => {
+                if (input.value) {
+                    input.classList.add('has-value');
+                } else {
+                    input.classList.remove('has-value');
+                }
+            });
+
+            input.addEventListener('focus', () => {
+                input.parentElement.classList.add('focused');
+            });
+
+            input.addEventListener('blur', () => {
+                input.parentElement.classList.remove('focused');
+            });
+        });
     }
 
     // Instance method: Setup sidebar-specific interactions
@@ -40,173 +144,53 @@ class ProfessionalGUIEnhancements {
         }
     }
 
-    // Instance method: Setup progress ring behaviors and smoothing
-    setupProgressEnhancements() {
-        try {
-            const ring = document.getElementById('progressRing');
-            const progressArc = document.getElementById('progressArc');
-            const pct = document.getElementById('progressPct');
-            if (!ring || !progressArc || !pct) return;
+    // Removed conflicting methods: setupProgressEnhancements, setupButtonHierarchy, setupBrowserBehavior, setupAccessibility, setupProfessionalInteractions
 
-            // Expose helper that adjusts arc and text smoothly
-            const update = (value = 0) => {
-                const max = 282.743; // circumference approximation used in markup
-                const clamped = Math.max(0, Math.min(100, value));
-                const offset = max - (clamped / 100) * max;
-                progressArc.style.strokeDashoffset = offset;
-                pct.textContent = `${Math.round(clamped)}%`;
-            };
 
-            // Defensive: store as property for other features
-            this._updateProgress = update;
+    // Setup Advanced Settings Accordion
+    setupAdvancedSettingsAccordion() {
+        const toggleBtn = document.querySelector('.advanced-toggle');
+        const content = document.getElementById('advancedContent');
 
-            // Hovering shows a glow; clicking toggles a small demo animation
-            ring.addEventListener('click', () => {
-                ProfessionalGUIEnhancements.updateProgressRingState(ProfessionalGUIEnhancements.ProgressRingStates.ACTIVE);
-                // animate 0 -> 100 -> 0 fast for dev/demo
-                let v = 0;
-                const t = setInterval(() => {
-                    v += 10;
-                    update(v);
-                    if (v >= 100) {
-                        clearInterval(t);
-                        setTimeout(() => update(0), 400);
-                    }
-                }, 60);
+        if (toggleBtn && content) {
+            toggleBtn.addEventListener('click', () => {
+                const isExpanded = toggleBtn.getAttribute('aria-expanded') === 'true';
+                toggleBtn.setAttribute('aria-expanded', !isExpanded);
+                content.hidden = isExpanded;
             });
-        } catch (e) {
-            console.warn('setupProgressEnhancements failed', e);
         }
     }
 
-    // Instance method: Setup button behaviors and state wiring
-    setupButtonHierarchy() {
-        try {
-            // Primary button wiring
-            const primary = document.getElementById('primaryActionBtn');
-            const fileInput = document.getElementById('fileInput');
-            const fileSelectBtn = document.getElementById('fileSelectBtn');
-            const clearBtn = document.getElementById('clearFileBtn');
+    // Setup Advanced Settings Tabs
+    setupAdvancedSettingsTabs() {
+        const tabButtons = document.querySelectorAll('.settings-tabs .tab-btn');
+        const tabPanels = document.querySelectorAll('.tab-panels .tab-panel');
 
-            if (fileSelectBtn && fileInput) {
-                fileSelectBtn.addEventListener('click', () => fileInput.click());
-            }
+        if (tabButtons.length && tabPanels.length) {
+            tabButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const tabId = btn.getAttribute('data-tab');
+                    const targetPanel = document.getElementById(`tab-${tabId}`);
 
-            if (clearBtn && fileInput) {
-                clearBtn.addEventListener('click', () => {
-                    fileInput.value = null;
-                    const fileName = document.getElementById('fileName');
-                    if (fileName) fileName.textContent = 'Drag & drop a file here or choose above';
-                    ProfessionalGUIEnhancements.updatePrimaryButtonState();
-                });
-            }
-
-            // Primary action: if not connected, attempt to toggle a simulated connection; if connected, start demo transfer
-            if (primary) {
-                primary.addEventListener('click', () => {
-                    const isConnected = globalThis.cyberBackupApp?.state?.isConnected || false;
-                    if (!isConnected) {
-                        // Simulate connecting if app is not present
-                        if (!globalThis.cyberBackupApp) globalThis.cyberBackupApp = { state: { isConnected: true, isTransferring: false } };
-                        else globalThis.cyberBackupApp.state.isConnected = true;
-                        ProfessionalGUIEnhancements.updatePrimaryButtonState();
-                        // close status detail dropdown for clarity
-                        const dropdown = document.getElementById('connectionDetails');
-                        if (dropdown) dropdown.classList.remove('show');
-                    } else {
-                        // Simulate transfer
-                        if (!globalThis.cyberBackupApp.state.isTransferring) {
-                            globalThis.cyberBackupApp.state.isTransferring = true;
-                            ProfessionalGUIEnhancements.updatePrimaryButtonState();
-                            if (this._updateProgress) {
-                                let v = 0;
-                                const t = setInterval(() => { v += 5; this._updateProgress(v); if (v >= 100) { clearInterval(t); globalThis.cyberBackupApp.state.isTransferring = false; ProfessionalGUIEnhancements.updatePrimaryButtonState(); } }, 250);
-                            }
-                        }
-                    }
-                });
-            }
-        } catch (e) {
-            console.warn('setupButtonHierarchy failed', e);
-        }
-    }
-
-    // Instance method: Misc browser behavior such as preventing accidental navigations and drag/drop
-    setupBrowserBehavior() {
-        try {
-            // Prevent file drag from navigating away
-            window.addEventListener('dragover', (e) => e.preventDefault());
-            window.addEventListener('drop', (e) => e.preventDefault());
-
-            // Allow drop zone to accept files
-            const dropZone = document.getElementById('fileDropZone');
-            const fileInput = document.getElementById('fileInput');
-            const fileName = document.getElementById('fileName');
-            const fileInfo = document.getElementById('fileInfo');
-
-            if (dropZone && fileInput) {
-                dropZone.addEventListener('dragenter', () => dropZone.classList.add('drag-over'));
-                dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
-                dropZone.addEventListener('drop', (e) => {
-                    dropZone.classList.remove('drag-over');
-                    const files = e.dataTransfer?.files;
-                    if (files && files.length > 0) {
-                        fileInput.files = files;
-                        if (fileName) fileName.textContent = files[0].name;
-                        if (fileInfo) fileInfo.textContent = `${ProfessionalGUIEnhancements.formatBytes(files[0].size)} • ${files[0].type || 'Unknown'}`;
-                        ProfessionalGUIEnhancements.updatePrimaryButtonState();
-                    }
-                });
-            }
-        } catch (e) {
-            console.warn('setupBrowserBehavior failed', e);
-        }
-    }
-
-    // Instance method: improve keyboard and screen reader accessibility
-    setupAccessibility() {
-        try {
-            // Ensure keyboard focus flows to primary button
-            const primary = document.getElementById('primaryActionBtn');
-            if (primary) {
-                primary.setAttribute('aria-pressed', 'false');
-                primary.addEventListener('click', () => primary.setAttribute('aria-pressed', String(primary.getAttribute('aria-pressed') === 'false')));
-            }
-
-            // Add focus outlines for keyboard users on interactive elements
-            document.querySelectorAll('.interactive').forEach(el => {
-                el.setAttribute('tabindex', '0');
-            });
-        } catch (e) {
-            console.warn('setupAccessibility failed', e);
-        }
-    }
-
-    // Instance method: Professional interactions like log filter buttons and pause/resume / stop simulator
-    setupProfessionalInteractions() {
-        try {
-            // Wire log filter controls
-            const filterButtons = document.querySelectorAll('.filter-btn');
-            if (filterButtons && filterButtons.length) {
-                filterButtons.forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        filterButtons.forEach(b => b.classList.remove('active'));
-                        btn.classList.add('active');
-                        // For local mode, just set aria-pressed
-                        btn.setAttribute('aria-pressed', 'true');
+                    // Update buttons
+                    tabButtons.forEach(b => {
+                        b.classList.remove('active');
+                        b.setAttribute('aria-selected', 'false');
                     });
-                });
-            }
+                    btn.classList.add('active');
+                    btn.setAttribute('aria-selected', 'true');
 
-            // Pause/resume/stop simulation buttons
-            const pauseBtn = document.getElementById('pauseBtn');
-            const resumeBtn = document.getElementById('resumeBtn');
-            const stopBtn = document.getElementById('stopBtn');
-            if (pauseBtn) pauseBtn.addEventListener('click', () => { if (globalThis.cyberBackupApp) globalThis.cyberBackupApp.state.isTransferring = false; ProfessionalGUIEnhancements.updatePrimaryButtonState(); });
-            if (resumeBtn) resumeBtn.addEventListener('click', () => { if (globalThis.cyberBackupApp) globalThis.cyberBackupApp.state.isTransferring = true; ProfessionalGUIEnhancements.updatePrimaryButtonState(); });
-            if (stopBtn) stopBtn.addEventListener('click', () => { if (globalThis.cyberBackupApp) { globalThis.cyberBackupApp.state.isTransferring = false; globalThis.cyberBackupApp.state.isConnected = false; } ProfessionalGUIEnhancements.updatePrimaryButtonState(); });
-        } catch (e) {
-            console.warn('setupProfessionalInteractions failed', e);
+                    // Update panels
+                    tabPanels.forEach(panel => {
+                        panel.classList.remove('active');
+                        panel.hidden = true;
+                    });
+                    if (targetPanel) {
+                        targetPanel.classList.add('active');
+                        targetPanel.hidden = false;
+                    }
+                });
+            });
         }
     }
 
@@ -285,50 +269,61 @@ class ProfessionalGUIEnhancements {
         }
     }
 
-    // Update file card with rich preview
+    // Update file card with rich preview (Icons and Badges only - text handled by app.js)
     static updateFileCardPreview(file) {
-        if (!file) return;
-
         const fileIcon = document.getElementById('fileIcon');
-        const fileName = document.getElementById('fileName');
-        const fileInfo = document.getElementById('fileInfo');
         const fileMetadata = document.getElementById('fileMetadata');
         const fileTypeBadge = document.getElementById('fileTypeBadge');
         const fileModified = document.getElementById('fileModified');
 
+        // New elements for toggling
+        const defaultContent = document.getElementById('defaultDropContent');
+        const previewCard = document.getElementById('filePreviewCard');
+        const fileNameDisplay = document.getElementById('fileNameDisplay');
+
+        if (!file) {
+            // Reset/Hide metadata if no file
+            if (defaultContent) defaultContent.style.display = 'flex';
+            if (previewCard) previewCard.style.display = 'none';
+
+            if (fileIcon) fileIcon.textContent = '';
+            if (fileMetadata) fileMetadata.style.display = 'none';
+            if (fileTypeBadge) fileTypeBadge.className = 'file-badge';
+            if (fileModified) fileModified.textContent = '';
+            return;
+        }
+
+        // Show preview, hide default
+        if (defaultContent) defaultContent.style.display = 'none';
+        if (previewCard) previewCard.style.display = 'grid';
+
         const typeInfo = ProfessionalGUIEnhancements.getFileTypeInfo(file.name);
-        const sizeFormatted = ProfessionalGUIEnhancements.formatBytes(file.size);
         const modifiedDate = ProfessionalGUIEnhancements.formatModifiedDate(new Date(file.lastModified));
 
-  // Update icon
-  if (fileIcon) {
-    fileIcon.textContent = typeInfo.icon;
-  }
+        // Update icon
+        if (fileIcon) {
+            fileIcon.textContent = typeInfo.icon;
+        }
 
-  // Update file name
-  if (fileName) {
-    fileName.textContent = file.name;
-  }
+        // Update name
+        if (fileNameDisplay) {
+            fileNameDisplay.textContent = file.name;
+        }
 
-  // Update file info
-  if (fileInfo) {
-    fileInfo.textContent = `${sizeFormatted} • ${file.type || 'Unknown type'}`;
-  }
+        // Update metadata visibility
+        if (fileMetadata) {
+            fileMetadata.style.display = 'flex';
+        }
 
-  // Update metadata
-  if (fileMetadata) {
-    fileMetadata.style.display = 'flex';
-  }
+        if (fileTypeBadge) {
+            fileTypeBadge.textContent = typeInfo.badge.toUpperCase();
+            fileTypeBadge.className = `file-badge ${typeInfo.class}`;
+        }
 
-  if (fileTypeBadge) {
-    fileTypeBadge.textContent = typeInfo.badge.toUpperCase();
-    fileTypeBadge.className = `file-badge ${typeInfo.class}`;
-  }
-
-  if (fileModified) {
-    fileModified.textContent = `Modified: ${modifiedDate}`;
-  }
-}
+        if (fileModified) {
+            fileModified.textContent = `Modified: ${modifiedDate}`;
+        }
+    }
 
     // Helper function for file size formatting
     static formatBytes(bytes, decimals = 2) {
@@ -340,135 +335,8 @@ class ProfessionalGUIEnhancements {
         return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
     }
 
-    // Progress ring state manager
-    static ProgressRingStates = {
-        IDLE: 'idle',
-        CONNECTING: 'connecting',
-        ACTIVE: 'active',
-        PAUSED: 'paused',
-        COMPLETE: 'complete',
-        ERROR: 'error'
-    };
+    // Removed conflicting methods: ProgressRingStates, updateProgressRingState, validateServerInput, validateUsername, updateValidationIcon, setupValidation, updatePrimaryButtonState
 
-    static updateProgressRingState(state) {
-        const ring = document.getElementById('progressRing');
-        if (!ring) return;
-
-        // Remove all state classes
-        Object.values(ProfessionalGUIEnhancements.ProgressRingStates).forEach(s => ring.classList.remove(s));
-
-        // Add new state
-        ring.classList.add(state);
-    }
-
-    // Input validation
-    static validateServerInput(value) {
-        // Regex for IP:PORT format
-        const regex = /^(\d{1,3}\.){3}\d{1,3}:\d{1,5}$/;
-        return regex.test(value);
-    }
-
-    static validateUsername(value) {
-        // Alphanumeric, 3-20 characters
-        const regex = /^[a-zA-Z0-9_]{3,20}$/;
-        return regex.test(value);
-    }
-
-    static updateValidationIcon(inputId, iconId, isValid) {
-        const icon = document.getElementById(iconId);
-        if (!icon) return;
-
-        if (isValid === null) {
-            icon.className = 'validation-icon hidden';
-            icon.textContent = '';
-        } else if (isValid) {
-            icon.className = 'validation-icon valid';
-            icon.textContent = '✓';
-        } else {
-            icon.className = 'validation-icon invalid';
-            icon.textContent = '✕';
-        }
-    }
-
-    // Setup validation listeners
-    static setupValidation() {
-        const serverInput = document.getElementById('serverInput');
-        const usernameInput = document.getElementById('usernameInput');
-
-        if (serverInput) {
-            serverInput.addEventListener('blur', () => {
-                const isValid = ProfessionalGUIEnhancements.validateServerInput(serverInput.value);
-                ProfessionalGUIEnhancements.updateValidationIcon('serverInput', 'serverValidIcon', isValid);
-                const hint = document.getElementById('serverHint');
-                if (hint) {
-                    hint.hidden = isValid;
-                }
-                serverInput.setAttribute('aria-invalid', !isValid);
-                ProfessionalGUIEnhancements.updatePrimaryButtonState();
-            });
-
-            serverInput.addEventListener('input', () => {
-                ProfessionalGUIEnhancements.updateValidationIcon('serverInput', 'serverValidIcon', null);
-                const hint = document.getElementById('serverHint');
-                if (hint) hint.hidden = true;
-            });
-        }
-
-        if (usernameInput) {
-            usernameInput.addEventListener('blur', () => {
-                const isValid = ProfessionalGUIEnhancements.validateUsername(usernameInput.value);
-                ProfessionalGUIEnhancements.updateValidationIcon('usernameInput', 'usernameValidIcon', isValid);
-                const hint = document.getElementById('usernameHint');
-                if (hint) {
-                    hint.hidden = isValid;
-                }
-                usernameInput.setAttribute('aria-invalid', !isValid);
-                ProfessionalGUIEnhancements.updatePrimaryButtonState();
-            });
-
-            usernameInput.addEventListener('input', () => {
-                ProfessionalGUIEnhancements.updateValidationIcon('usernameInput', 'usernameValidIcon', null);
-                const hint = document.getElementById('usernameHint');
-                if (hint) hint.hidden = true;
-            });
-        }
-    }
-
-// Primary button state manager
-    static updatePrimaryButtonState() {
-        const btn = document.getElementById('primaryActionBtn');
-        const btnText = document.getElementById('primaryBtnText');
-        const fileInput = document.getElementById('fileInput');
-        const serverInput = document.getElementById('serverInput');
-        const usernameInput = document.getElementById('usernameInput');
-
-        if (!btn || !btnText) return;
-
-        const hasFile = fileInput && fileInput.files && fileInput.files.length > 0;
-        const serverValid = serverInput && ProfessionalGUIEnhancements.validateServerInput(serverInput.value);
-        const usernameValid = usernameInput && ProfessionalGUIEnhancements.validateUsername(usernameInput.value);
-
-        // Check connection state from app
-        const isConnected = globalThis.cyberBackupApp?.state?.isConnected || false;
-        const isTransferring = globalThis.cyberBackupApp?.state?.isTransferring || false;
-
-        if (isTransferring) {
-            btnText.textContent = 'Transferring...';
-            btn.disabled = true;
-        } else if (!hasFile) {
-            btnText.textContent = 'Select a file first';
-            btn.disabled = true;
-        } else if (!serverValid || !usernameValid) {
-            btnText.textContent = 'Check inputs';
-            btn.disabled = true;
-        } else if (isConnected) {
-            btnText.textContent = '🚀 Start Backup';
-            btn.disabled = false;
-        } else {
-            btnText.textContent = '🔌 Connect to Server';
-            btn.disabled = false;
-        }
-    }
 
     // Connection dropdown toggle
     static setupConnectionDropdown() {
@@ -636,7 +504,7 @@ class ProfessionalGUIEnhancements {
 
     // Initialize speed chart
     static setupSpeedChart() {
-        const speedChart = new ProfessionalGUIEnhancements.SpeedChart('speedChart');
+        ProfessionalGUIEnhancements.chartInstance = new ProfessionalGUIEnhancements.SpeedChart('speedChart');
 
         const toggleBtn = document.getElementById('toggleSpeedChart');
         const container = document.getElementById('speedChartContainer');
@@ -650,146 +518,43 @@ class ProfessionalGUIEnhancements {
                 } else {
                     container.classList.add('show');
                     toggleBtn.textContent = 'Hide Chart';
-                    if (speedChart) speedChart.draw();
+                    if (ProfessionalGUIEnhancements.chartInstance) ProfessionalGUIEnhancements.chartInstance.draw();
                 }
             });
         }
     }
 
-    // Theme toggle with smooth transition
-    static setupThemeToggle() {
-        const themeBtn = document.getElementById('themeToggle');
-        if (!themeBtn) return;
-
-        themeBtn.addEventListener('click', () => {
-            // Add rotating animation
-            themeBtn.classList.add('rotating');
-            setTimeout(() => themeBtn.classList.remove('rotating'), 600);
-
-            // Toggle theme (this part should integrate with existing theme manager)
-            const html = document.documentElement;
-            const isDark = html.classList.contains('theme-dark');
-
-            if (isDark) {
-                html.classList.remove('theme-dark');
-                html.classList.add('theme-light');
-                themeBtn.textContent = '🌙 Dark mode';
-            } else {
-                html.classList.add('theme-dark');
-                html.classList.remove('theme-light');
-                themeBtn.textContent = '☀️ Light mode';
-            }
-        });
-    }
-
-    // Data particles initialization (safe DOM methods)
-    static initDataParticles() {
-        const container = document.getElementById('dataParticles');
-        if (!container) return;
-
-        // Clear any existing particles safely
-        while (container.firstChild) {
-            container.removeChild(container.firstChild);
-        }
-
-        // Create particles based on screen size (reduced for performance)
-        const particleCount = window.innerWidth > 1200 ? 8 : window.innerWidth > 768 ? 5 : 3;
-
-        for (let i = 0; i < particleCount; i++) {
-            const particle = document.createElement('div');
-            particle.className = 'particle';
-
-            // Randomize particle position and animation
-            particle.style.left = Math.random() * 100 + '%';
-            particle.style.animationDelay = Math.random() * 20 + 's';
-            particle.style.animationDuration = (12 + Math.random() * 10) + 's';
-
-            container.appendChild(particle);
-        }
-    }
-
-    // Ripple effect handler
-    static initRippleEffects() {
-        document.addEventListener('click', (e) => {
-            const target = e.target.closest('.ripple');
-            if (!target) return;
-
-            const rect = target.getBoundingClientRect();
-            const size = Math.max(rect.width, rect.height);
-            const x = e.clientX - rect.left - size / 2;
-            const y = e.clientY - rect.top - size / 2;
-
-            const ripple = document.createElement('span');
-            ripple.className = 'ripple-effect';
-            ripple.style.width = ripple.style.height = size + 'px';
-            ripple.style.left = x + 'px';
-            ripple.style.top = y + 'px';
-
-            target.appendChild(ripple);
-
-            setTimeout(() => {
-                ripple.remove();
-            }, 600);
-        });
-    }
-
-    // Floating label enhancement
-    static initFloatingLabels() {
-        const floatingLabels = document.querySelectorAll('.floating-label input');
-
-        floatingLabels.forEach(input => {
-            // Check if input has value on load
-            const checkValue = () => {
-                if (input.value) {
-                    input.classList.add('has-value');
-                } else {
-                    input.classList.remove('has-value');
-                }
-            };
-
-            checkValue();
-
-            input.addEventListener('focus', () => {
-                input.classList.add('focused');
-            });
-
-            input.addEventListener('blur', () => {
-                input.classList.remove('focused');
-                checkValue();
-            });
-
-            input.addEventListener('input', checkValue);
-        });
-    }
+    // Removed conflicting methods: setupThemeToggle
 
     // Initialize all enhancements
     static initializeEnhancements() {
         ProfessionalGUIEnhancements.addEnhancementStyles();
-        ProfessionalGUIEnhancements.setupValidation();
         ProfessionalGUIEnhancements.setupConnectionDropdown();
         ProfessionalGUIEnhancements.setupLogSearch();
         ProfessionalGUIEnhancements.setupSpeedChart();
-        ProfessionalGUIEnhancements.setupThemeToggle();
 
         // Enhanced interactions
         ProfessionalGUIEnhancements.initDataParticles();
         ProfessionalGUIEnhancements.initRippleEffects();
         ProfessionalGUIEnhancements.initFloatingLabels();
 
-        // Set initial progress ring state
-        ProfessionalGUIEnhancements.updateProgressRingState(ProfessionalGUIEnhancements.ProgressRingStates.IDLE);
-
-        // Set initial button state
-        ProfessionalGUIEnhancements.updatePrimaryButtonState();
-
-        // Watch for file selection changes
+        // Watch for file selection changes to update icons/badges
         const fileInput = document.getElementById('fileInput');
         if (fileInput) {
             fileInput.addEventListener('change', () => {
                 if (fileInput.files && fileInput.files[0]) {
                     ProfessionalGUIEnhancements.updateFileCardPreview(fileInput.files[0]);
+                } else {
+                    ProfessionalGUIEnhancements.updateFileCardPreview(null);
                 }
-                ProfessionalGUIEnhancements.updatePrimaryButtonState();
+            });
+        }
+
+        // Watch for clear button
+        const clearBtn = document.getElementById('clearFileBtn');
+        if (clearBtn) {
+            clearBtn.addEventListener('click', () => {
+                ProfessionalGUIEnhancements.updateFileCardPreview(null);
             });
         }
 
@@ -887,12 +652,13 @@ window.ProfessionalGUIEnhancements = ProfessionalGUIEnhancements;
 // Export functions for use by main app
 if (typeof window !== 'undefined') {
     window.Enhancements = {
-        updateProgressRingState: ProfessionalGUIEnhancements.updateProgressRingState,
-        updatePrimaryButtonState: ProfessionalGUIEnhancements.updatePrimaryButtonState,
         updateFileCardPreview: ProfessionalGUIEnhancements.updateFileCardPreview,
         getFileTypeInfo: ProfessionalGUIEnhancements.getFileTypeInfo,
-        speedChart: () => ProfessionalGUIEnhancements.speedChart,
-        ProgressRingStates: ProfessionalGUIEnhancements.ProgressRingStates,
+        updateSpeedChart: (speed) => {
+            if (ProfessionalGUIEnhancements.chartInstance) {
+                ProfessionalGUIEnhancements.chartInstance.addDataPoint(speed);
+            }
+        },
         initializeEnhancements: ProfessionalGUIEnhancements.initializeEnhancements
     };
 }
@@ -908,3 +674,4 @@ export {
     ProfessionalGUIEnhancements,
     ProfessionalGUIEnhancements as default
 };
+// End of enhancements.js

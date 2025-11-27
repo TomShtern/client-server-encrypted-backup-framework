@@ -33,7 +33,9 @@ for _path in (_script_dir, _flet_v2_dir, _repo_root):
 # Configure environment for GUI integration
 os.environ["CYBERBACKUP_DISABLE_INTEGRATED_GUI"] = "1"  # Disable server's embedded GUI
 os.environ["CYBERBACKUP_DISABLE_GUI"] = "1"  # Use standalone FletV2 GUI instead
-os.environ["PYTHONNOUSERSITE"] = "1"  # Prevent package conflicts from user site-packages
+os.environ["PYTHONNOUSERSITE"] = (
+    "1"  # Prevent package conflicts from user site-packages
+)
 
 # Debugging flags (disabled for production use - causes severe performance degradation)
 # os.environ['FLET_DASHBOARD_DEBUG'] = '1'  # Uncomment only for dashboard diagnostics
@@ -68,8 +70,8 @@ except ImportError as e:
 
 # Import Flet
 print("\n[2/4] Importing Flet...")
-import flet as ft
-import main
+import flet as ft  # noqa: E402
+import main  # noqa: E402
 
 # Initialize BackupServer in MAIN thread (signal handlers require main thread)
 print("\n[3/4] Initializing BackupServer (main thread)...")
@@ -128,7 +130,9 @@ def gui_with_server_main(page: ft.Page):
     print("\n[PAGE CONNECT] New page connection established")
 
     # Server already initialized (or failed) before ft.app launch
-    print(f"   Server Instance: {'[OK] Connected' if server_instance else '[WARN]  Mock Mode'}")
+    print(
+        f"   Server Instance: {'[OK] Connected' if server_instance else '[WARN]  Mock Mode'}"
+    )
 
     # Create FletV2App with real server
     app = main.FletV2App(page, real_server=server_instance)
@@ -154,7 +158,9 @@ def gui_with_server_main(page: ft.Page):
         try:
             print("[INIT] Starting async initialization...")
             print(f"[DEBUG] App object: {app}")
-            print(f"[DEBUG] App.initialize callable? {callable(getattr(app, 'initialize', None))}")
+            print(
+                f"[DEBUG] App.initialize callable? {callable(getattr(app, 'initialize', None))}"
+            )
             print("[DEBUG] About to await app.initialize()...")
             await app.initialize()
             print("[DEBUG] app.initialize() returned successfully")
@@ -188,7 +194,13 @@ if __name__ == "__main__":
 
     def _pick_port(preferred: int) -> int:
         """Pick an available port, starting from preferred and trying a few fallbacks."""
-        candidates = [preferred, preferred + 1, preferred + 2, preferred + 3, preferred + 4]
+        candidates = [
+            preferred,
+            preferred + 1,
+            preferred + 2,
+            preferred + 3,
+            preferred + 4,
+        ]
         for p in candidates:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -207,10 +219,16 @@ if __name__ == "__main__":
         )
         chosen_port = _pick_port(port)
         if chosen_port != port:
-            print(f"[INFO] Preferred port {port} is busy; auto-selected free port {chosen_port}")
+            print(
+                f"[INFO] Preferred port {port} is busy; auto-selected free port {chosen_port}"
+            )
         try:
             # Launch in WEB_BROWSER view so automated tools can capture screenshots
-            ft.app(target=gui_with_server_main, view=ft.AppView.WEB_BROWSER, port=chosen_port)
+            ft.app(
+                target=gui_with_server_main,
+                view=ft.AppView.WEB_BROWSER,
+                port=chosen_port,
+            )
             print("[OK] FletV2 web application closed normally")
         except Exception as launch_err:
             print(f"[FATAL] FletV2 failed to launch (web): {launch_err}")

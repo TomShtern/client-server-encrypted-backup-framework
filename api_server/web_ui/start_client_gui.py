@@ -4,14 +4,15 @@ One-click launcher for CyberBackup Client GUI
 Starts HTTP server and opens browser automatically
 """
 
-import webbrowser
-import time
-import sys
-from http.server import HTTPServer, SimpleHTTPRequestHandler
-import threading
 import os
 import signal
 import socket
+import sys
+import threading
+import time
+import webbrowser
+from http.server import HTTPServer, SimpleHTTPRequestHandler
+
 
 class ClientGUIHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
@@ -24,32 +25,32 @@ class ClientGUIHandler(SimpleHTTPRequestHandler):
     def guess_type(self, path):
         """Override to ensure .js files are served with correct MIME type for ES6 modules"""
         mimetype = super().guess_type(path)
-        if path.endswith('.js'):
-            return 'application/javascript'
-        return mimetype
+        return "application/javascript" if str(path).endswith(".js") else mimetype
 
     def end_headers(self):
         """Add necessary headers for module loading"""
-        self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
-        self.send_header('Pragma', 'no-cache')
-        self.send_header('Expires', '0')
+        self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
+        self.send_header("Pragma", "no-cache")
+        self.send_header("Expires", "0")
         super().end_headers()
+
 
 def find_free_port(start_port=8080):
     """Find a free port starting from start_port"""
     for port in range(start_port, start_port + 100):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
-            sock.bind(('localhost', port))
+            sock.bind(("localhost", port))
             sock.close()
             return port
         except OSError:
             continue
     return start_port
 
+
 def start_server(port):
     """Start the HTTP server"""
-    server = HTTPServer(('localhost', port), ClientGUIHandler)
+    server = HTTPServer(("localhost", port), ClientGUIHandler)
     print(f"🚀 CyberBackup Client GUI running at http://localhost:{port}")
     print("📁 Serving files from:", os.path.dirname(__file__))
     print("⏹️  Press Ctrl+C to stop the server")
@@ -61,12 +62,14 @@ def start_server(port):
         print("\n🛑 Server stopped")
         server.server_close()
 
+
 def open_browser(port, delay=1):
     """Open browser after a short delay"""
     time.sleep(delay)
     url = f"http://localhost:{port}/NewGUIforClient.html"
     print(f"🌐 Opening browser: {url}")
     webbrowser.open(url)
+
 
 def main():
     """Main launcher function"""
@@ -91,6 +94,7 @@ def main():
 
     # Start the server
     start_server(port)
+
 
 if __name__ == "__main__":
     main()

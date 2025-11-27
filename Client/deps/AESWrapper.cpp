@@ -5,10 +5,28 @@
 #include <cstring>
 
 // Real AES implementation using Crypto++
-#include <cryptopp/aes.h>
-#include <cryptopp/modes.h>
-#include <cryptopp/filters.h>
-#include <cryptopp/osrng.h>
+#if defined(__has_include)
+    #if __has_include(<cryptopp/aes.h>)
+        #include <cryptopp/aes.h>
+        #include <cryptopp/modes.h>
+        #include <cryptopp/filters.h>
+        #include <cryptopp/osrng.h>
+    #elif __has_include(<aes.h>)
+        // Some installations expose Crypto++ headers without the "cryptopp/" prefix
+        #include <aes.h>
+        #include <modes.h>
+        #include <filters.h>
+        #include <osrng.h>
+    #else
+        #error "Crypto++ headers not found. Install Crypto++ or adjust include paths."
+    #endif
+#else
+    // Fallback: try the expected include paths (may still error if headers are missing)
+    #include <cryptopp/aes.h>
+    #include <cryptopp/modes.h>
+    #include <cryptopp/filters.h>
+    #include <cryptopp/osrng.h>
+#endif
 
 // AESWrapper implementation using Crypto++
 AESWrapper::AESWrapper(const unsigned char* key, size_t keyLength, bool useStaticZeroIV) {

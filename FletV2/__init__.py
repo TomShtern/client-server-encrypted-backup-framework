@@ -15,9 +15,9 @@ if package_dir not in sys.path:
 # Import main application components
 # Import views package
 # Import utils package
-from . import utils, views
-from .main import FletV2App
-from .theme import (
+from . import utils, views  # noqa: E402
+from .main import FletV2App  # noqa: E402
+from .theme import (  # noqa: E402
     create_modern_card,
     get_design_tokens,
     setup_sophisticated_theme,

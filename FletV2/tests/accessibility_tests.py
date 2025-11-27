@@ -7,16 +7,19 @@ ensuring WCAG 2.1 compliance and desktop-specific accessibility features.
 Compatible with Flet 0.28.3 and Windows 11 desktop applications.
 """
 
-import flet as ft
+import contextlib
 import logging
-from typing import Dict, List, Any, Optional, Tuple
 from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple
+
+import flet as ft
 
 logger = logging.getLogger(__name__)
 
 
 class AccessibilityLevel(Enum):
     """WCAG accessibility compliance levels"""
+
     A = "A"
     AA = "AA"
     AAA = "AAA"
@@ -25,7 +28,10 @@ class AccessibilityLevel(Enum):
 
 class AccessibilityIssue:
     """Represents an accessibility issue"""
-    def __init__(self, element: str, issue: str, level: AccessibilityLevel, suggestion: str = ""):
+
+    def __init__(
+        self, element: str, issue: str, level: AccessibilityLevel, suggestion: str = ""
+    ):
         self.element = element
         self.issue = issue
         self.level = level
@@ -51,7 +57,9 @@ class AccessibilityTester:
         self.issues: List[AccessibilityIssue] = []
         self.tested_elements: List[str] = []
 
-    def test_keyboard_navigation(self, root_control: ft.Control) -> List[AccessibilityIssue]:
+    def test_keyboard_navigation(
+        self, root_control: ft.Control
+    ) -> List[AccessibilityIssue]:
         """Test keyboard navigation accessibility"""
         issues = []
 
@@ -59,45 +67,60 @@ class AccessibilityTester:
             if not control:
                 return
 
-            current_path = f"{path}/{type(control).__name__}" if path else type(control).__name__
+            current_path = (
+                f"{path}/{type(control).__name__}" if path else type(control).__name__
+            )
             self.tested_elements.append(current_path)
 
             # Check if control can receive focus
-            if hasattr(control, 'autofocus') and control.autofocus:
+            if hasattr(control, "autofocus") and control.autofocus:
                 # Good: control can receive focus automatically
                 pass
-            elif hasattr(control, 'focus') and not any([
-                isinstance(control, ft.Container) and not control.content,
-                isinstance(control, ft.Column) and not control.controls,
-                isinstance(control, ft.Row) and not control.controls
-            ]):
+            elif hasattr(control, "focus") and not any(
+                [
+                    isinstance(control, ft.Container) and not control.content,
+                    isinstance(control, ft.Column) and not control.controls,
+                    isinstance(control, ft.Row) and not control.controls,
+                ]
+            ):
                 # Interactive control that should be keyboard accessible
-                issues.append(AccessibilityIssue(
-                    element=current_path,
-                    issue="Interactive control may not be keyboard accessible",
-                    level=AccessibilityLevel.A,
-                    suggestion="Ensure control can receive focus and be operated via keyboard"
-                ))
+                issues.append(
+                    AccessibilityIssue(
+                        element=current_path,
+                        issue="Interactive control may not be keyboard accessible",
+                        level=AccessibilityLevel.A,
+                        suggestion="Ensure control can receive focus and be operated via keyboard",
+                    )
+                )
 
             # Check for keyboard event handlers
-            if hasattr(control, 'on_click') and not any([
-                hasattr(control, 'on_key_down'),
-                hasattr(control, 'on_key_up'),
-                hasattr(control, 'on_keyboard_event')
-            ]):
+            if (
+                hasattr(control, "on_click")
+                and not any(
+                    [
+                        hasattr(control, "on_key_down"),
+                        hasattr(control, "on_key_up"),
+                        hasattr(control, "on_keyboard_event"),
+                    ]
+                )
+                and not isinstance(
+                    control, (ft.IconButton, ft.FilledButton, ft.TextButton)
+                )
+            ):
                 # Control has click handler but no keyboard support
-                if not isinstance(control, (ft.IconButton, ft.FilledButton, ft.TextButton)):
-                    issues.append(AccessibilityIssue(
+                issues.append(
+                    AccessibilityIssue(
                         element=current_path,
                         issue="Click-only interactive element without keyboard support",
                         level=AccessibilityLevel.A,
-                        suggestion="Add keyboard event handlers or use keyboard-accessible alternatives"
-                    ))
+                        suggestion="Add keyboard event handlers or use keyboard-accessible alternatives",
+                    )
+                )
 
             # Recursively check child controls
-            if hasattr(control, 'content') and control.content:
+            if hasattr(control, "content") and control.content:
                 check_control(control.content, current_path)
-            elif hasattr(control, 'controls') and control.controls:
+            elif hasattr(control, "controls") and control.controls:
                 for child in control.controls:
                     check_control(child, current_path)
 
@@ -112,37 +135,44 @@ class AccessibilityTester:
             if not control:
                 return
 
-            current_path = f"{path}/{type(control).__name__}" if path else type(control).__name__
+            current_path = (
+                f"{path}/{type(control).__name__}" if path else type(control).__name__
+            )
 
             # Check for insufficient color contrast
-            if hasattr(control, 'color') and hasattr(control, 'bgcolor'):
+            if hasattr(control, "color") and hasattr(control, "bgcolor"):
                 # This is a simplified check - in practice, you'd need proper contrast calculation
                 color = control.color
                 bgcolor = control.bgcolor
 
                 # Basic heuristics for obvious contrast issues
                 if self._is_low_contrast_pair(color, bgcolor):
-                    issues.append(AccessibilityIssue(
-                        element=current_path,
-                        issue="Insufficient color contrast",
-                        level=AccessibilityLevel.AA,
-                        suggestion="Use colors with better contrast ratio (4.5:1 for normal text, 3:1 for large text)"
-                    ))
+                    issues.append(
+                        AccessibilityIssue(
+                            element=current_path,
+                            issue="Insufficient color contrast",
+                            level=AccessibilityLevel.AA,
+                            suggestion="Use colors with better contrast ratio (4.5:1 for normal text, 3:1 for large text)",
+                        )
+                    )
 
             # Check text controls for proper contrast
-            if isinstance(control, ft.Text):
-                if self._is_text_color_invisible(control.color, getattr(control, 'bgcolor', None)):
-                    issues.append(AccessibilityIssue(
+            if type(control).__name__ == "Text" and self._is_text_color_invisible(
+                control.color, getattr(control, "bgcolor", None)
+            ):
+                issues.append(
+                    AccessibilityIssue(
                         element=current_path,
                         issue="Text may be invisible on background",
                         level=AccessibilityLevel.A,
-                        suggestion="Ensure text color contrasts with background"
-                    ))
+                        suggestion="Ensure text color contrasts with background",
+                    )
+                )
 
             # Recursively check child controls
-            if hasattr(control, 'content') and control.content:
+            if hasattr(control, "content") and control.content:
                 check_control_colors(control.content, current_path)
-            elif hasattr(control, 'controls') and control.controls:
+            elif hasattr(control, "controls") and control.controls:
                 for child in control.controls:
                     check_control_colors(child, current_path)
 
@@ -157,76 +187,103 @@ class AccessibilityTester:
             if not control:
                 return
 
-            current_path = f"{path}/{type(control).__name__}" if path else type(control).__name__
+            current_path = (
+                f"{path}/{type(control).__name__}" if path else type(control).__name__
+            )
 
             # Check for missing semantic labels
-            if isinstance(control, (ft.IconButton, ft.FilledButton, ft.TextButton)):
-                if not hasattr(control, 'icon') and not (hasattr(control, 'text') and control.text):
-                    issues.append(AccessibilityIssue(
+            if (
+                type(control).__name__ in ["IconButton", "FilledButton", "TextButton"]
+                and not hasattr(control, "icon")
+                and not (hasattr(control, "text") and control.text)
+            ):
+                issues.append(
+                    AccessibilityIssue(
                         element=current_path,
                         issue="Button without accessible label",
                         level=AccessibilityLevel.A,
-                        suggestion="Add text or icon to make the button purpose clear"
-                    ))
+                        suggestion="Add text or icon to make the button purpose clear",
+                    )
+                )
 
             # Check data table accessibility
             if isinstance(control, ft.DataTable):
                 if not control.columns:
-                    issues.append(AccessibilityIssue(
-                        element=current_path,
-                        issue="DataTable without column headers",
-                        level=AccessibilityLevel.A,
-                        suggestion="Add column headers with descriptive text"
-                    ))
+                    issues.append(
+                        AccessibilityIssue(
+                            element=current_path,
+                            issue="DataTable without column headers",
+                            level=AccessibilityLevel.A,
+                            suggestion="Add column headers with descriptive text",
+                        )
+                    )
                 else:
                     for i, column in enumerate(control.columns):
-                        if not hasattr(column, 'text') or not column.text:
-                            issues.append(AccessibilityIssue(
-                                element=f"{current_path}.column_{i}",
-                                issue="DataTable column without header text",
-                                level=AccessibilityLevel.A,
-                                suggestion="Add descriptive text to column header"
-                            ))
+                        if not hasattr(column, "text") or not column.text:
+                            issues.append(
+                                AccessibilityIssue(
+                                    element=f"{current_path}.column_{i}",
+                                    issue="DataTable column without header text",
+                                    level=AccessibilityLevel.A,
+                                    suggestion="Add descriptive text to column header",
+                                )
+                            )
 
             # Check for missing alt text on images
-            if hasattr(control, 'src') and not hasattr(control, 'alt'):
-                issues.append(AccessibilityIssue(
-                    element=current_path,
-                    issue="Image element without alt text",
-                    level=AccessibilityLevel.A,
-                    suggestion="Add descriptive alt text for screen readers"
-                ))
+            if hasattr(control, "src") and not hasattr(control, "alt"):
+                issues.append(
+                    AccessibilityIssue(
+                        element=current_path,
+                        issue="Image element without alt text",
+                        level=AccessibilityLevel.A,
+                        suggestion="Add descriptive alt text for screen readers",
+                    )
+                )
 
             # Recursively check child controls
-            if hasattr(control, 'content') and control.content:
+            if hasattr(control, "content") and control.content:
                 check_control_aria(control.content, current_path)
-            elif hasattr(control, 'controls') and control.controls:
+            elif hasattr(control, "controls") and control.controls:
                 for child in control.controls:
                     check_control_aria(child, current_path)
 
         check_control_aria(root_control)
         return issues
 
-    def test_focus_management(self, root_control: ft.Control) -> List[AccessibilityIssue]:
+    def test_focus_management(
+        self, root_control: ft.Control
+    ) -> List[AccessibilityIssue]:
         """Test focus management and tab order"""
         issues = []
 
-        def find_focusable_controls(control: ft.Control, focusable_controls: List[Tuple[ft.Control, str]]):
+        def find_focusable_controls(
+            control: ft.Control, focusable_controls: List[Tuple[ft.Control, str]]
+        ):
             if not control:
                 return
 
             current_path = f"{type(control).__name__}"
 
             # Check if control can receive focus
-            if hasattr(control, 'autofocus') and control.autofocus:
+            if hasattr(control, "autofocus") and control.autofocus:
                 focusable_controls.append((control, current_path))
-            elif isinstance(control, (ft.TextField, ft.Dropdown, ft.Button, ft.IconButton, ft.Checkbox, ft.Radio)):
+            elif isinstance(
+                control,
+                (
+                    ft.TextField,
+                    ft.Dropdown,
+                    ft.Button,
+                    ft.IconButton,
+                    ft.Checkbox,
+                    ft.Radio,
+                ),
+            ):
                 focusable_controls.append((control, current_path))
 
             # Recursively find child controls
-            if hasattr(control, 'content') and control.content:
+            if hasattr(control, "content") and control.content:
                 find_focusable_controls(control.content, focusable_controls)
-            elif hasattr(control, 'controls') and control.controls:
+            elif hasattr(control, "controls") and control.controls:
                 for child in control.controls:
                     find_focusable_controls(child, focusable_controls)
 
@@ -234,28 +291,34 @@ class AccessibilityTester:
         find_focusable_controls(root_control, focusable_controls)
 
         # Check if there are enough focusable elements
-        if len(focusable_controls) == 0:
-            issues.append(AccessibilityIssue(
-                element="Application",
-                issue="No focusable interactive elements found",
-                level=AccessibilityLevel.A,
-                suggestion="Ensure there are keyboard-accessible interactive elements"
-            ))
+        if not focusable_controls:
+            issues.append(
+                AccessibilityIssue(
+                    element="Application",
+                    issue="No focusable interactive elements found",
+                    level=AccessibilityLevel.A,
+                    suggestion="Ensure there are keyboard-accessible interactive elements",
+                )
+            )
 
         # Check for proper focus trapping in modals
-        if hasattr(root_control, 'open') and hasattr(root_control, 'actions'):
+        if hasattr(root_control, "open") and hasattr(root_control, "actions"):
             # This is likely a dialog/modal
-            if len(focusable_controls) == 0:
-                issues.append(AccessibilityIssue(
-                    element="Modal/Dialog",
-                    issue="Modal without focusable elements",
-                    level=AccessibilityLevel.A,
-                    suggestion="Ensure modal contains keyboard-accessible elements"
-                ))
+            if not focusable_controls:
+                issues.append(
+                    AccessibilityIssue(
+                        element="Modal/Dialog",
+                        issue="Modal without focusable elements",
+                        level=AccessibilityLevel.A,
+                        suggestion="Ensure modal contains keyboard-accessible elements",
+                    )
+                )
 
         return issues
 
-    def test_desktop_specific_features(self, root_control: ft.Control) -> List[AccessibilityIssue]:
+    def test_desktop_specific_features(
+        self, root_control: ft.Control
+    ) -> List[AccessibilityIssue]:
         """Test desktop-specific accessibility features"""
         issues = []
 
@@ -264,51 +327,62 @@ class AccessibilityTester:
             if not control:
                 return
 
-            current_path = f"{path}/{type(control).__name__}" if path else type(control).__name__
+            current_path = (
+                f"{path}/{type(control).__name__}" if path else type(control).__name__
+            )
 
             # Check for tooltip support
-            if isinstance(control, (ft.IconButton, ft.FilledButton, ft.TextButton)):
-                if not hasattr(control, 'tooltip') or not control.tooltip:
-                    issues.append(AccessibilityIssue(
+            if type(control).__name__ in [
+                "IconButton",
+                "FilledButton",
+                "TextButton",
+            ] and (not hasattr(control, "tooltip") or not control.tooltip):
+                issues.append(
+                    AccessibilityIssue(
                         element=current_path,
                         issue="Button without tooltip",
                         level=AccessibilityLevel.AA,
-                        suggestion="Add tooltips to improve discoverability"
-                    ))
+                        suggestion="Add tooltips to improve discoverability",
+                    )
+                )
 
             # Check for keyboard shortcuts hints
-            if hasattr(control, 'content') and "Ctrl+" in str(control.content):
-                # Control mentions keyboard shortcut
-                if not hasattr(control, 'tooltip'):
-                    issues.append(AccessibilityIssue(
+            if (
+                hasattr(control, "content")
+                and "Ctrl+" in str(control.content)
+                and not hasattr(control, "tooltip")
+            ):
+                issues.append(
+                    AccessibilityIssue(
                         element=current_path,
                         issue="Keyboard shortcut mentioned without proper hint",
                         level=AccessibilityLevel.AA,
-                        suggestion="Add tooltip to explain keyboard shortcut"
-                    ))
+                        suggestion="Add tooltip to explain keyboard shortcut",
+                    )
+                )
 
             # Recursively check child controls
-            if hasattr(control, 'content') and control.content:
+            if hasattr(control, "content") and control.content:
                 check_windows_features(control.content, current_path)
-            elif hasattr(control, 'controls') and control.controls:
+            elif hasattr(control, "controls") and control.controls:
                 for child in control.controls:
                     check_windows_features(child, current_path)
 
         check_windows_features(root_control)
 
         # Check for high contrast mode support
-        try:
+        with contextlib.suppress(Exception):
             # Simulate checking theme compatibility
-            if hasattr(root_control, 'theme') or hasattr(root_control, 'color'):
+            if hasattr(root_control, "theme") or hasattr(root_control, "color"):
                 # This is simplified - in practice, you'd test with actual high contrast themes
-                issues.append(AccessibilityIssue(
-                    element="Application",
-                    issue="High contrast mode compatibility not verified",
-                    level=AccessibilityLevel.AA,
-                    suggestion="Test with Windows high contrast themes to ensure compatibility"
-                ))
-        except:
-            pass
+                issues.append(
+                    AccessibilityIssue(
+                        element="Application",
+                        issue="High contrast mode compatibility not verified",
+                        level=AccessibilityLevel.AA,
+                        suggestion="Test with Windows high contrast themes to ensure compatibility",
+                    )
+                )
 
         return issues
 
@@ -318,20 +392,15 @@ class AccessibilityTester:
         light_colors = ["#FFFFFF", "#F0F0F0", "#E0E0E0", "#F5F5F5"]
         dark_colors = ["#000000", "#1C1C1C", "#212121", "#2D2D2D"]
 
-        if color1.lower() in light_colors and color2.lower() in light_colors:
-            return True
-        if color1.lower() in dark_colors and color2.lower() in dark_colors:
-            return True
+        return (color1.lower() in light_colors and color2.lower() in light_colors) or (
+            color1.lower() in dark_colors and color2.lower() in dark_colors
+        )
 
-        return False
-
-    def _is_text_color_invisible(self, text_color: str, bg_color: Optional[str]) -> bool:
+    def _is_text_color_invisible(
+        self, text_color: str, bg_color: Optional[str]
+    ) -> bool:
         """Check if text color would be invisible on background"""
-        if not bg_color:
-            return False
-
-        # Simplified check for same colors
-        return text_color.lower() == bg_color.lower()
+        return bool(bg_color) and text_color.lower() == bg_color.lower()
 
     def run_accessibility_tests(self, root_control: ft.Control) -> Dict[str, Any]:
         """Run all accessibility tests and generate comprehensive report"""
@@ -349,17 +418,19 @@ class AccessibilityTester:
 
         # Combine all issues
         all_issues = (
-            keyboard_issues +
-            color_issues +
-            aria_issues +
-            focus_issues +
-            desktop_issues
+            keyboard_issues + color_issues + aria_issues + focus_issues + desktop_issues
         )
 
         # Categorize by severity
-        level_a_issues = [issue for issue in all_issues if issue.level == AccessibilityLevel.A]
-        level_aa_issues = [issue for issue in all_issues if issue.level == AccessibilityLevel.AA]
-        level_aaa_issues = [issue for issue in all_issues if issue.level == AccessibilityLevel.AAA]
+        level_a_issues = [
+            issue for issue in all_issues if issue.level == AccessibilityLevel.A
+        ]
+        level_aa_issues = [
+            issue for issue in all_issues if issue.level == AccessibilityLevel.AA
+        ]
+        level_aaa_issues = [
+            issue for issue in all_issues if issue.level == AccessibilityLevel.AAA
+        ]
 
         print("\n📊 Accessibility Test Results")
         print(f"Total Issues Found: {len(all_issues)}")
@@ -374,7 +445,7 @@ class AccessibilityTester:
                 "Color Contrast": color_issues,
                 "ARIA Labels": aria_issues,
                 "Focus Management": focus_issues,
-                "Desktop Features": desktop_issues
+                "Desktop Features": desktop_issues,
             }
 
             for category, issues_list in categories.items():
@@ -387,20 +458,31 @@ class AccessibilityTester:
 
         # Generate compliance assessment
         print("\n✅ WCAG 2.1 Compliance Assessment:")
-        if len(level_a_issues) == 0:
+
+        is_level_a_compliant = not level_a_issues
+        is_level_aa_compliant = is_level_a_compliant and not level_aa_issues
+        is_level_aaa_compliant = is_level_aa_compliant and not level_aaa_issues
+
+        if is_level_a_compliant:
             print("   ✅ Level A: COMPLIANT")
         else:
-            print(f"   ❌ Level A: NOT COMPLIANT ({len(level_a_issues)} critical issues)")
+            print(
+                f"   ❌ Level A: NOT COMPLIANT ({len(level_a_issues)} critical issues)"
+            )
 
-        if len(level_a_issues) == 0 and len(level_aa_issues) == 0:
+        if is_level_aa_compliant:
             print("   ✅ Level AA: COMPLIANT")
         else:
-            print(f"   ❌ Level AA: NOT COMPLIANT ({len(level_aa_issues)} major issues)")
+            print(
+                f"   ❌ Level AA: NOT COMPLIANT ({len(level_aa_issues)} major issues)"
+            )
 
-        if len(level_a_issues) == 0 and len(level_aa_issues) == 0 and len(level_aaa_issues) == 0:
+        if is_level_aaa_compliant:
             print("   ✅ Level AAA: COMPLIANT")
         else:
-            print(f"   ⚠️  Level AAA: NOT COMPLIANT ({len(level_aaa_issues)} minor issues)")
+            print(
+                f"   ⚠️  Level AAA: NOT COMPLIANT ({len(level_aaa_issues)} minor issues)"
+            )
 
         return {
             "summary": {
@@ -408,17 +490,17 @@ class AccessibilityTester:
                 "level_a_issues": len(level_a_issues),
                 "level_aa_issues": len(level_aa_issues),
                 "level_aaa_issues": len(level_aaa_issues),
-                "wcag_a_compliant": len(level_a_issues) == 0,
-                "wcag_aa_compliant": len(level_a_issues) == 0 and len(level_aa_issues) == 0,
-                "wcag_aaa_compliant": len(all_issues) == 0,
-                "tested_elements": len(self.tested_elements)
+                "wcag_a_compliant": is_level_a_compliant,
+                "wcag_aa_compliant": is_level_aa_compliant,
+                "wcag_aaa_compliant": is_level_aaa_compliant,
+                "tested_elements": len(self.tested_elements),
             },
             "issues": [
                 {
                     "element": issue.element,
                     "issue": issue.issue,
                     "level": issue.level.value,
-                    "suggestion": issue.suggestion
+                    "suggestion": issue.suggestion,
                 }
                 for issue in all_issues
             ],
@@ -427,82 +509,105 @@ class AccessibilityTester:
                 "color_contrast": color_issues,
                 "aria_labels": aria_issues,
                 "focus_management": focus_issues,
-                "desktop_features": desktop_issues
-            }
+                "desktop_features": desktop_issues,
+            },
         }
 
 
 def create_accessibility_test_demo():
     """Create a demo application for accessibility testing"""
+
     def main(page: ft.Page):
         page.title = "Accessibility Test Demo"
         page.theme_mode = ft.ThemeMode.LIGHT
 
         # Create test controls with various accessibility features
-        test_controls = ft.Column([
-            ft.Text("Accessibility Testing Demo", size=24, weight=ft.FontWeight.BOLD),
-            ft.Text("This page includes various controls to test accessibility features"),
-            ft.Divider(),
-
-            # Buttons with different accessibility characteristics
-            ft.Text("Buttons:", weight=ft.FontWeight.BOLD),
-            ft.Row([
-                ft.ElevatedButton("Good Button", tooltip="This button has proper labeling"),
-                ft.ElevatedButton("Icon Only", icon=ft.Icons.SETTINGS, tooltip="Settings button"),
-                ft.ElevatedButton("", icon=ft.Icons.CLOSE, tooltip="Close button - problematic without label"),
-            ]),
-            ft.Divider(),
-
-            # Form controls
-            ft.Text("Form Controls:", weight=ft.FontWeight.BOLD),
-            ft.TextField(
-                label="Accessible Text Field",
-                helper_text="This field has proper labeling",
-                value="Sample text"
-            ),
-            ft.Dropdown(
-                label="Accessible Dropdown",
-                options=[
-                    ft.dropdown.Option("Option 1"),
-                    ft.dropdown.Option("Option 2"),
-                    ft.dropdown.Option("Option 3"),
-                ],
-                value="Option 1"
-            ),
-            ft.Divider(),
-
-            # Data table
-            ft.Text("Data Table:", weight=ft.FontWeight.BOLD),
-            ft.DataTable(
-                columns=[
-                    ft.DataColumn(ft.Text("Name", weight=ft.FontWeight.BOLD)),
-                    ft.DataColumn(ft.Text("Email", weight=ft.FontWeight.BOLD)),
-                    ft.DataColumn(ft.Text("Role", weight=ft.FontWeight.BOLD)),
-                ],
-                rows=[
-                    ft.DataRow(cells=[
-                        ft.DataCell(ft.Text("John Doe")),
-                        ft.DataCell(ft.Text("john@example.com")) ,
-                        ft.DataCell(ft.Text("Admin"))
-                    ]),
-                    ft.DataRow(cells=[
-                        ft.DataCell(ft.Text("Jane Smith")),
-                        ft.DataCell(ft.Text("jane@example.com")) ,
-                        ft.DataCell(ft.Text("User"))
-                    ])
-                ]
-            ),
-            ft.Divider(),
-
-            # Test results area
-            ft.Text("Test Results:", weight=ft.FontWeight.BOLD),
-            ft.Container(
-                content=ft.Text("Run accessibility tests to see results here...", color=ft.Colors.GREY),
-                bgcolor=ft.Colors.with_opacity(0.05, ft.Colors.GREY),
-                padding=20,
-                border_radius=8
-            ),
-        ], spacing=10)
+        test_controls = ft.Column(
+            [
+                ft.Text(
+                    "Accessibility Testing Demo", size=24, weight=ft.FontWeight.BOLD
+                ),
+                ft.Text(
+                    "This page includes various controls to test accessibility features"
+                ),
+                ft.Divider(),
+                # Buttons with different accessibility characteristics
+                ft.Text("Buttons:", weight=ft.FontWeight.BOLD),
+                ft.Row(
+                    [
+                        ft.ElevatedButton(
+                            "Good Button", tooltip="This button has proper labeling"
+                        ),
+                        ft.ElevatedButton(
+                            "Icon Only",
+                            icon=ft.Icons.SETTINGS,
+                            tooltip="Settings button",
+                        ),
+                        ft.ElevatedButton(
+                            "",
+                            icon=ft.Icons.CLOSE,
+                            tooltip="Close button - problematic without label",
+                        ),
+                    ]
+                ),
+                ft.Divider(),
+                # Form controls
+                ft.Text("Form Controls:", weight=ft.FontWeight.BOLD),
+                ft.TextField(
+                    label="Accessible Text Field",
+                    helper_text="This field has proper labeling",
+                    value="Sample text",
+                ),
+                ft.Dropdown(
+                    label="Accessible Dropdown",
+                    options=[
+                        ft.dropdown.Option("Option 1"),
+                        ft.dropdown.Option("Option 2"),
+                        ft.dropdown.Option("Option 3"),
+                    ],
+                    value="Option 1",
+                ),
+                ft.Divider(),
+                # Data table
+                ft.Text("Data Table:", weight=ft.FontWeight.BOLD),
+                ft.DataTable(
+                    columns=[
+                        ft.DataColumn(ft.Text("Name", weight=ft.FontWeight.BOLD)),
+                        ft.DataColumn(ft.Text("Email", weight=ft.FontWeight.BOLD)),
+                        ft.DataColumn(ft.Text("Role", weight=ft.FontWeight.BOLD)),
+                    ],
+                    rows=[
+                        ft.DataRow(
+                            cells=[
+                                ft.DataCell(ft.Text("John Doe")),
+                                ft.DataCell(ft.Text("john@example.com")),
+                                ft.DataCell(ft.Text("Admin")),
+                            ]
+                        ),
+                        ft.DataRow(
+                            cells=[
+                                ft.DataCell(ft.Text("Jane Smith")),
+                                ft.DataCell(ft.Text("jane@example.com")),
+                                ft.DataCell(ft.Text("User")),
+                            ]
+                        ),
+                    ],
+                ),
+                ft.Divider(),
+                # Test results area
+                ft.Text("Test Results:", weight=ft.FontWeight.BOLD),
+                ft.Container(
+                    content=ft.Text(
+                        "Run accessibility tests to see results here...",
+                        color=ft.Colors.GREY,
+                    ),
+                    bgcolor=ft.Colors.with_opacity(0.05, ft.Colors.GREY),
+                    padding=20,
+                    border_radius=8,
+                ),
+            ],
+            spacing=10,
+        )
 
         # Add test button
         def run_tests(e):
@@ -519,7 +624,7 @@ def create_accessibility_test_demo():
                 f"\nIssues Found:\n"
             )
 
-            for issue in results['issues']:
+            for issue in results["issues"]:
                 results_text.value += f"- {issue['element']}: {issue['issue']}\n"
 
             results_container.content = results_text
@@ -529,22 +634,25 @@ def create_accessibility_test_demo():
             content=ft.Text("Click 'Run Tests' to start accessibility testing"),
             bgcolor=ft.Colors.with_opacity(0.05, ft.Colors.GREY),
             padding=20,
-            border_radius=8
+            border_radius=8,
         )
 
         # Add test button to page
         test_button = ft.ElevatedButton(
-            "Run Accessibility Tests",
-            on_click=run_tests,
-            icon=ft.Icons.ACCESSIBILITY
+            "Run Accessibility Tests", on_click=run_tests, icon=ft.Icons.ACCESSIBILITY
         )
 
         page.add(
-            ft.Column([
-                test_controls,
-                ft.Divider(),
-                ft.Row([test_button, results_container], alignment=ft.MainAxisAlignment.CENTER),
-            ])
+            ft.Column(
+                [
+                    test_controls,
+                    ft.Divider(),
+                    ft.Row(
+                        [test_button, results_container],
+                        alignment=ft.MainAxisAlignment.CENTER,
+                    ),
+                ]
+            )
         )
 
     return main

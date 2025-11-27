@@ -1,3 +1,8 @@
+"""
+GUI Integration for Enhanced Process Monitoring
+Provides visual components for displaying process metrics and health status.
+"""
+
 import logging
 import threading
 import time
@@ -9,20 +14,14 @@ from typing import Any
 from .process_monitor import ProcessMetrics, ProcessState, get_process_registry
 
 logger = logging.getLogger(__name__)
-"""
-GUI Integration for Enhanced Process Monitoring
-Provides visual components for displaying process metrics and health status.
-"""
-
-import logging
-
-logger = logging.getLogger(__name__)
 
 
 class ProcessMonitorWidget:
     """Widget for displaying process monitoring information"""
 
-    def __init__(self, parent: Any, title: str = "Process Monitor", update_interval: float = 2.0) -> None:
+    def __init__(
+        self, parent: Any, title: str = "Process Monitor", update_interval: float = 2.0
+    ) -> None:
         self.parent = parent
         self.title = title
         self.update_interval = update_interval
@@ -50,7 +49,9 @@ class ProcessMonitorWidget:
 
         # Treeview for process list
         columns = ("Name", "State", "PID", "CPU%", "Memory MB", "Threads", "Warnings")
-        self.process_tree = ttk.Treeview(list_container, columns=columns, show="headings", height=8)
+        self.process_tree = ttk.Treeview(
+            list_container, columns=columns, show="headings", height=8
+        )
 
         # Configure column headings and widths
         for col in columns:
@@ -71,7 +72,9 @@ class ProcessMonitorWidget:
                 self.process_tree.column(col, width=200)
 
         # Scrollbar for treeview
-        scrollbar = ttk.Scrollbar(list_container, orient="vertical", command=self.process_tree.yview)  # type: ignore
+        scrollbar = ttk.Scrollbar(
+            list_container, orient="vertical", command=self.process_tree.yview
+        )  # type: ignore
         self.process_tree.configure(yscrollcommand=scrollbar.set)
 
         # Pack treeview and scrollbar
@@ -93,10 +96,14 @@ class ProcessMonitorWidget:
         button_frame = ttk.Frame(self.frame)
         button_frame.pack(fill="x", pady=(10, 0))
 
-        self.refresh_button = ttk.Button(button_frame, text="Refresh", command=self.refresh_now)
+        self.refresh_button = ttk.Button(
+            button_frame, text="Refresh", command=self.refresh_now
+        )
         self.refresh_button.pack(side="left", padx=(0, 5))
 
-        self.clear_button = ttk.Button(button_frame, text="Clear", command=self.clear_display)
+        self.clear_button = ttk.Button(
+            button_frame, text="Clear", command=self.clear_display
+        )
         self.clear_button.pack(side="left")
 
     def start_monitoring(self) -> None:
@@ -152,7 +159,9 @@ class ProcessMonitorWidget:
                     cpu_percent = f"{metrics.cpu_percent:.1f}"
                     memory_mb = f"{metrics.memory_mb:.1f}"
                     threads = str(metrics.num_threads)
-                    warnings = "; ".join(metrics.warnings) if metrics.warnings else "None"
+                    warnings = (
+                        "; ".join(metrics.warnings) if metrics.warnings else "None"
+                    )
                 else:
                     cpu_percent = "N/A"
                     memory_mb = "N/A"
@@ -161,7 +170,17 @@ class ProcessMonitorWidget:
 
                 # Add to tree
                 item_id = self.process_tree.insert(
-                    "", "end", values=(name, state, pid, cpu_percent, memory_mb, threads, warnings)
+                    "",
+                    "end",
+                    values=(
+                        name,
+                        state,
+                        pid,
+                        cpu_percent,
+                        memory_mb,
+                        threads,
+                        warnings,
+                    ),
                 )
 
                 # Color code by state
@@ -181,8 +200,12 @@ class ProcessMonitorWidget:
 
             # Update status
             total_count = len(processes)
-            self.status_label.config(text=f"Monitoring: {running_count}/{total_count} processes")
-            self.last_update_label.config(text=f"Last update: {datetime.now().strftime('%H:%M:%S')}")
+            self.status_label.config(
+                text=f"Monitoring: {running_count}/{total_count} processes"
+            )
+            self.last_update_label.config(
+                text=f"Last update: {datetime.now().strftime('%H:%M:%S')}"
+            )
 
         except Exception as e:
             logger.error(f"Error updating process monitor display: {e}")
@@ -216,7 +239,9 @@ class ProcessMonitorWidget:
 class ProcessMetricsChart:
     """Chart widget for displaying process metrics over time"""
 
-    def __init__(self, parent: Any, process_id: str, title: str = "Process Metrics") -> None:
+    def __init__(
+        self, parent: Any, process_id: str, title: str = "Process Metrics"
+    ) -> None:
         self.parent = parent
         self.process_id = process_id
         self.title = title
@@ -257,7 +282,9 @@ class ProcessMetricsChart:
         metrics_frame.pack(fill="both", expand=True)
 
         # Current metrics labels
-        current_frame = ttk.LabelFrame(metrics_frame, text="Current Metrics", padding="5")
+        current_frame = ttk.LabelFrame(
+            metrics_frame, text="Current Metrics", padding="5"
+        )
         current_frame.pack(fill="x", pady=(0, 10))
 
         self.cpu_label = ttk.Label(current_frame, text="CPU: N/A")
@@ -274,7 +301,9 @@ class ProcessMetricsChart:
         chart_frame.pack(fill="both", expand=True)
 
         self.chart_text = tk.Text(chart_frame, height=10, width=60, font=("Courier", 9))
-        chart_scrollbar = ttk.Scrollbar(chart_frame, orient="vertical", command=self.chart_text.yview)  # type: ignore
+        chart_scrollbar = ttk.Scrollbar(
+            chart_frame, orient="vertical", command=self.chart_text.yview
+        )  # type: ignore
         self.chart_text.configure(yscrollcommand=chart_scrollbar.set)
 
         self.chart_text.pack(side="left", fill="both", expand=True)
@@ -324,7 +353,12 @@ class ProcessMetricsChart:
 
         # Keep only last 50 data points
         max_points = 50
-        for data_list in [self.timestamps, self.cpu_percent, self.memory_mb, self.threads]:
+        for data_list in [
+            self.timestamps,
+            self.cpu_percent,
+            self.memory_mb,
+            self.threads,
+        ]:
             if len(data_list) > max_points:
                 data_list[:] = data_list[-max_points:]
 
@@ -387,7 +421,9 @@ def create_process_monitor_tab(
     scrollbar = ttk.Scrollbar(tab_frame, orient="vertical", command=canvas.yview)  # type: ignore
     scrollable_frame = ttk.Frame(canvas)
 
-    scrollable_frame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+    scrollable_frame.bind(
+        "<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+    )
 
     canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
     canvas.configure(yscrollcommand=scrollbar.set)

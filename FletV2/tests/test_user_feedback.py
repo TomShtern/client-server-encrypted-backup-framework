@@ -9,12 +9,12 @@ import unittest
 from unittest.mock import MagicMock, Mock
 
 # Add the FletV2 directory to the path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 # Mock flet for testing
-sys.modules['flet'] = MagicMock()
+sys.modules["flet"] = MagicMock()
 
-from utils.user_feedback import (
+from utils.user_feedback import (  # noqa: E402
     show_confirmation,
     show_error_message,
     show_info_message,
@@ -57,25 +57,16 @@ class TestUserFeedback(unittest.TestCase):
 
     def test_show_confirmation_dialog(self):
         """Test showing a confirmation dialog."""
-        show_confirmation(
-            self.mock_page,
-            "Test title",
-            "Test content",
-            lambda e: None
-        )
+        show_confirmation(self.mock_page, "Test title", "Test content", lambda e: None)
         self.mock_page.update.assert_called()
 
     def test_show_input_dialog(self):
         """Test showing an input dialog."""
         show_input(
-            self.mock_page,
-            "Test title",
-            "Test content",
-            "Test label",
-            lambda x: None
+            self.mock_page, "Test title", "Test content", "Test label", lambda x: None
         )
         self.mock_page.update.assert_called()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

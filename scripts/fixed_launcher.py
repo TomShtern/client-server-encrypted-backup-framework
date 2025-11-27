@@ -38,16 +38,17 @@ os.chdir(project_root)
 # Setup logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
+    format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.FileHandler('logs/fixed_launcher.log', mode='w'),
-        logging.StreamHandler()
-    ]
+        logging.FileHandler("logs/fixed_launcher.log", mode="w"),
+        logging.StreamHandler(),
+    ],
 )
 logger = logging.getLogger(__name__)
 
 # Ensure logs directory exists
-Path('logs').mkdir(exist_ok=True)
+Path("logs").mkdir(exist_ok=True)
+
 
 def check_port(host: str, port: int, timeout: int = 2):
     """Check if a port is responding"""
@@ -57,6 +58,7 @@ def check_port(host: str, port: int, timeout: int = 2):
             return sock.connect_ex((host, port)) == 0
     except Exception:
         return False
+
 
 def wait_for_port(host: str, port: int, max_wait: int = 30, check_interval: int = 1):
     """Wait for a port to become available"""
@@ -69,16 +71,26 @@ def wait_for_port(host: str, port: int, max_wait: int = 30, check_interval: int 
     logger.error(f"❌ Port {port} failed to become available within {max_wait} seconds")
     return False
 
+
 def kill_existing_processes():
     """Kill any existing CyberBackup processes"""
     logger.info("Cleaning up existing processes...")
     try:
         # Kill Python processes that might be running our servers
-        run_utf8("taskkill /F /IM python.exe /FI \"WINDOWTITLE eq *server*\" 2>NUL", shell=True, capture_output=True)
-        run_utf8("taskkill /F /IM EncryptedBackupClient.exe 2>NUL", shell=True, capture_output=True)
+        run_utf8(
+            'taskkill /F /IM python.exe /FI "WINDOWTITLE eq *server*" 2>NUL',
+            shell=True,
+            capture_output=True,
+        )
+        run_utf8(
+            "taskkill /F /IM EncryptedBackupClient.exe 2>NUL",
+            shell=True,
+            capture_output=True,
+        )
         time.sleep(2)  # Give processes time to die
     except Exception as e:
         logger.warning(f"Error during cleanup: {e}")
+
 
 def start_backup_server():
     """Start the backup server with GUI disabled to avoid coupling issues"""
@@ -91,33 +103,34 @@ def start_backup_server():
 
     # Set environment to disable GUI integration
     env = os.environ.copy()
-    env['CYBERBACKUP_DISABLE_GUI'] = '1'  # Disable GUI to avoid coupling issues
-    env['PYTHONPATH'] = str(project_root)  # Ensure Python can find modules
+    env["CYBERBACKUP_DISABLE_GUI"] = "1"  # Disable GUI to avoid coupling issues
+    env["PYTHONPATH"] = str(project_root)  # Ensure Python can find modules
 
     try:
         # Start server with direct file path (not module import) using UTF-8 support
         process = Popen_utf8(
             [sys.executable, str(server_script)],
-            creationflags=subprocess.CREATE_NEW_CONSOLE if os.name == 'nt' else 0,
-            cwd=project_root
+            creationflags=subprocess.CREATE_NEW_CONSOLE if os.name == "nt" else 0,
+            cwd=project_root,
         )
         logger.info(f"Backup server started with PID: {process.pid}")
 
         # Wait for server to be ready
-        if wait_for_port('127.0.0.1', 1256, max_wait=20):
+        if wait_for_port("127.0.0.1", 1256, max_wait=20):
             logger.info("Backup server is ready and listening on port 1256")
             return process
         else:
             logger.error("Backup server failed to start listening on port 1256")
             try:
                 process.terminate()
-            except:
+            except Exception:
                 pass
             return None
 
     except Exception as e:
         logger.error(f"Failed to start backup server: {e}")
         return None
+
 
 def start_api_server():
     """Start the API server"""
@@ -130,32 +143,33 @@ def start_api_server():
 
     # Set environment
     env = os.environ.copy()
-    env['PYTHONPATH'] = str(project_root)  # Ensure Python can find modules
+    env["PYTHONPATH"] = str(project_root)  # Ensure Python can find modules
 
     try:
         # Start API server with direct file path using UTF-8 support
         process = Popen_utf8(
             [sys.executable, str(api_script)],
-            creationflags=subprocess.CREATE_NEW_CONSOLE if os.name == 'nt' else 0,
-            cwd=project_root
+            creationflags=subprocess.CREATE_NEW_CONSOLE if os.name == "nt" else 0,
+            cwd=project_root,
         )
         logger.info(f"API server started with PID: {process.pid}")
 
         # Wait for API server to be ready
-        if wait_for_port('127.0.0.1', 9090, max_wait=15):
+        if wait_for_port("127.0.0.1", 9090, max_wait=15):
             logger.info("API server is ready and listening on port 9090")
             return process
         else:
             logger.error("API server failed to start listening on port 9090")
             try:
                 process.terminate()
-            except:
+            except Exception:
                 pass
             return None
 
     except Exception as e:
         logger.error(f"Failed to start API server: {e}")
         return None
+
 
 def test_file_transfer():
     """Test file transfer functionality"""
@@ -169,25 +183,27 @@ def test_file_transfer():
     try:
         # Check if transfer.info exists and is properly configured
         transfer_info = Path("transfer.info")
-# sourcery skip: no-conditionals-in-tests
+        # sourcery skip: no-conditionals-in-tests
         if not transfer_info.exists():
             logger.info("Creating transfer.info for testing...")
             transfer_info.write_text("127.0.0.1:1256\ntestuser\ntest_transfer.txt\n")
 
         # Check if C++ client exists
-# sourcery skip: no-loop-in-tests
+        # sourcery skip: no-loop-in-tests
         client_exe = None
         for possible_path in [
             Path("build/Release/EncryptedBackupClient.exe"),
             Path("build/EncryptedBackupClient.exe"),
-            Path("Client/EncryptedBackupClient.exe")
+            Path("Client/EncryptedBackupClient.exe"),
         ]:
             if possible_path.exists():
                 client_exe = possible_path
                 break
 
         if not client_exe:
-            logger.warning("C++ client executable not found - file transfers will not work")
+            logger.warning(
+                "C++ client executable not found - file transfers will not work"
+            )
             logger.info("Run: cmake --build build --config Release")
             return False
 
@@ -199,25 +215,33 @@ def test_file_transfer():
                 [str(client_exe), "--batch"],  # CRITICAL: Use --batch flag
                 cwd=project_root,
                 timeout=10,
-                capture_output=True
+                capture_output=True,
             )
-            logger.info(f"C++ client test completed with exit code: {result.returncode}")
+            logger.info(
+                f"C++ client test completed with exit code: {result.returncode}"
+            )
 
-# sourcery skip: no-conditionals-in-tests
+            # sourcery skip: no-conditionals-in-tests
             # Check if file was transferred
             received_files = Path("received_files")
             if received_files.exists():
                 files = list(received_files.glob("*test_transfer*"))
                 if files:
-                    logger.info(f"File transfer test SUCCESS - found {len(files)} transferred files")
+                    logger.info(
+                        f"File transfer test SUCCESS - found {len(files)} transferred files"
+                    )
                     return True
                 else:
-                    logger.warning("File transfer test - no files found in received_files/")
+                    logger.warning(
+                        "File transfer test - no files found in received_files/"
+                    )
             else:
                 logger.warning("received_files directory doesn't exist")
 
         except subprocess.TimeoutExpired:
-            logger.warning("C++ client test timed out (may be normal for connection test)")
+            logger.warning(
+                "C++ client test timed out (may be normal for connection test)"
+            )
         except Exception as e:
             logger.warning(f"C++ client test failed: {e}")
 
@@ -228,9 +252,11 @@ def test_file_transfer():
         if test_file.exists():
             test_file.unlink()
 
+
 def open_web_gui():
     """Open the web GUI in browser"""
     import webbrowser
+
     url = "http://127.0.0.1:9090/"
     logger.info(f"Opening web GUI: {url}")
     try:
@@ -239,6 +265,7 @@ def open_web_gui():
     except Exception as e:
         logger.error(f"Failed to open browser: {e}")
         return False
+
 
 def main():
     print("=" * 70)
@@ -274,9 +301,9 @@ def main():
         return 1
 
     # Step 4: Test system functionality
-    print("\n" + "="*50)
+    print("\n" + "=" * 50)
     print("🚀 SYSTEM STARTUP COMPLETED")
-    print("="*50)
+    print("=" * 50)
     print(f"✅ Backup Server: Running on port 1256 (PID: {backup_server.pid})")
     print(f"✅ API Server: Running on port 9090 (PID: {api_server.pid})")
     print("✅ Services are decoupled and running independently")
@@ -296,15 +323,17 @@ def main():
     else:
         print("⚠️  Manually open: http://127.0.0.1:9090/")
 
-    print("\n" + "="*50)
+    print("\n" + "=" * 50)
     print("📋 SYSTEM STATUS")
-    print("="*50)
+    print("=" * 50)
 
     # Final status check
-    backup_running = check_port('127.0.0.1', 1256)
-    api_running = check_port('127.0.0.1', 9090)
+    backup_running = check_port("127.0.0.1", 1256)
+    api_running = check_port("127.0.0.1", 9090)
 
-    print(f"Backup Server (1256): {'✅ RUNNING' if backup_running else '❌ NOT RESPONDING'}")
+    print(
+        f"Backup Server (1256): {'✅ RUNNING' if backup_running else '❌ NOT RESPONDING'}"
+    )
     print(f"API Server (9090): {'✅ RUNNING' if api_running else '❌ NOT RESPONDING'}")
     print(f"Web Interface: {'✅ AVAILABLE' if api_running else '❌ UNAVAILABLE'}")
 
@@ -326,7 +355,7 @@ def main():
     print("\n💡 To stop all services:")
     print("• Close the console windows")
     print("• Or run: taskkill /F /IM python.exe")
-    print("="*50)
+    print("=" * 50)
 
     # Keep script running
     try:
@@ -334,13 +363,14 @@ def main():
         while True:
             time.sleep(60)
             # Periodic health check
-            if not (check_port('127.0.0.1', 1256) and check_port('127.0.0.1', 9090)):
+            if not (check_port("127.0.0.1", 1256) and check_port("127.0.0.1", 9090)):
                 print("⚠️  Service health check failed - some services may have stopped")
     except KeyboardInterrupt:
         print("\n\n🛑 Launcher shutting down...")
         logger.info("Launcher stopped by user")
 
     return 0
+
 
 if __name__ == "__main__":
     sys.exit(main())

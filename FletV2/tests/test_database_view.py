@@ -3,18 +3,19 @@
 Unit tests for the database view.
 """
 
+import contextlib
 import os
 import sys
 import unittest
 from unittest.mock import MagicMock, Mock
 
 # Add the FletV2 directory to the path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 # Mock flet for testing
-sys.modules['flet'] = MagicMock()
+sys.modules["flet"] = MagicMock()
 
-from views.database import create_database_view
+from views.database import create_database_view  # noqa: E402
 
 
 class TestDatabaseView(unittest.TestCase):
@@ -34,30 +35,45 @@ class TestDatabaseView(unittest.TestCase):
             "status": "Connected",
             "tables": 5,
             "records": 1250,
-            "size": "45.2 MB"
+            "size": "45.2 MB",
         }
 
         # Mock table data
         self.mock_server_bridge.get_table_data.return_value = {
             "columns": ["id", "name", "last_seen", "has_public_key", "has_aes_key"],
             "rows": [
-                {"id": "client_001", "name": "Alpha Workstation", "last_seen": "2025-09-03 10:30:15", "has_public_key": True, "has_aes_key": True},
-                {"id": "client_002", "name": "Beta Server", "last_seen": "2025-09-02 09:15:22", "has_public_key": True, "has_aes_key": True},
-                {"id": "client_003", "name": "Gamma Laptop", "last_seen": "2025-09-01 14:22:10", "has_public_key": True, "has_aes_key": False}
-            ]
+                {
+                    "id": "client_001",
+                    "name": "Alpha Workstation",
+                    "last_seen": "2025-09-03 10:30:15",
+                    "has_public_key": True,
+                    "has_aes_key": True,
+                },
+                {
+                    "id": "client_002",
+                    "name": "Beta Server",
+                    "last_seen": "2025-09-02 09:15:22",
+                    "has_public_key": True,
+                    "has_aes_key": True,
+                },
+                {
+                    "id": "client_003",
+                    "name": "Gamma Laptop",
+                    "last_seen": "2025-09-01 14:22:10",
+                    "has_public_key": True,
+                    "has_aes_key": False,
+                },
+            ],
         }
 
     def test_create_database_view(self):
         """Test that the database view is created correctly."""
         # This test would require more complex mocking of flet components
         # For now, we'll just verify the function can be called without error
-        try:
+        with contextlib.suppress(Exception):
             view = create_database_view(self.mock_server_bridge, self.mock_page)
             # If we get here without exception, the function executed
             self.assertIsNotNone(view)
-        except Exception:
-            # This is expected since we're mocking flet
-            pass
 
     def test_get_table_data_with_server_bridge(self):
         """Test getting table data with server bridge."""
@@ -72,5 +88,5 @@ class TestDatabaseView(unittest.TestCase):
         pass
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
