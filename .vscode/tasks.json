@@ -184,6 +184,25 @@
 				"api_server"
 			],
 			"group": "test"
+		},
+		{
+			"label": "Run Client Web GUI (Python)",
+			"type": "shell",
+			"command": "${workspaceFolder}/flet_venv/Scripts/python.exe",
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Run Client Web GUI (Python) Correct",
+			"type": "shell",
+			"command": "${workspaceFolder}/flet_venv/Scripts/python.exe",
+			"args": [
+				"api_server/web_ui/start_client_gui.py"
+			],
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
 		}
 	]
 }

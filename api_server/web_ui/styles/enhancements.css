@@ -1264,7 +1264,7 @@ html.theme-light .log-message {
 }
 
 /* Log Entries Container - Seamless dark area */
-.logs-entries-container {
+#logContainer {
   position: relative;
   z-index: 1;
   min-height: 280px;
@@ -1275,19 +1275,23 @@ html.theme-light .log-message {
   background: linear-gradient(180deg,
     rgba(0, 0, 0, 0.25) 0%,
     rgba(0, 0, 0, 0.4) 100%);
+  white-space: normal; /* Reset pre-wrap from app.css */
+  font-family: inherit;
+  line-height: inherit;
+  color: inherit;
 }
 
 /* Custom Scrollbar */
-.logs-entries-container::-webkit-scrollbar {
+#logContainer::-webkit-scrollbar {
   width: 10px;
 }
 
-.logs-entries-container::-webkit-scrollbar-track {
+#logContainer::-webkit-scrollbar-track {
   background: rgba(255, 255, 255, 0.02);
   border-radius: 0 0 var(--radius-xl) 0;
 }
 
-.logs-entries-container::-webkit-scrollbar-thumb {
+#logContainer::-webkit-scrollbar-thumb {
   background: linear-gradient(180deg,
     rgba(88, 166, 255, 0.3) 0%,
     rgba(167, 139, 250, 0.2) 100%);
@@ -1297,7 +1301,7 @@ html.theme-light .log-message {
   transition: background 0.2s ease;
 }
 
-.logs-entries-container::-webkit-scrollbar-thumb:hover {
+#logContainer::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(180deg,
     rgba(88, 166, 255, 0.5) 0%,
     rgba(167, 139, 250, 0.4) 100%);
@@ -1708,13 +1712,13 @@ html.theme-light .logs-action-btn.primary {
   color: var(--accent);
 }
 
-html.theme-light .logs-entries-container {
+html.theme-light #logContainer {
   background: linear-gradient(180deg,
     rgba(246, 248, 250, 0.5) 0%,
     rgba(255, 255, 255, 0.8) 100%);
 }
 
-html.theme-light .logs-entries-container::-webkit-scrollbar-thumb {
+html.theme-light #logContainer::-webkit-scrollbar-thumb {
   background: linear-gradient(180deg,
     rgba(9, 105, 218, 0.25) 0%,
     rgba(130, 80, 223, 0.15) 100%);
