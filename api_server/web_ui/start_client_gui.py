@@ -34,6 +34,14 @@ class ClientGUIHandler(SimpleHTTPRequestHandler):
         self.send_header("Expires", "0")
         super().end_headers()
 
+    def do_GET(self):
+        """Handle GET requests with error suppression for client disconnects"""
+        try:
+            super().do_GET()
+        except (ConnectionAbortedError, ConnectionResetError, BrokenPipeError):
+            # Client disconnected before response was fully sent - this is normal
+            pass
+
 
 def find_free_port(start_port=8080):
     """Find a free port starting from start_port"""

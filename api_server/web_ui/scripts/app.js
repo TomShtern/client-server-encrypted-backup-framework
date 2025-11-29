@@ -311,22 +311,28 @@ class App {
       });
     }
 
-    // Segmented filter control with sliding indicator
-    for (let i = 0; i < dom.logFilters.length; i++) {
-      const button = dom.logFilters[i];
-      button.addEventListener('click', () => {
-        // Update active state for all buttons
-        for (const other of dom.logFilters) {
-          const isActive = other === button;
-          other.classList.toggle('active', isActive);
-          other.setAttribute('aria-pressed', isActive ? 'true' : 'false');
-        }
+    // Segmented filter control with sliding indicator - Event Delegation
+    const filterContainer = document.querySelector('.logs-filter-segment');
+    if (filterContainer) {
+      filterContainer.addEventListener('click', (e) => {
+        const button = e.target.closest('.segment-btn');
+        if (!button) return;
+
+        const buttons = filterContainer.querySelectorAll('.segment-btn');
+        buttons.forEach(btn => {
+          const isActive = btn === button;
+          btn.classList.toggle('active', isActive);
+          btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        });
 
         // Animate segment indicator
         if (dom.segmentIndicator) {
-          const segmentWidth = 100 / dom.logFilters.length;
-          dom.segmentIndicator.style.width = `calc(${segmentWidth}% - 3px)`;
-          dom.segmentIndicator.style.left = `calc(${i * segmentWidth}% + 4px)`;
+          const index = Array.from(buttons).indexOf(button);
+          if (index !== -1) {
+            const segmentWidth = 100 / buttons.length;
+            dom.segmentIndicator.style.width = `calc(${segmentWidth}% - 3px)`;
+            dom.segmentIndicator.style.left = `calc(${index * segmentWidth}% + 4px)`;
+          }
         }
 
         // Apply filter
@@ -799,6 +805,12 @@ class App {
     this.logs.add(message, { level, phase: 'RECEIPT' });
     if (data?.verified || /complete|verified/i.test(descriptor)) {
       this.toast.show('Backup verified on server', 'success', 3600);
+
+      if (window.Enhancements?.showNotification) {
+        window.Enhancements.showNotification('Backup Verified', {
+          body: `File ${name} verified on server.`
+        });
+      }
     }
   }
 
@@ -932,6 +944,12 @@ class App {
       this.#stopJobStatusLoop();
       this.toast.show('Backup completed', 'success', 4000);
       this.announcer.announce('Backup completed successfully');
+
+      if (window.Enhancements?.showNotification) {
+        window.Enhancements.showNotification('Backup Completed', {
+          body: `Backup of ${this.state.snapshot.fileName || 'file'} finished successfully.`
+        });
+      }
     }
 
     if (Array.isArray(status.events)) {

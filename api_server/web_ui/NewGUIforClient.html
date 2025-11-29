@@ -26,12 +26,26 @@
     <link rel="shortcut icon" href="favicon.svg" type="image/svg+xml" />
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
 
+    <!-- Theme Variables -->
+    <link rel="stylesheet" href="styles/theme.css" />
     <!-- Main Application Styles -->
     <link rel="stylesheet" href="styles/app.css" />
     <!-- Enhancement Styles -->
     <link rel="stylesheet" href="styles/enhancements.css" />
 </head>
 <body>
+    <!-- Drag & Drop Overlay -->
+    <div id="dragOverlay" class="drag-overlay">
+        <div class="drag-content">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke-linecap="round" stroke-linejoin="round"/>
+                <polyline points="17 8 12 3 7 8" stroke-linecap="round" stroke-linejoin="round"/>
+                <line x1="12" y1="3" x2="12" y2="15" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>Drop files to upload</span>
+        </div>
+    </div>
+
     <!-- Data Flow Particles -->
     <div class="data-particles" id="dataParticles"></div>
 
@@ -428,16 +442,17 @@
                     </div>
 
                     <!-- Filter Pills -->
-                    <div class="logs-filter-pills" role="group" aria-label="Log level filter">
-                        <button id="filterAll" class="filter-pill active" type="button" data-level="all" aria-pressed="true">All</button>
-                        <button id="filterInfo" class="filter-pill" type="button" data-level="info" aria-pressed="false">
-                            <span class="pill-dot info"></span>Info
+                    <div class="logs-filter-segment" role="group" aria-label="Log level filter">
+                        <div id="segmentIndicator" class="segment-indicator"></div>
+                        <button id="filterAll" class="segment-btn active" type="button" data-level="all" aria-pressed="true">All</button>
+                        <button id="filterInfo" class="segment-btn" type="button" data-level="info" aria-pressed="false">
+                            <span class="segment-dot info"></span>Info
                         </button>
-                        <button id="filterWarn" class="filter-pill" type="button" data-level="warn" aria-pressed="false">
-                            <span class="pill-dot warn"></span>Warn
+                        <button id="filterWarn" class="segment-btn" type="button" data-level="warn" aria-pressed="false">
+                            <span class="segment-dot warn"></span>Warn
                         </button>
-                        <button id="filterError" class="filter-pill" type="button" data-level="error" aria-pressed="false">
-                            <span class="pill-dot error"></span>Error
+                        <button id="filterError" class="segment-btn" type="button" data-level="error" aria-pressed="false">
+                            <span class="segment-dot error"></span>Error
                         </button>
                     </div>
 
@@ -475,6 +490,45 @@
     </dialog>
 
     <div id="srLive" class="sr-only" aria-live="polite"></div>
+
+    <!-- Keyboard Shortcuts Button -->
+    <button id="shortcutBtn" class="shortcut-btn" title="Keyboard Shortcuts (Shift+?)">?</button>
+
+    <!-- Shortcuts Modal -->
+    <dialog id="shortcutModal" class="shortcut-modal">
+        <div class="shortcut-content">
+            <div class="shortcut-header">
+                <h3>Keyboard Shortcuts</h3>
+                <button id="closeShortcutBtn" class="close-btn">✕</button>
+            </div>
+            <div class="shortcut-grid">
+                <div class="shortcut-item">
+                    <span class="key">Enter</span>
+                    <span class="desc">Connect / Start</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="key">Esc</span>
+                    <span class="desc">Stop / Close</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="key">Space</span>
+                    <span class="desc">Pause / Resume</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="key">Ctrl</span> + <span class="key">L</span>
+                    <span class="desc">Clear Logs</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="key">Ctrl</span> + <span class="key">O</span>
+                    <span class="desc">Open File</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="key">?</span>
+                    <span class="desc">Show Shortcuts</span>
+                </div>
+            </div>
+        </div>
+    </dialog>
 
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" integrity="sha384-2huaZvOR9iDzHqslqwpR87isEmrfxqyWOF7hr7BY6KG0+hVKLoEXMPUJw3ynWuhO" crossorigin="anonymous" defer onerror="console.warn('Socket.IO failed to load - real-time features disabled')"></script>
 

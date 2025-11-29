@@ -142,7 +142,27 @@ export class LogStore {
       msg.className = 'log-message';
       msg.textContent = entry.message;
 
-      row.append(indicator, iconWrapper, time, levelBadge, msg);
+      // Actions container
+      const actions = document.createElement('div');
+      actions.className = 'log-actions';
+
+      // Copy button
+      const copyBtn = document.createElement('button');
+      copyBtn.className = 'log-action-mini';
+      copyBtn.dataset.action = 'copy';
+      copyBtn.title = 'Copy to clipboard';
+      copyBtn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
+
+      // Pin button
+      const pinBtn = document.createElement('button');
+      pinBtn.className = 'log-action-mini';
+      pinBtn.dataset.action = 'pin';
+      pinBtn.title = 'Pin this log';
+      pinBtn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="17" x2="12" y2="22"></line><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"></path></svg>`;
+
+      actions.append(copyBtn, pinBtn);
+
+      row.append(indicator, iconWrapper, time, levelBadge, msg, actions);
       fragment.append(row);
     }
 

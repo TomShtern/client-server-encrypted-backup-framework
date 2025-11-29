@@ -1,0 +1,187 @@
+:root {
+  /* Base Colors */
+  --bg: #0a0e12;
+  --bg-gradient: linear-gradient(180deg, #0f1419 0%, #0a0e12 100%);
+  --surface: #161b22;
+  --surface-hover: #1c2128;
+  --surface-alt: #0d1117;
+  --border: #30363d;
+  --border-hover: #484f58;
+  --fg: #f0f6fc;
+  --fg-secondary: #c9d1d9;
+  --muted: #8b949e;
+  --focus: #58a6ff;
+  --accent: #1f6feb;
+  --accent-hover: #388bfd;
+  --success: #3fb950;
+  --warning: #d29922;
+  --danger: #f85149;
+
+  /* Enhanced Semantic Colors */
+  --bg-secondary: #0f1419;
+  --bg-tertiary: #0d1117;
+  --bg-quaternary: #161b22;
+  --border-default: #30363d;
+  --border-subtle: #21262d;
+  --border-accent: rgba(88, 166, 255, 0.5);
+  --text-primary: #f0f6fc;
+  --text-secondary: #c9d1d9;
+  --text-muted: #8b949e;
+  --text-fluid-sm: var(--fs-13);
+
+  /* Accent System */
+  --primary-400: #58a6ff;
+  --secondary-400: #a78bfa;
+  --accent-400: #22d3ee;
+
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, #1f6feb 0%, #388bfd 100%);
+  --gradient-flow: linear-gradient(135deg, #22d3ee 0%, #a78bfa 50%, #ec4899 100%);
+  --gradient-flow-size: 200% 200%;
+  --card-gradient: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+
+  /* Shadows & Glows - Five-level elevation system */
+  --shadow-1: 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.12);
+  --shadow-2: 0 3px 6px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.15);
+  --shadow-3: 0 6px 12px rgba(0, 0, 0, 0.4), 0 3px 6px rgba(0, 0, 0, 0.2);
+  --shadow-4: 0 12px 24px rgba(0, 0, 0, 0.5), 0 6px 12px rgba(0, 0, 0, 0.25);
+  --shadow-5: 0 24px 48px rgba(0, 0, 0, 0.6), 0 12px 24px rgba(0, 0, 0, 0.3);
+
+  /* Fallback for compatibility */
+  --shadow: var(--shadow-3);
+  --shadow-lg: var(--shadow-4);
+  --shadow-xl: var(--shadow-5);
+  --shadow-large: var(--shadow-4);
+  --shadow-primary: 0 4px 16px rgba(31, 111, 235, 0.3);
+
+  --glow-accent: 0 0 20px rgba(34, 211, 238, 0.2), 0 0 40px rgba(34, 211, 238, 0.1);
+  --glow-accent-intense: 0 0 30px rgba(34, 211, 238, 0.4), 0 0 60px rgba(34, 211, 238, 0.2);
+  --glow-primary-intense: 0 0 30px rgba(88, 166, 255, 0.5), 0 0 60px rgba(88, 166, 255, 0.3);
+  --glow-warning: 0 0 20px rgba(210, 153, 34, 0.3);
+  --glow-warning-intense: 0 0 30px rgba(210, 153, 34, 0.5);
+
+  /* Spacing - Luxury Scale */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 24px;
+  --radius-full: 9999px;
+
+  --gap-1: 4px;
+  --gap-2: 8px;
+  --gap-3: 12px;
+  --gap-4: 16px;
+  --gap-5: 24px;
+  --gap-6: 32px;
+
+  /* Optimized spacing system - Compact Mode */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 20px;
+  --space-2xl: 24px;
+  --space-3xl: 32px;
+
+  /* Typography - Enhanced Scale */
+  --fs-10: 10px;
+  --fs-11: 11px;
+  --fs-12: 12px;
+  --fs-13: 13px;
+  --fs-14: 14px;
+  --fs-15: 15px;
+  --fs-16: 16px;
+  --fs-18: 18px;
+  --fs-20: 20px;
+  --fs-24: 22px;
+  --fs-28: 26px;
+  --fs-32: 30px;
+  --fs-36: 34px;
+  --fs-48: 42px;
+  --fs-56: 48px;
+  --fs-72: 60px;
+
+  --weight-thin: 300;
+  --weight-normal: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --weight-black: 900;
+
+  /* Progress Ring - Responsive sizing with constraints */
+  --ring-size: clamp(160px, 20vw, 200px);
+  --ring-max: 200px;
+
+  /* Motion system - consistent easing and duration */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-enter: 300ms cubic-bezier(0, 0, 0.2, 1);
+  --transition-exit: 200ms cubic-bezier(0.4, 0, 1, 1);
+
+  /* Easing curves */
+  --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-elastic: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+  /* Legacy transitions for compatibility */
+  --transition: all var(--transition-base);
+  --transition-fast-legacy: all var(--transition-fast);
+  --transition-slow-legacy: all var(--transition-slow);
+}
+
+html.theme-light {
+  /* Base Colors */
+  --bg: #ffffff;
+  --bg-gradient: linear-gradient(180deg, #f6f8fa 0%, #ffffff 100%);
+  --surface: #ffffff;
+  --surface-hover: #f6f8fa;
+  --surface-alt: #f6f8fa;
+  --border: #d0d7de;
+  --border-hover: #8c959f;
+  --fg: #24292f;
+  --fg-secondary: #57606a;
+  --muted: #656d76;
+  --focus: #0969da;
+  --accent: #0969da;
+  --accent-hover: #0860ca;
+  --success: #1a7f37;
+  --warning: #bf8700;
+  --danger: #cf222e;
+
+  /* Enhanced Semantic Colors */
+  --bg-secondary: #f6f8fa;
+  --bg-tertiary: #ffffff;
+  --bg-quaternary: #eaeef2;
+  --border-default: #d0d7de;
+  --border-subtle: #d8dee4;
+  --border-accent: rgba(9, 105, 218, 0.5);
+  --text-primary: #24292f;
+  --text-secondary: #57606a;
+  --text-muted: #656d76;
+
+  /* Accent System */
+  --primary-400: #0969da;
+  --secondary-400: #8250df;
+  --accent-400: #0ea5e9;
+
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, #0969da 0%, #0860ca 100%);
+  --gradient-flow: linear-gradient(135deg, #0ea5e9 0%, #8250df 50%, #db2777 100%);
+  --card-gradient: linear-gradient(180deg, rgba(0,0,0,0.01), rgba(0,0,0,0.02));
+
+  /* Shadows & Glows */
+  --shadow: 0 1px 3px rgba(31, 35, 40, 0.12), 0 8px 24px rgba(66, 74, 83, 0.12);
+  --shadow-lg: 0 3px 6px rgba(140, 149, 159, 0.15);
+  --shadow-xl: 0 6px 16px rgba(140, 149, 159, 0.2);
+  --shadow-large: 0 8px 24px rgba(140, 149, 159, 0.18);
+  --shadow-primary: 0 4px 16px rgba(9, 105, 218, 0.2);
+
+  --glow-accent: 0 0 20px rgba(14, 165, 233, 0.15), 0 0 40px rgba(14, 165, 233, 0.08);
+  --glow-accent-intense: 0 0 30px rgba(14, 165, 233, 0.3), 0 0 60px rgba(14, 165, 233, 0.15);
+  --glow-primary-intense: 0 0 30px rgba(9, 105, 218, 0.4), 0 0 60px rgba(9, 105, 218, 0.2);
+  --glow-warning: 0 0 20px rgba(191, 135, 0, 0.2);
+  --glow-warning-intense: 0 0 30px rgba(191, 135, 0, 0.35);
+}
