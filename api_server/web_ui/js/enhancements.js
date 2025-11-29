@@ -62,7 +62,14 @@ class ProfessionalGUIEnhancements {
     }
 
     // Static method: Initialize data particles
+    // PERFORMANCE: Disabled by default to reduce CPU usage from continuous animations
+    // To re-enable, uncomment the code below and call initDataParticles()
     static initDataParticles() {
+        // Particles disabled  for performance - they cause constant repaints
+        console.log('[Performance] Data particles disabled for better performance');
+        return;
+
+        /* ORIGINAL CODE - DISABLED FOR PERFORMANCE
         const container = document.getElementById('dataParticles');
         if (!container) return;
 
@@ -92,6 +99,7 @@ class ProfessionalGUIEnhancements {
 
             container.appendChild(particle);
         }
+        */
     }
 
     // Static method: Initialize ripple effects
@@ -694,7 +702,10 @@ class ProfessionalGUIEnhancements {
             });
         }
 
-        // Responsive particle count on resize
+        // Responsive particle count on resize - DISABLED for performance
+        // Particles are disabled by default. To re-enable, uncomment initDataParticles() in line 64
+
+        /*
         let resizeTimeout;
         window.addEventListener('resize', () => {
             clearTimeout(resizeTimeout);
@@ -702,6 +713,7 @@ class ProfessionalGUIEnhancements {
                 ProfessionalGUIEnhancements.initDataParticles();
             }, 250);
         });
+        */
 
         // Initialize new professional enhancements
         new ProfessionalGUIEnhancements();

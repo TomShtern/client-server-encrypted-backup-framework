@@ -92,8 +92,9 @@ class ErrorBoundary {
 }
 
 const CIRCUMFERENCE = 282.743; // Precomputed circumference for r=45 circle
-const STATUS_INTERVAL_MS = 2500;
-const GENERAL_STATUS_INTERVAL_MS = 12000;
+const STATUS_INTERVAL_MS = 5000;  // Reduced from 2500ms for performance
+const GENERAL_STATUS_INTERVAL_MS = 15000;  // Reduced from 12000ms for performance
+const RENDER_DEBOUNCE_MS = 50;  // Minimum time between render calls
 
 const INITIAL_STATE = {
   connecting: false,
@@ -122,14 +123,32 @@ const INITIAL_STATE = {
 
 class App {
   constructor() {
+    // Get the correct API base URL for cross-origin requests
+    const apiBaseUrl = API_CONFIG.getApiBaseUrl();
+    const isFileProtocol = API_CONFIG.isFileProtocol();
+
+    if (apiBaseUrl) {
+      console.log('[App] API Base URL:', apiBaseUrl);
+    } else if (isFileProtocol) {
+      console.log('[App] Running from file:// protocol - API features will be limited');
+    } else {
+      console.log('[App] API Base URL: (same origin)');
+    }
+
     // Initialize with error boundaries
     try {
-      this.api = new ApiClient('');
+      this.api = new ApiClient(apiBaseUrl);
       this.toast = new ToastManager(dom.toastStack);
       this.announcer = new ScreenReaderAnnouncer(dom.srLive);
       this.state = new StateStore(INITIAL_STATE);
       this.logs = new LogStore(dom.logContainer);
       this.theme = new ThemeManager(dom.themeToggle);
+
+      // Show warning if opened via file:// protocol (after toast is initialized)
+      if (isFileProtocol) {
+        // Delay to ensure UI is ready
+        setTimeout(() => API_CONFIG.showFileProtocolWarning((msg, type, duration) => this.toast.show(msg, type, duration)), 500);
+      }
     } catch (error) {
       ErrorBoundary.handle(error, 'App Initialization', () => {
         // Fallback initialization
@@ -166,7 +185,10 @@ class App {
       onResult: (payload) => this.#handleConnectionUpdate(payload),
     });
 
+    // Use the same API base URL for WebSocket connections
+    const socketUrl = apiBaseUrl || globalThis.location?.origin || '';
     this.socket = new SocketClient({
+      url: socketUrl,
       onConnect: () => this.#onSocketConnect(),
       onDisconnect: (reason) => this.#onSocketDisconnect(reason),
       onError: (error) => this.#onSocketError(error),
@@ -183,9 +205,15 @@ class App {
     this.modalKeyHandler = null;
     this.modalFocusables = [];
     this.actionLock = false;
+    this._lastRenderTime = 0;  // For render debouncing
+    this._isTabVisible = true;  // Track tab visibility
+
+    // Set initial idle state (no transfer running)
+    document.documentElement.classList.add('app-idle');
 
       try {
       this.#bindEvents();
+      this.#setupVisibilityHandler();
       this.state.subscribe((snapshot) => this.#render(snapshot));
     } catch (error) {
       ErrorBoundary.handle(error, 'Event Binding', () => {
@@ -217,6 +245,47 @@ class App {
       this.#startGeneralStatusLoop();
     } catch (error) {
       console.warn('Initial status check failed', error);
+    }
+  }
+
+  // Page Visibility API: pause polling when tab is hidden
+  #setupVisibilityHandler() {
+    document.addEventListener('visibilitychange', () => {
+      const isHidden = document.hidden;
+      this._isTabVisible = !isHidden;
+
+      if (isHidden) {
+        // Pause all polling when tab is hidden
+        document.documentElement.classList.add('tab-hidden');
+        this.connectionMonitor.stop();
+        this.#stopJobStatusLoop();
+        if (this.generalStatusTimer) {
+          clearInterval(this.generalStatusTimer);
+          this.generalStatusTimer = null;
+        }
+        console.log('[Performance] Tab hidden - polling paused');
+      } else {
+        // Resume polling when tab becomes visible
+        document.documentElement.classList.remove('tab-hidden');
+        this.connectionMonitor.start();
+        this.#startGeneralStatusLoop();
+
+        // Resume job polling if there's an active job
+        const { jobId, jobRunning } = this.state.snapshot;
+        if (jobId && jobRunning) {
+          this.#startJobStatusLoop(jobId);
+        }
+        console.log('[Performance] Tab visible - polling resumed');
+      }
+    });
+  }
+
+  // Update idle state based on job status
+  #updateIdleState(isRunning) {
+    if (isRunning) {
+      document.documentElement.classList.remove('app-idle');
+    } else {
+      document.documentElement.classList.add('app-idle');
     }
   }
 
@@ -1013,10 +1082,27 @@ class App {
   }
 
   #render(state) {
+    // Debounce renders to avoid excessive DOM updates
+    const now = performance.now();
+    if (now - this._lastRenderTime < RENDER_DEBOUNCE_MS) {
+      // Skip this render, but schedule one for later
+      if (!this._pendingRender) {
+        this._pendingRender = setTimeout(() => {
+          this._pendingRender = null;
+          this.#render(this.state.snapshot);
+        }, RENDER_DEBOUNCE_MS);
+      }
+      return;
+    }
+    this._lastRenderTime = now;
+
     // Cache previous render state to avoid unnecessary DOM updates
     if (!this._prevRenderState) {
       this._prevRenderState = {};
     }
+
+    // Update idle state based on job running status
+    this.#updateIdleState(state.jobRunning);
 
     // Use RAF-based batching for smooth rendering
     performanceOptimizer.scheduleUpdate('app-render', () => {

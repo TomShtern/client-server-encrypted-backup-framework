@@ -294,7 +294,7 @@ function getQualityLabel(quality) {
 }
 
 // --- services/connection-monitor.js ---
-const DEFAULT_INTERVAL = 7000;
+const DEFAULT_INTERVAL = 15000;  // Reduced from 7000ms for performance
 
 class ConnectionMonitor {
   constructor({ api, interval = DEFAULT_INTERVAL, onResult }) {

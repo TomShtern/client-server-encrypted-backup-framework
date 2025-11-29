@@ -11,6 +11,30 @@
     },
     "exclude": [
         "node_modules",
-        "**/node_modules/*"
+        "**/node_modules/*",
+        "dist",
+        "build",
+        "out",
+        "coverage",
+        "coverage/*",
+        ".cache",
+        ".next",
+        ".vercel",
+        "public",
+        "static",
+        "tmp",
+        "temp",
+        "logs",
+        "*.log",
+        ".git",
+        ".vscode",
+        ".idea",
+        ".turbo",
+        ".pnpm-store",
+        ".yarn",
+        "vendor",
+        "bower_components",
+        "examples",
+        "docs"
     ]
 }

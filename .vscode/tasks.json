@@ -203,6 +203,47 @@
 			"isBackground": true,
 			"problemMatcher": [],
 			"group": "build"
+		},
+		{
+			"label": "Client Web GUI + API Server",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-Command",
+				"$ErrorActionPreference='Stop'; Write-Host '🚀 Starting API Server (port 9090)...' -ForegroundColor Cyan; Start-Process -FilePath '${workspaceFolder}/flet_venv/Scripts/python.exe' -ArgumentList 'api_server/cyberbackup_api_server.py' -WorkingDirectory '${workspaceFolder}' -WindowStyle Minimized; Start-Sleep -Seconds 2; Write-Host '🌐 Opening Client Web GUI...' -ForegroundColor Green; Start-Process 'http://localhost:9090'; Write-Host '✅ Client Web GUI with API Server started!' -ForegroundColor Green; Write-Host 'Press Ctrl+C to stop...' -ForegroundColor Yellow; while($true) { Start-Sleep -Seconds 60 }"
+			],
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"panel": "dedicated",
+				"focus": false
+			}
+		},
+		{
+			"label": "Client Web GUI (Static Only - No API)",
+			"type": "shell",
+			"command": "${workspaceFolder}/flet_venv/Scripts/python.exe",
+			"args": [
+				"api_server/web_ui/start_client_gui.py"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"panel": "dedicated",
+				"focus": false
+			}
 		}
 	]
 }

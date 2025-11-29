@@ -512,85 +512,6 @@
                     <span class="key">Space</span>
                     <span class="desc">Pause / Resume</span>
                 </div>
-                <div class="shortcut-item">
-                    <span class="key">Ctrl</span> + <span class="key">L</span>
-                    <span class="desc">Clear Logs</span>
-                </div>
-                <div class="shortcut-item">
-                    <span class="key">Ctrl</span> + <span class="key">O</span>
-                    <span class="desc">Open File</span>
-                </div>
-                <div class="shortcut-item">
-                    <span class="key">?</span>
-                    <span class="desc">Show Shortcuts</span>
-                </div>
-            </div>
-                        </defs>
-                        <circle cx="50" cy="50" r="45" stroke="rgba(88, 166, 255, 0.1)" stroke-width="4" fill="none" />
-                        <circle id="progressArc" cx="50" cy="50" r="45" stroke="url(#progressGradient)" stroke-width="4" fill="none"
-                                stroke-linecap="round" stroke-dasharray="282.743" stroke-dashoffset="282.743"
-                                class="progress-fill" filter="url(#glow)" />
-                    </svg>
-                    <div class="kpi">
-                        <div id="progressPct" class="pct">0%</div>
-                        <div id="phaseText" class="phase-status">Idle</div>
-                        <div class="eta">ETA <span id="etaText">—</span></div>
-                    </div>
-                </div>
-
-                <div class="actions" aria-label="Transfer actions">
-                    <button id="primaryActionBtn" class="interactive primary ripple" type="button">
-                        <span id="primaryBtnSpinner" class="loading-spinner"></span>
-                        <span id="primaryBtnText">CONNECT</span>
-                    </button>
-                    <button id="pauseBtn" class="interactive ripple action-btn" type="button" disabled>PAUSE</button>
-                    <button id="resumeBtn" class="interactive ripple action-btn" type="button" disabled>RESUME</button>
-                    <button id="stopBtn" class="interactive ripple action-btn" type="button" disabled>STOP</button>
-                </div>
-
-                <div id="statsGrid" aria-label="Transfer statistics">
-                    <div class="stat interactive">
-                        <div class="stat-icon">
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                                <path d="M3 8L8 3L13 8M8 3V13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
-                        </div>
-                        <div class="stat-content">
-                            <div class="label">Bytes Sent</div>
-                            <div class="value" id="statBytes">0 B</div>
-                        </div>
-                    </div>
-                    <div class="stat interactive">
-                        <div class="stat-icon">
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                                <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/>
-                                <path d="M8 4V8L11 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                            </svg>
-                        </div>
-                        <div class="stat-content">
-                            <div class="label">Speed</div>
-                            <div class="value" id="statSpeed">0 B/s</div>
-                        </div>
-                    </div>
-                    <div class="stat interactive">
-                        <div class="stat-icon">
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                                <rect x="3" y="2" width="10" height="12" rx="1" stroke="currentColor" stroke-width="1.5"/>
-                                <path d="M6 5H10M6 8H10M6 11H8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                            </svg>
-                        </div>
-                        <div class="stat-content">
-                            <div class="label">File Size</div>
-                            <div class="value" id="statSize">0 B</div>
-                        </div>
-                    </div>
-                    <div class="stat interactive">
-                        <div class="stat-icon">
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                                <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/>
-                                <path d="M8 5V8H11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
-                        </div>
                         <div class="stat-content">
                             <div class="label">Elapsed</div>
                             <div class="value" id="statElapsed">--</div>
@@ -618,7 +539,7 @@
                     <div class="logs-search-wrapper">
                         <svg class="search-icon" width="14" height="14" viewBox="0 0 16 16" fill="none">
                             <circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.5"/>
-                            <path d="M11 11L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                            <path d="M11 11L14 14" stroke="currentColor" stroke-width="1.5" stroke-width="1.5" stroke-linecap="round"/>
                         </svg>
                         <input
                             id="logSearchInput"
@@ -723,7 +644,8 @@
         </div>
     </dialog>
 
-    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" integrity="sha384-2huaZvOR9iDzHqslqwpR87isEmrfxqyWOF7hr7BY6KG0+hVKLoEXMPUJw3ynWuhO" crossorigin="anonymous" defer onerror="console.warn('Socket.IO failed to load - real-time features disabled')"></script>
+    <!-- Socket.IO is now lazy-loaded on-demand for faster initial page load -->
+    <!-- See services.js SocketClient.#ensureIoFactory() -->
 
     <!-- Application Scripts -->
     <script src="js/core-utils.js" defer></script>

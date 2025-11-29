@@ -16,9 +16,14 @@ A modern, responsive web interface for the CyberBackup encrypted file backup sys
 
 ## Architecture
 
-- **Canonical UI**: NewGUIforClient.html is the canonical, single implementation used for development and production. All other HTML variants in this directory have been archived under `archived/` to avoid duplication and confusion.
-- **Pure Vanilla JavaScript**: No framework dependencies, modern ES6 modules
-- **Modular Design**: Clean separation of concerns with service layer architecture
+- **Single Page Application**: `index.html` is the canonical single-page implementation
+- **Consolidated Assets**: All CSS consolidated into `css/styles.css`, all JavaScript organized into `js/` directory
+- **Pure Vanilla JavaScript**: No module bundlers, modern defer loading for optimal performance
+- **Modular Design**: Four main JavaScript bundles for clean separation:
+  - `core-utils.js` - DOM utilities, formatters, and state management
+  - `services.js` - API client, WebSocket, and service layer
+  - `app.js` - Main application logic and UI binding
+  - `enhancements.js` - UI enhancements and advanced features
 - **Error Boundaries**: Robust error handling and recovery mechanisms
 - **Performance Optimized**: Efficient DOM updates and memory management
 - **Security**: Input validation and XSS protection
@@ -30,34 +35,44 @@ A modern, responsive web interface for the CyberBackup encrypted file backup sys
 - Node.js 16.0.0 or higher
 - A compatible web browser (Chrome 90+, Firefox 88+, Safari 14+)
 
-### Installation
+### ⚠️ Important: Must Run via HTTP Server
+
+**Do NOT open the HTML file directly from your filesystem** (`file://` protocol).
+The application requires an HTTP server because:
+- Browsers block API requests from `file://` origins (CORS security)
+- WebSocket connections require HTTP/HTTPS protocols
+
+### Recommended: Use the API Server (Serves Both API and UI)
 
 ```bash
-# Clone or navigate to the project directory
-cd Client/Client-gui
-
-# Install dependencies
-npm install
-
-# Start the development server
-npm run dev
+# From the project root
+python api_server/cyberbackup_api_server.py
 ```
+Then open: **http://localhost:9090**
 
-The application will be available at `http://localhost:8080`
+This runs the Flask API server which also serves the web UI - no additional setup needed.
 
-### Alternative Setup (without Node.js)
+### Alternative: Static Server + API Server
 
-If you don't have Node.js installed, you can use any HTTP server:
+If you want to serve the UI separately for development:
 
 ```bash
-# Using Python
-python -m http.server 8080
+# Terminal 1: Start the API server (port 9090)
+python api_server/cyberbackup_api_server.py
 
-# Using PHP
-php -S localhost:8080
-
-# Or use any static file server
+# Terminal 2: Start a static file server (port 9091)
+cd api_server/web_ui
+npx http-server -p 9091 -c-1 .
 ```
+Then open: **http://localhost:9091**
+
+The UI automatically detects cross-origin scenarios and routes API calls to port 9090.
+
+### VS Code Tasks
+
+You can also use the pre-configured VS Code tasks:
+- **`Client Web GUI + API Server`** - Starts the API server and opens the web GUI in browser
+- **`Client Web GUI (Static Only - No API)`** - Starts just the static file server (for UI testing without API)
 
 ## Usage
 
@@ -71,17 +86,19 @@ php -S localhost:8080
 ### Project Structure
 
 ```
-Client-gui/
-├── scripts/           # JavaScript modules
-│   ├── app.js        # Main application entry point
-│   ├── services/     # Business logic services
-│   ├── state/        # State management
-│   ├── ui/           # UI components
-│   └── utils/        # Utility functions
-├── styles/           # CSS stylesheets
-├── *.html           # HTML templates
-├── package.json     # Project configuration
-└── README.md        # This file
+web_ui/
+├── js/                # JavaScript bundles (consolidated)
+│   ├── core-utils.js  # DOM utilities, formatters, state management
+│   ├── services.js    # API client, WebSocket, service layer
+│   ├── app.js         # Main application logic
+│   └── enhancements.js # UI enhancements and effects
+├── css/               # Stylesheets (consolidated)
+│   └── styles.css     # All CSS (theme, layout, components)
+├── backup/            # Archived legacy implementations
+├── index.html         # Main application page
+├── favicon.svg        # Application icon
+├── package.json       # Project configuration
+└── README.md          # This file
 ```
 
 ### Available Scripts
@@ -102,9 +119,10 @@ npm run build        # Validate and lint the project
 
 ### Code Style
 
-- **ES6 Modules**: All code uses ES6 import/export syntax
+- **Consolidated Bundles**: JavaScript organized into four main bundles for optimal loading
+- **Defer Loading**: Scripts loaded with `defer` attribute for non-blocking page load
 - **Error Boundaries**: All async operations wrapped in error handling
-- **Clean Architecture**: Separation of concerns with clear module boundaries
+- **Clean Architecture**: Separation of concerns with clear functional boundaries
 - **Documentation**: Functions and classes should have JSDoc comments
 - **Accessibility**: All interactive elements have proper ARIA attributes
 
@@ -150,7 +168,7 @@ The application includes comprehensive error handling:
 1. **Connection Refused**: Ensure the CyberBackup server is running and accessible
 2. **File Upload Fails**: Check file size limits and server permissions
 3. **WebSocket Errors**: Verify firewall settings and port availability
-4. **Module Loading Errors**: Ensure all files are present and HTTP headers are correct
+4. **Script Loading Errors**: Ensure all files in `js/` and `css/` directories are present
 
 ### Debug Mode
 

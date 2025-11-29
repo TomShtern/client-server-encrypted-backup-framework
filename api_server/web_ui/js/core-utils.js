@@ -684,3 +684,66 @@ class ScreenReaderAnnouncer {
     this._isAnnouncing = false;
   }
 }
+
+// --- utils/api-config.js ---
+/**
+ * API Configuration utilities for cross-origin and protocol detection
+ */
+const API_CONFIG = {
+  // Default API server port
+  API_PORT: 9090,
+  // Static file server port (when served separately)
+  STATIC_PORT: 9091,
+
+  /**
+   * Check if the page is opened via file:// protocol
+   */
+  isFileProtocol() {
+    return globalThis.location?.protocol === 'file:';
+  },
+
+  /**
+   * Get the appropriate API base URL based on current origin
+   * @returns {string} The API base URL or empty string for same-origin
+   */
+  getApiBaseUrl() {
+    const { location } = globalThis;
+    if (!location) return '';
+
+    // If opened as file://, we can't make API calls - return empty and let app handle gracefully
+    if (location.protocol === 'file:') {
+      console.warn('[API Config] Page opened via file:// protocol - API calls will not work');
+      return '';
+    }
+
+    const { hostname = 'localhost', port, protocol } = location;
+    const currentPort = parseInt(port, 10) || (protocol === 'https:' ? 443 : 80);
+
+    // If we're on the API server port (9090), use same origin
+    if (currentPort === this.API_PORT) {
+      return '';
+    }
+
+    // If we're on a different port (e.g., static server on 9091), point to API server
+    return `http://${hostname}:${this.API_PORT}`;
+  },
+
+  /**
+   * Show a small notification when page is opened via file:// protocol
+   * @param {Function} toastFn - Toast function to show notification
+   */
+  showFileProtocolWarning(toastFn) {
+    if (typeof toastFn === 'function') {
+      toastFn(
+        '⚠️ Running from file:// - API features disabled. Use HTTP server for full functionality.',
+        'warn',
+        8000
+      );
+    }
+    console.warn(
+      '[API Config] Page opened via file:// protocol.\n' +
+      'To enable API features, run: python api_server/cyberbackup_api_server.py\n' +
+      'Then open: http://localhost:9090'
+    );
+  }
+};

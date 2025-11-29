@@ -4761,4 +4761,79 @@ html.theme-light .autoscroll-switch input:checked + .switch-track {
   height: 14px;
 }
 
+/* ========================================
+   PERFORMANCE OPTIMIZATIONS
+   ======================================== */
 
+/* GPU Hints - ONLY on key animated elements */
+.progress-fill,
+#progressArc {
+  will-change: stroke-dashoffset;
+}
+
+.wave-layer {
+  will-change: transform;
+}
+
+.ring-decoration,
+.ring-decoration::before,
+.ring-decoration::after {
+  will-change: transform;
+}
+
+/* Pause all heavy animations when app is idle (no active transfer) */
+html.app-idle .wave-layer,
+html.app-idle .wave-layer.wave-1,
+html.app-idle .wave-layer.wave-2 {
+  animation-play-state: paused;
+}
+
+html.app-idle .ring-decoration::before,
+html.app-idle .ring-decoration::after {
+  animation-play-state: paused;
+}
+
+html.app-idle .progress-glow {
+  animation-play-state: paused;
+}
+
+html.app-idle .center::before {
+  animation-play-state: paused;
+}
+
+html.app-idle .cloud-upload-icon {
+  animation-play-state: paused;
+}
+
+html.app-idle .file-drop-zone .drop-zone-wave::before {
+  animation-play-state: paused;
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .wave-layer,
+  .ring-decoration,
+  .progress-glow,
+  .cloud-upload-icon {
+    animation: none !important;
+  }
+}
+
+/* When tab is hidden, pause everything */
+html.tab-hidden .wave-layer,
+html.tab-hidden .ring-decoration::before,
+html.tab-hidden .ring-decoration::after,
+html.tab-hidden .progress-glow,
+html.tab-hidden .center::before,
+html.tab-hidden .cloud-upload-icon,
+html.tab-hidden .file-drop-zone .drop-zone-wave::before {
+  animation-play-state: paused !important;
+}
