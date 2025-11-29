@@ -1680,13 +1680,13 @@ svg {
 .setting-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   padding: var(--space-sm) 0;
   gap: var(--space-md);
   border-radius: var(--radius-sm);
   transition: background 0.2s ease;
   margin-bottom: var(--space-xs);
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
 .setting-row:hover {
@@ -1698,7 +1698,7 @@ svg {
   font-weight: 500;
   color: var(--fg-secondary);
   flex-shrink: 0;
-  min-width: 100px;
+  min-width: 140px;
 }
 
 .setting-select,
@@ -1726,10 +1726,12 @@ svg {
   display: flex;
   align-items: center;
   gap: 4px;
+  flex: 1;
 }
 
 .input-with-unit input {
-  width: 80px;
+  width: 100%;
+  flex: 1;
   padding: 8px 12px;
   background: var(--surface-alt);
   border: 1px solid var(--border);

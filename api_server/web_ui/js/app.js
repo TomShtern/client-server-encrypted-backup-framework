@@ -183,6 +183,12 @@ class App {
       recentButton: dom.recentFilesBtn,
       nameLabel: dom.fileName,
       infoLabel: dom.fileInfo,
+      // New File Card Elements
+      fileIcon: dom.fileIcon,
+      fileNameDisplay: dom.fileNameDisplay,
+      fileMetadata: dom.fileMetadata,
+      fileTypeBadge: dom.fileTypeBadge,
+      fileModified: dom.fileModified,
       announcer: this.announcer,
       onRecent: (meta) => {
         const message = `Most recent • ${meta.name} (${meta.formattedSize})`;

@@ -51,6 +51,12 @@ const dom = {
   usernameHint: getElement('usernameHint'),
   fileDropZone: getElement('fileDropZone'),
   fileInput: getElement('fileInput'),
+  // New File Card Elements
+  fileIcon: getOptionalElement('fileIcon'),
+  fileNameDisplay: getOptionalElement('fileNameDisplay'),
+  fileMetadata: getOptionalElement('fileMetadata'),
+  fileTypeBadge: getOptionalElement('fileTypeBadge'),
+  fileModified: getOptionalElement('fileModified'),
   // Optional elements that may not exist in new design
   fileSelectBtn: getOptionalElement('chooseFileBtn'),
   recentFilesBtn: getOptionalElement('recentFilesBtn'),

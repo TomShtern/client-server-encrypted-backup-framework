@@ -9,7 +9,8 @@
         <script>
             (function () {
                 var host = location.hostname;
-                if (host === '127.0.0.1' || host === 'localhost') {
+                // Disable Sentry for localhost, 127.0.0.1, and file:// protocol (empty hostname)
+                if (host === '127.0.0.1' || host === 'localhost' || host === '') {
                     console.info('Sentry disabled in local mode');
                     return;
                 }
@@ -182,7 +183,7 @@
                     </div>
 
                     <!-- Selected State -->
-                    <div class="file-card" id="filePreviewCard">
+                    <div class="file-card" id="filePreviewCard" style="display: none;">
                         <div class="file-icon" id="fileIcon"></div>
                         <div class="file-meta">
                             <div class="file-name" id="fileNameDisplay"></div>

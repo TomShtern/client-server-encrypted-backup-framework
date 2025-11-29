@@ -393,7 +393,7 @@ const RECENT_STORAGE_KEY = 'cyberbackup-recent-files';
 const MAX_RECENT = 5;
 
 class FileManager {
-  constructor({ dropZone, fileInput, selectButton, clearButton, recentButton, nameLabel, infoLabel, announcer, onRecent }) {
+  constructor({ dropZone, fileInput, selectButton, clearButton, recentButton, nameLabel, infoLabel, fileIcon, fileNameDisplay, fileMetadata, fileTypeBadge, fileModified, announcer, onRecent }) {
     this.dropZone = dropZone;
     this.fileInput = fileInput;
     this.selectButton = selectButton;
@@ -401,6 +401,14 @@ class FileManager {
     this.recentButton = recentButton;
     this.nameLabel = nameLabel;
     this.infoLabel = infoLabel;
+
+    // New File Card Elements
+    this.fileIcon = fileIcon;
+    this.fileNameDisplay = fileNameDisplay;
+    this.fileMetadata = fileMetadata;
+    this.fileTypeBadge = fileTypeBadge;
+    this.fileModified = fileModified;
+
     this.announcer = announcer;
     this.onRecent = onRecent;
 
@@ -428,7 +436,10 @@ class FileManager {
   #attachEvents() {
     // Select button click (optional - may not exist in new design)
     if (this.selectButton) {
-      this.selectButton.addEventListener('click', () => this.fileInput?.click());
+      this.selectButton.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent bubbling if inside drop zone
+        this.fileInput?.click();
+      });
     }
 
     // File input change
@@ -444,7 +455,8 @@ class FileManager {
 
     // Clear button (optional)
     if (this.clearButton) {
-      this.clearButton.addEventListener('click', () => {
+      this.clearButton.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent bubbling
         this.clear();
         this.announcer?.announce('File cleared');
       });
@@ -473,7 +485,7 @@ class FileManager {
       // Click on drop zone to open file picker
       const onClick = (event) => {
         // Don't trigger if clicking on a button inside
-        if (event.target.tagName === 'BUTTON') return;
+        if (event.target.tagName === 'BUTTON' || event.target.closest('button')) return;
         this.fileInput?.click();
       };
 
@@ -524,16 +536,36 @@ class FileManager {
       return;
     }
 
-    const { name, size, type } = this.currentFileMeta;
+    const { name, size, type, lastModified } = this.currentFileMeta;
 
     // Add file-selected class with animation
     this.dropZone?.classList.add('file-selected');
     this.dropZone?.classList.remove('file-invalid');
 
-    // Update drop zone text for new design
+    // Update drop zone text for new design (hidden but kept for fallback)
     if (dropZoneText) {
       dropZoneText.textContent = `${name} (${formatBytes(size)})`;
       dropZoneText.classList.add('file-selected');
+    }
+
+    // Update new file card elements
+    if (this.fileNameDisplay) {
+      this.fileNameDisplay.textContent = name;
+      this.fileNameDisplay.title = name;
+    }
+
+    if (this.fileTypeBadge) {
+      const ext = name.includes('.') ? name.split('.').pop().toUpperCase() : 'FILE';
+      this.fileTypeBadge.textContent = ext.substring(0, 8); // Limit length
+    }
+
+    if (this.fileModified && lastModified) {
+      const date = new Date(lastModified);
+      this.fileModified.textContent = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    if (this.fileIcon) {
+      this.fileIcon.innerHTML = this.#getFileIcon(name);
     }
 
     // Update old-style labels if they exist
@@ -546,15 +578,36 @@ class FileManager {
       this.infoLabel.classList.remove('placeholder');
     }
 
-    // Add animation to file icon
-    const fileIcon = this.dropZone?.querySelector('.file-icon');
-    if (fileIcon) {
-      fileIcon.classList.add('file-selected');
-    }
-
     if (this.clearButton) {
       this.clearButton.disabled = false;
     }
+  }
+
+  #getFileIcon(filename) {
+    const ext = filename.split('.').pop().toLowerCase();
+
+    // Default icon
+    let iconPath = `<path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline>`;
+
+    // Simple extension matching
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext)) {
+      // Image
+      iconPath = `<rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline>`;
+    } else if (['mp4', 'mov', 'avi', 'mkv'].includes(ext)) {
+      // Video
+      iconPath = `<rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line>`;
+    } else if (['mp3', 'wav', 'ogg'].includes(ext)) {
+      // Audio
+      iconPath = `<path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle>`;
+    } else if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext)) {
+      // Archive
+      iconPath = `<path d="M21 8v13H3V8"></path><path d="M1 3h22v5H1z"></path><path d="M10 12h4"></path>`;
+    } else if (['pdf', 'doc', 'docx', 'txt'].includes(ext)) {
+      // Document
+      iconPath = `<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline>`;
+    }
+
+    return `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${iconPath}</svg>`;
   }
 
   #showRecent() {
