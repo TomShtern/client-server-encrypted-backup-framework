@@ -1,24 +1,7 @@
-import { dom } from './utils/dom.js';
-import {
-  formatBytes,
-  formatSpeed,
-  formatDuration,
-  formatLatency,
-  formatPercentage,
-  parseServerAddress,
-} from './utils/formatters.js';
-import { ApiClient } from './services/api-client.js';
-import { ToastManager } from './ui/toasts.js';
-import { ScreenReaderAnnouncer } from './ui/accessibility.js';
-import { StateStore } from './state/state-store.js';
-import { LogStore } from './services/log-store.js';
-import { FileManager } from './services/file-manager.js';
-import { ThemeManager } from './services/theme-manager.js';
-import { AdvancedSettings } from './services/advanced-settings.js';
-import { ConnectionMonitor } from './services/connection-monitor.js';
-import { SocketClient } from './services/socket-client.js';
-import { evaluateConnectionQuality, getQualityLabel } from './services/connection-metrics.js';
-import performanceOptimizer from './utils/performance-optimizer.js';
+/**
+ * CyberBackup - Main Application Logic
+ * Consolidated from multiple modules
+ */
 
 // Error boundary utilities
 class ErrorBoundary {

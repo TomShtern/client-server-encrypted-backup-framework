@@ -27,11 +27,9 @@
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
 
     <!-- Theme Variables -->
-    <link rel="stylesheet" href="styles/theme.css" />
+    <link rel="stylesheet" href="css/styles.css" />
     <!-- Main Application Styles -->
-    <link rel="stylesheet" href="styles/app.css" />
     <!-- Enhancement Styles -->
-    <link rel="stylesheet" href="styles/enhancements.css" />
 </head>
 <body>
     <!-- Drag & Drop Overlay -->
@@ -527,65 +525,210 @@
                     <span class="desc">Show Shortcuts</span>
                 </div>
             </div>
+                        </defs>
+                        <circle cx="50" cy="50" r="45" stroke="rgba(88, 166, 255, 0.1)" stroke-width="4" fill="none" />
+                        <circle id="progressArc" cx="50" cy="50" r="45" stroke="url(#progressGradient)" stroke-width="4" fill="none"
+                                stroke-linecap="round" stroke-dasharray="282.743" stroke-dashoffset="282.743"
+                                class="progress-fill" filter="url(#glow)" />
+                    </svg>
+                    <div class="kpi">
+                        <div id="progressPct" class="pct">0%</div>
+                        <div id="phaseText" class="phase-status">Idle</div>
+                        <div class="eta">ETA <span id="etaText">—</span></div>
+                    </div>
+                </div>
+
+                <div class="actions" aria-label="Transfer actions">
+                    <button id="primaryActionBtn" class="interactive primary ripple" type="button">
+                        <span id="primaryBtnSpinner" class="loading-spinner"></span>
+                        <span id="primaryBtnText">CONNECT</span>
+                    </button>
+                    <button id="pauseBtn" class="interactive ripple action-btn" type="button" disabled>PAUSE</button>
+                    <button id="resumeBtn" class="interactive ripple action-btn" type="button" disabled>RESUME</button>
+                    <button id="stopBtn" class="interactive ripple action-btn" type="button" disabled>STOP</button>
+                </div>
+
+                <div id="statsGrid" aria-label="Transfer statistics">
+                    <div class="stat interactive">
+                        <div class="stat-icon">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M3 8L8 3L13 8M8 3V13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <div class="stat-content">
+                            <div class="label">Bytes Sent</div>
+                            <div class="value" id="statBytes">0 B</div>
+                        </div>
+                    </div>
+                    <div class="stat interactive">
+                        <div class="stat-icon">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/>
+                                <path d="M8 4V8L11 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                        <div class="stat-content">
+                            <div class="label">Speed</div>
+                            <div class="value" id="statSpeed">0 B/s</div>
+                        </div>
+                    </div>
+                    <div class="stat interactive">
+                        <div class="stat-icon">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <rect x="3" y="2" width="10" height="12" rx="1" stroke="currentColor" stroke-width="1.5"/>
+                                <path d="M6 5H10M6 8H10M6 11H8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                        <div class="stat-content">
+                            <div class="label">File Size</div>
+                            <div class="value" id="statSize">0 B</div>
+                        </div>
+                    </div>
+                    <div class="stat interactive">
+                        <div class="stat-icon">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/>
+                                <path d="M8 5V8H11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <div class="stat-content">
+                            <div class="label">Elapsed</div>
+                            <div class="value" id="statElapsed">--</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="speedChartContainer" class="speed-chart-container" hidden>
+                    <div class="speed-chart-header">
+                        <span class="speed-chart-title">Transfer Speed (Last 30s)</span>
+                        <button id="toggleSpeedChart" class="ghost speed-chart-toggle" type="button">Hide</button>
+                    </div>
+                    <canvas id="speedChart" class="speed-chart"></canvas>
+                </div>
+            </section>
+
+            <!-- Activity Logs - Grid Row 2 -->
+            <section class="logs stack" aria-labelledby="logTitle">
+                <!-- Phase Title - matches Configuration and Status panels -->
+                <div id="logTitle" class="phase">Activity Logs</div>
+
+                <!-- Toolbar Row -->
+                <div class="logs-toolbar">
+                    <!-- Search Input -->
+                    <div class="logs-search-wrapper">
+                        <svg class="search-icon" width="14" height="14" viewBox="0 0 16 16" fill="none">
+                            <circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.5"/>
+                            <path d="M11 11L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                        </svg>
+                        <input
+                            id="logSearchInput"
+                            type="text"
+                            placeholder="Search logs..."
+                            aria-label="Search logs"
+                            class="logs-search-input"
+                        />
+                        <button type="button" class="search-clear-btn" id="searchClearBtn" hidden>
+                            <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                                <path d="M2 2L10 10M10 2L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Filter Pills -->
+                    <div class="logs-filter-segment" role="group" aria-label="Log level filter">
+                        <div id="segmentIndicator" class="segment-indicator"></div>
+                        <button id="filterAll" class="segment-btn active" type="button" data-level="all" aria-pressed="true">All</button>
+                        <button id="filterInfo" class="segment-btn" type="button" data-level="info" aria-pressed="false">
+                            <span class="segment-dot info"></span>Info
+                        </button>
+                        <button id="filterWarn" class="segment-btn" type="button" data-level="warn" aria-pressed="false">
+                            <span class="segment-dot warn"></span>Warn
+                        </button>
+                        <button id="filterError" class="segment-btn" type="button" data-level="error" aria-pressed="false">
+                            <span class="segment-dot error"></span>Error
+                        </button>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="logs-actions">
+                        <span class="logs-count"><span id="logEntryCount">0</span> entries</span>
+                        <button id="logClearBtn" class="logs-btn" type="button" title="Clear logs">Clear</button>
+                        <button id="logDemoBtn" class="logs-btn" type="button" title="Add demo logs">Demo</button>
+                    </div>
+                </div>
+
+                <!-- Log Entries -->
+                <div id="logContainer" class="logs-container" aria-live="polite">
+                    <div class="logs-empty" id="logsEmptyState">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <rect x="3" y="3" width="18" height="18" rx="2"/>
+                            <path d="M7 8h10M7 12h8M7 16h6" opacity="0.5"/>
+                        </svg>
+                        <span>No activity yet</span>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <dialog id="modalConfirm" class="sr-only" aria-labelledby="modalTitle" aria-describedby="modalDesc">
+        <div class="card modal-card">
+            <div id="modalTitle" class="phase text-center">Confirm</div>
+            <div id="modalDesc" class="muted text-center">Are you sure you want to stop the transfer?</div>
+            <div class="row centered">
+                <button id="modalCancelBtn" class="interactive ghost" type="button">Cancel</button>
+                <button id="modalOkBtn" class="interactive primary" type="button">OK</button>
+            </div>
+        </div>
+    </dialog>
+
+    <div id="srLive" class="sr-only" aria-live="polite"></div>
+
+    <!-- Keyboard Shortcuts Button -->
+    <button id="shortcutBtn" class="shortcut-btn" title="Keyboard Shortcuts (Shift+?)">?</button>
+
+    <!-- Shortcuts Modal -->
+    <dialog id="shortcutModal" class="shortcut-modal">
+        <div class="shortcut-content">
+            <div class="shortcut-header">
+                <h3>Keyboard Shortcuts</h3>
+                <button id="closeShortcutBtn" class="close-btn">✕</button>
+            </div>
+            <div class="shortcut-grid">
+                <div class="shortcut-item">
+                    <span class="key">Enter</span>
+                    <span class="desc">Connect / Start</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="key">Esc</span>
+                    <span class="desc">Stop / Close</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="key">Space</span>
+                    <span class="desc">Pause / Resume</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="key">Ctrl</span> + <span class="key">L</span>
+                    <span class="desc">Clear Logs</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="key">Ctrl</span> + <span class="key">O</span>
+                    <span class="desc">Open File</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="key">?</span>
+                    <span class="desc">Show Shortcuts</span>
+                </div>
+            </div>
         </div>
     </dialog>
 
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" integrity="sha384-2huaZvOR9iDzHqslqwpR87isEmrfxqyWOF7hr7BY6KG0+hVKLoEXMPUJw3ynWuhO" crossorigin="anonymous" defer onerror="console.warn('Socket.IO failed to load - real-time features disabled')"></script>
 
-    <!-- Module loading error boundary -->
-    <script>
-        // Create fallback error element safely
-        function createErrorElement() {
-            const container = document.createElement('div');
-            container.className = 'load-error';
-
-            const innerDiv = document.createElement('div');
-            innerDiv.className = 'load-error__card';
-
-            const title = document.createElement('h2');
-            title.className = 'load-error__title';
-            title.textContent = '⚠️ Application Loading Failed';
-
-            const message = document.createElement('p');
-            message.className = 'load-error__message';
-            message.textContent = 'A required module failed to load. Please refresh the page.';
-
-            const button = document.createElement('button');
-            button.className = 'load-error__action';
-            button.type = 'button';
-            button.textContent = 'Refresh Page';
-            button.onclick = () => globalThis.location.reload();
-
-            innerDiv.appendChild(title);
-            innerDiv.appendChild(message);
-            innerDiv.appendChild(button);
-            container.appendChild(innerDiv);
-
-            return container;
-        }
-
-        // Global error handler for module loading failures
-        globalThis.addEventListener('error', function(event) {
-            if (event.filename && event.filename.includes('scripts/')) {
-                console.error('Module loading failed:', event.filename, event.message);
-                document.body.replaceChildren(createErrorElement());
-            }
-        });
-
-        // Module loading timeout
-        const loadTimeout = setTimeout(() => {
-            if (!globalThis.cyberBackupApp) {
-                console.warn('Application loading timeout - please check console for errors');
-            }
-        }, 10000);
-
-        // Clear timeout if app loads successfully
-        globalThis.addEventListener('DOMContentLoaded', () => {
-            clearTimeout(loadTimeout);
-        });
-    </script>
-
-    <script type="module" src="scripts/app.js"></script>
-  <script type="module" src="scripts/enhancements.js"></script>
+    <!-- Application Scripts -->
+    <script src="js/core-utils.js" defer></script>
+    <script src="js/services.js" defer></script>
+    <script src="js/app.js" defer></script>
+    <script src="js/enhancements.js" defer></script>
 </body>
 </html>
