@@ -699,6 +699,9 @@ class LogStore {
   #container;
   #emptyState;
   #countElement;
+  #lastRenderedId;
+  #nextId;
+  #renderPending;
 
   constructor(container) {
     this.#entries = [];
@@ -707,11 +710,36 @@ class LogStore {
     this.#container = container;
     this.#emptyState = document.getElementById('logsEmptyState');
     this.#countElement = document.getElementById('logEntryCount');
+    this.#lastRenderedId = 0;
+    this.#nextId = 1;
+    this.#renderPending = false;
+    // Set up event delegation for log action buttons
+    this.#setupEventDelegation();
+  }
+
+  #setupEventDelegation() {
+    if (!this.#container) return;
+    this.#container.addEventListener('click', (e) => {
+      const btn = e.target.closest('.log-action-mini');
+      if (!btn) return;
+      const entry = btn.closest('.log-entry');
+      if (!entry) return;
+      const { action } = btn.dataset;
+      if (action === 'copy') {
+        const msg = entry.querySelector('.log-message');
+        if (msg) navigator.clipboard.writeText(msg.textContent);
+      } else if (action === 'pin') {
+        entry.classList.toggle('pinned');
+      }
+    });
   }
 
   setFilter(filter) {
+    if (this.#filter === filter) return;
     this.#filter = filter;
-    this.render();
+    // Filter changed - need full rebuild
+    this.#lastRenderedId = 0;
+    this.render(true);
   }
 
   setAutoScroll(enabled) {
@@ -720,21 +748,26 @@ class LogStore {
 
   add(message, { level = 'info', phase, timestamp = new Date() } = {}) {
     const entry = {
+      id: this.#nextId++,
       timestamp: timestamp instanceof Date ? timestamp : new Date(timestamp),
       message,
       phase: phase || null,
       level: normalizeLevel(level),
     };
     this.#entries.push(entry);
+
+    // Keep only last 500 entries in memory
     if (this.#entries.length > 500) {
-      this.#entries.splice(0, this.#entries.length - 500);
+      this.#entries.shift(); // Remove oldest
     }
-    this.render();
+
+    this.#requestRender();
   }
 
   clear() {
     this.#entries = [];
-    this.render();
+    this.#lastRenderedId = 0;
+    this.render(true);
   }
 
   export() {
@@ -756,7 +789,14 @@ class LogStore {
     });
   }
 
-  render() {
+  #requestRender() {
+    if (this.#renderPending) return;
+    this.#renderPending = true;
+    requestAnimationFrame(() => this.render());
+  }
+
+  render(forceRebuild = false) {
+    this.#renderPending = false;
     if (!this.#container) return;
 
     const filter = this.#filter;
@@ -774,77 +814,92 @@ class LogStore {
       this.#emptyState.style.display = filteredEntries.length === 0 ? 'flex' : 'none';
     }
 
-    const fragment = document.createDocumentFragment();
-    const entriesToShow = filteredEntries.slice(-400);
+    // If force rebuild or container is empty (but we have entries), clear and rebuild
+    // We check if container has children other than emptyState
+    const hasLogEntries = this.#container.querySelector('.log-entry');
 
-    for (let i = 0; i < entriesToShow.length; i++) {
-      const entry = entriesToShow[i];
-      const isNew = i === entriesToShow.length - 1 && entriesToShow.length === this.#entries.length;
-
-      const row = document.createElement('div');
-      row.className = `log-entry log-${entry.level}${isNew ? ' log-entry-new' : ''}`;
-      row.dataset.level = entry.level;
-
-      // Level indicator bar
-      const indicator = document.createElement('div');
-      indicator.className = 'log-indicator';
-
-      // Icon
-      const iconWrapper = document.createElement('div');
-      iconWrapper.className = 'log-icon-wrapper';
-      iconWrapper.innerHTML = LEVEL_ICONS[entry.level] || LEVEL_ICONS.info;
-
-      // Timestamp
-      const time = document.createElement('span');
-      time.className = 'log-timestamp';
-      time.textContent = this.#formatTime(entry.timestamp);
-
-      // Level badge
-      const levelBadge = document.createElement('span');
-      levelBadge.className = `log-level-badge log-level-${entry.level}`;
-      levelBadge.textContent = entry.level.toUpperCase();
-
-      // Message
-      const msg = document.createElement('span');
-      msg.className = 'log-message';
-      msg.textContent = entry.message;
-
-      // Actions container
-      const actions = document.createElement('div');
-      actions.className = 'log-actions';
-
-      // Copy button
-      const copyBtn = document.createElement('button');
-      copyBtn.className = 'log-action-mini';
-      copyBtn.dataset.action = 'copy';
-      copyBtn.title = 'Copy to clipboard';
-      copyBtn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
-
-      // Pin button
-      const pinBtn = document.createElement('button');
-      pinBtn.className = 'log-action-mini';
-      pinBtn.dataset.action = 'pin';
-      pinBtn.title = 'Pin this log';
-      pinBtn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="17" x2="12" y2="22"></line><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"></path></svg>`;
-
-      actions.append(copyBtn, pinBtn);
-
-      row.append(indicator, iconWrapper, time, levelBadge, msg, actions);
-      fragment.append(row);
+    if (forceRebuild || (!hasLogEntries && filteredEntries.length > 0)) {
+       // Clear container (preserve empty state element)
+       const children = Array.from(this.#container.children);
+       for (const child of children) {
+         if (child.id !== 'logsEmptyState') {
+           child.remove();
+         }
+       }
+       this.#lastRenderedId = 0;
     }
 
-    // Clear container and add entries (preserve empty state element)
-    const children = Array.from(this.#container.children);
-    for (const child of children) {
-      if (child.id !== 'logsEmptyState') {
-        child.remove();
+    // Find entries that haven't been rendered yet
+    const newEntries = filteredEntries.filter(e => e.id > this.#lastRenderedId);
+
+    if (newEntries.length > 0) {
+      const fragment = document.createDocumentFragment();
+      for (let i = 0; i < newEntries.length; i++) {
+        const entry = newEntries[i];
+        fragment.append(this.#createLogEntry(entry, true));
+        this.#lastRenderedId = Math.max(this.#lastRenderedId, entry.id);
+      }
+      this.#container.append(fragment);
+    }
+
+    // Trim DOM if too many entries (keep last 400 visible)
+    const logEntries = this.#container.querySelectorAll('.log-entry');
+    const maxVisible = 400;
+    if (logEntries.length > maxVisible) {
+      const excess = logEntries.length - maxVisible;
+      for (let i = 0; i < excess; i++) {
+        logEntries[i].remove();
       }
     }
-    this.#container.append(fragment);
 
-    if (this.#autoScroll) {
+    if (this.#autoScroll && newEntries.length > 0) {
       this.#container.scrollTop = this.#container.scrollHeight;
     }
+  }
+
+  #createLogEntry(entry, isNew) {
+    const row = document.createElement('div');
+    row.className = `log-entry log-${entry.level}${isNew ? ' log-entry-new' : ''}`;
+    row.dataset.level = entry.level;
+    row.dataset.id = entry.id;
+
+    // Level indicator bar
+    const indicator = document.createElement('div');
+    indicator.className = 'log-indicator';
+
+    // Icon
+    const iconWrapper = document.createElement('div');
+    iconWrapper.className = 'log-icon-wrapper';
+    iconWrapper.innerHTML = LEVEL_ICONS[entry.level] || LEVEL_ICONS.info;
+
+    // Timestamp
+    const time = document.createElement('span');
+    time.className = 'log-timestamp';
+    time.textContent = this.#formatTime(entry.timestamp);
+
+    // Level badge
+    const levelBadge = document.createElement('span');
+    levelBadge.className = `log-level-badge log-level-${entry.level}`;
+    levelBadge.textContent = entry.level.toUpperCase();
+
+    // Message
+    const msg = document.createElement('span');
+    msg.className = 'log-message';
+    msg.textContent = entry.message;
+
+    // Actions container - created but hidden via CSS until hover
+    const actions = document.createElement('div');
+    actions.className = 'log-actions';
+    actions.innerHTML = `
+      <button class="log-action-mini" data-action="copy" title="Copy to clipboard">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+      </button>
+      <button class="log-action-mini" data-action="pin" title="Pin this log">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="17" x2="12" y2="22"></line><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"></path></svg>
+      </button>`;
+
+    row.append(indicator, iconWrapper, time, levelBadge, msg, actions);
+    return row;
   }
 }
 

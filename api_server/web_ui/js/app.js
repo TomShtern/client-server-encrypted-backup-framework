@@ -96,6 +96,21 @@ const STATUS_INTERVAL_MS = 5000;  // Reduced from 2500ms for performance
 const GENERAL_STATUS_INTERVAL_MS = 15000;  // Reduced from 12000ms for performance
 const RENDER_DEBOUNCE_MS = 50;  // Minimum time between render calls
 
+/**
+ * Add an animation class and remove it when the animation ends.
+ * Uses animationend event instead of setTimeout for better performance.
+ * @param {Element} element - The DOM element
+ * @param {string} className - The class to add/remove
+ */
+function animateOnce(element, className) {
+  if (!element) return;
+  element.classList.add(className);
+  element.addEventListener('animationend', function handler() {
+    element.classList.remove(className);
+    element.removeEventListener('animationend', handler);
+  }, { once: true });
+}
+
 const INITIAL_STATE = {
   connecting: false,
   connected: false,
@@ -1209,9 +1224,8 @@ class App {
 
     // Apply phase transition animation when text changes
     if (dom.phaseText.textContent !== phaseLabel) {
-      dom.phaseText.classList.add('phase-transitioning');
+      animateOnce(dom.phaseText, 'phase-transitioning');
       dom.phaseText.textContent = phaseLabel;
-      setTimeout(() => dom.phaseText.classList.remove('phase-transitioning'), 500);
     }
 
     // Determine progress ring state based on job state
@@ -1256,9 +1270,8 @@ class App {
     // Add updating animation class for percentage pop
     const progressText = formatPercentage(normalizedProgress);
     if (dom.progressPct.textContent !== progressText) {
-      dom.progressPct.classList.add('updating');
+      animateOnce(dom.progressPct, 'updating');
       dom.progressPct.textContent = progressText;
-      setTimeout(() => dom.progressPct.classList.remove('updating'), 400);
     }
 
     const etaText = etaSeconds ? formatDuration(etaSeconds) : 'ETA —';
@@ -1293,34 +1306,30 @@ class App {
     // Update bytes with animation
     const bytesText = formatBytes(state.bytesTransferred);
     if (dom.stats.bytes.textContent !== bytesText) {
-      dom.stats.bytes.classList.add('updating');
+      animateOnce(dom.stats.bytes, 'updating');
       dom.stats.bytes.textContent = bytesText;
-      setTimeout(() => dom.stats.bytes.classList.remove('updating'), 400);
     }
 
     // Update speed with animation (more frequent updates)
     const speedText = formatSpeed(state.speed);
     if (dom.stats.speed.textContent !== speedText) {
-      dom.stats.speed.classList.add('updating');
+      animateOnce(dom.stats.speed, 'updating');
       dom.stats.speed.textContent = speedText;
-      setTimeout(() => dom.stats.speed.classList.remove('updating'), 400);
     }
 
     // Update size with animation
     const total = state.totalBytes || state.fileSize;
     const sizeText = formatBytes(total);
     if (dom.stats.size.textContent !== sizeText) {
-      dom.stats.size.classList.add('updating');
+      animateOnce(dom.stats.size, 'updating');
       dom.stats.size.textContent = sizeText;
-      setTimeout(() => dom.stats.size.classList.remove('updating'), 400);
     }
 
     // Update elapsed time with animation
     const elapsedText = state.elapsedSeconds ? formatDuration(state.elapsedSeconds) : '—';
     if (dom.stats.elapsed.textContent !== elapsedText) {
-      dom.stats.elapsed.classList.add('updating');
+      animateOnce(dom.stats.elapsed, 'updating');
       dom.stats.elapsed.textContent = elapsedText;
-      setTimeout(() => dom.stats.elapsed.classList.remove('updating'), 400);
     }
 
     // Update speed chart if available

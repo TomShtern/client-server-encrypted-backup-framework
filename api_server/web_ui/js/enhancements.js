@@ -29,7 +29,6 @@ class ProfessionalGUIEnhancements {
         // New Enhancements
         this.setupDragAndDrop();
         this.setupShortcuts();
-        this.setupLogInteractions();
         this.setupBrowserNotifications();
     }
 
@@ -625,47 +624,6 @@ class ProfessionalGUIEnhancements {
             if (e.key === '?' && e.shiftKey && document.activeElement.tagName !== 'INPUT') {
                 e.preventDefault();
                 modal.showModal();
-            }
-        });
-    }
-
-    // Setup Log Interactions (Copy/Pin)
-    setupLogInteractions() {
-        const logContainer = document.getElementById('logContainer');
-        if (!logContainer) return;
-
-        logContainer.addEventListener('click', (e) => {
-            const btn = e.target.closest('.log-action-mini');
-            if (!btn) return;
-
-            const entry = btn.closest('.log-entry');
-            if (!entry) return;
-
-            const { action } = btn.dataset;
-            const message = entry.querySelector('.log-message').textContent;
-
-            if (action === 'copy') {
-                navigator.clipboard.writeText(message).then(() => {
-                    // Visual feedback
-                    const originalIcon = btn.innerHTML;
-                    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>';
-                    btn.style.color = 'var(--success)';
-                    setTimeout(() => {
-                        btn.innerHTML = originalIcon;
-                        btn.style.color = '';
-                    }, 1500);
-                });
-            } else if (action === 'pin') {
-                entry.classList.toggle('pinned');
-                if (entry.classList.contains('pinned')) {
-                    entry.style.background = 'rgba(88, 166, 255, 0.1)';
-                    entry.style.borderLeftColor = 'var(--accent)';
-                    btn.style.color = 'var(--accent)';
-                } else {
-                    entry.style.background = '';
-                    entry.style.borderLeftColor = '';
-                    btn.style.color = '';
-                }
             }
         });
     }
