@@ -702,6 +702,7 @@ class LogStore {
   #lastRenderedId;
   #nextId;
   #renderPending;
+  #rowTemplate;
 
   constructor(container) {
     this.#entries = [];
@@ -713,8 +714,30 @@ class LogStore {
     this.#lastRenderedId = 0;
     this.#nextId = 1;
     this.#renderPending = false;
+    this.#rowTemplate = this.#buildRowTemplate();
     // Set up event delegation for log action buttons
     this.#setupEventDelegation();
+  }
+
+  #buildRowTemplate() {
+    const row = document.createElement('div');
+    row.className = 'log-entry';
+    row.innerHTML = `
+      <div class="log-indicator"></div>
+      <div class="log-icon-wrapper"></div>
+      <span class="log-timestamp"></span>
+      <span class="log-level-badge"></span>
+      <span class="log-message"></span>
+      <div class="log-actions">
+        <button class="log-action-mini" data-action="copy" title="Copy to clipboard">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+        </button>
+        <button class="log-action-mini" data-action="pin" title="Pin this log">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="17" x2="12" y2="22"></line><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"></path></svg>
+        </button>
+      </div>
+    `;
+    return row;
   }
 
   #setupEventDelegation() {
@@ -858,47 +881,24 @@ class LogStore {
   }
 
   #createLogEntry(entry, isNew) {
-    const row = document.createElement('div');
+    const row = this.#rowTemplate.cloneNode(true);
     row.className = `log-entry log-${entry.level}${isNew ? ' log-entry-new' : ''}`;
     row.dataset.level = entry.level;
     row.dataset.id = entry.id;
 
-    // Level indicator bar
-    const indicator = document.createElement('div');
-    indicator.className = 'log-indicator';
+    // Fast access to children (order is known from #buildRowTemplate)
+    // 0: indicator, 1: icon-wrapper, 2: timestamp, 3: badge, 4: message, 5: actions
+    const iconWrapper = row.children[1];
+    const time = row.children[2];
+    const badge = row.children[3];
+    const msg = row.children[4];
 
-    // Icon
-    const iconWrapper = document.createElement('div');
-    iconWrapper.className = 'log-icon-wrapper';
     iconWrapper.innerHTML = LEVEL_ICONS[entry.level] || LEVEL_ICONS.info;
-
-    // Timestamp
-    const time = document.createElement('span');
-    time.className = 'log-timestamp';
     time.textContent = this.#formatTime(entry.timestamp);
-
-    // Level badge
-    const levelBadge = document.createElement('span');
-    levelBadge.className = `log-level-badge log-level-${entry.level}`;
-    levelBadge.textContent = entry.level.toUpperCase();
-
-    // Message
-    const msg = document.createElement('span');
-    msg.className = 'log-message';
+    badge.className = `log-level-badge log-level-${entry.level}`;
+    badge.textContent = entry.level.toUpperCase();
     msg.textContent = entry.message;
 
-    // Actions container - created but hidden via CSS until hover
-    const actions = document.createElement('div');
-    actions.className = 'log-actions';
-    actions.innerHTML = `
-      <button class="log-action-mini" data-action="copy" title="Copy to clipboard">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-      </button>
-      <button class="log-action-mini" data-action="pin" title="Pin this log">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="17" x2="12" y2="22"></line><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"></path></svg>
-      </button>`;
-
-    row.append(indicator, iconWrapper, time, levelBadge, msg, actions);
     return row;
   }
 }

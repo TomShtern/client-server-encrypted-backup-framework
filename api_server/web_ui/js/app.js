@@ -104,10 +104,12 @@ const RENDER_DEBOUNCE_MS = 50;  // Minimum time between render calls
  */
 function animateOnce(element, className) {
   if (!element) return;
+  // Optimization: If already animating, let it finish. Don't stack listeners.
+  if (element.classList.contains(className)) return;
+
   element.classList.add(className);
   element.addEventListener('animationend', function handler() {
     element.classList.remove(className);
-    element.removeEventListener('animationend', handler);
   }, { once: true });
 }
 
