@@ -225,22 +225,9 @@
                                     </select>
                                 </div>
                                 <div class="setting-row">
-                                    <label for="advPolycene">Exists Polycene</label>
+                                    <label for="advPolycene" title="Enable Polyglot Environment">Polyglot Environment (Polycene)</label>
                                     <label class="toggle-switch">
                                         <input type="checkbox" id="advPolycene">
-                                        <span class="toggle-slider"></span>
-                                    </label>
-                                </div>
-                                <div class="setting-row">
-                                    <label for="advBandwidth">Bandwidth Limit</label>
-                                    <div class="input-with-unit">
-                                        <input id="advBandwidth" type="text" placeholder="0" class="interactive" value="0 B"/>
-                                        <span class="unit">B/s</span>
-                                    </div>
-                                </div>
-                                <div class="setting-row">
-                                    <label for="advPort">Port</label>
-                                    <input id="advPort" type="text" placeholder="1000" class="interactive" value="1000"/>
                                 </div>
                             </div>
                             <div id="tab-schedule" class="tab-panel" role="tabpanel" hidden>
@@ -459,7 +446,7 @@
                     <div class="logs-actions">
                         <span class="logs-count"><span id="logEntryCount">0</span> entries</span>
                         <button id="logClearBtn" class="logs-action-btn" type="button" title="Clear logs">Clear</button>
-                        <button id="logDemoBtn" class="logs-action-btn" type="button" title="Add demo logs">Demo</button>
+                        <button id="logDemoBtn" class="logs-action-btn" type="button" title="Add demo logs" hidden>Demo</button>
                     </div>
                 </div>
 

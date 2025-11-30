@@ -74,7 +74,7 @@ def start_server(port):
 def open_browser(port, delay=1):
     """Open browser after a short delay"""
     time.sleep(delay)
-    url = f"http://localhost:{port}/NewGUIforClient.html"
+    url = f"http://localhost:{port}/index.html"
     print(f"🌐 Opening browser: {url}")
     webbrowser.open(url)
 
