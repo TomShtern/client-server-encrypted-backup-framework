@@ -44,7 +44,15 @@ from typing import Any, cast
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 # Third-party imports
-from flask import Flask, Response, jsonify, request, send_file, send_from_directory, session
+from flask import (
+    Flask,
+    Response,
+    jsonify,
+    request,
+    send_file,
+    send_from_directory,
+    session,
+)
 from flask_cors import CORS
 from flask_socketio import SocketIO, emit
 
@@ -53,19 +61,25 @@ from Shared.path_utils import setup_imports
 
 setup_imports()  # This must be called before any other first-party imports
 
-from python_server.server.connection_health import get_connection_health_monitor  # noqa: E402 # Moved from global scope
-from python_server.server.server_singleton import ensure_single_server_instance  # noqa: E402
+from python_server.server.connection_health import (
+    get_connection_health_monitor,  # noqa: E402 # Moved from global scope
+)
+from python_server.server.server_singleton import (
+    ensure_single_server_instance,  # noqa: E402
+)
+from Shared.config.unified_config import get_config  # noqa: E402
 from Shared.logging.logging_utils import (  # noqa: E402
     create_enhanced_logger,
     create_log_monitor_info,
     log_performance_metrics,
     setup_dual_logging,
 )
+from Shared.monitoring.performance_monitor import (
+    get_performance_monitor,  # noqa: E402 # Moved from api_perf_job()
+)
+from Shared.monitoring.unified_monitor import UnifiedFileMonitor  # noqa: E402
 from Shared.observability_middleware import setup_observability_for_flask  # noqa: E402
 from Shared.sentry_config import capture_error, init_sentry  # noqa: E402
-from Shared.monitoring.unified_monitor import UnifiedFileMonitor  # noqa: E402
-from Shared.monitoring.performance_monitor import get_performance_monitor  # noqa: E402 # Moved from api_perf_job()
-from Shared.config.unified_config import get_config  # noqa: E402
 
 # Define PROJECT_ROOT for consistent path resolution
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -103,10 +117,12 @@ MAX_CONNECTIONS_PER_IP = 12  # Increased to allow more concurrent connections fo
 connected_clients: set[str] = set()  # Track connected client IDs
 connection_locks: dict[str, threading.Lock] = {}  # Per-IP connection limits
 ip_connection_counts: dict[str, int] = {}  # Track connections per IP
-active_sessions: dict[str, Any] = {}  # Track active sessions per IP to prevent multiple browser instances
+active_sessions: dict[
+    str, Any
+] = {}  # Track active sessions per IP to prevent multiple browser instances
 
 # File path constants (DRY principle - defined once, used multiple times)
-CLIENT_GUI_HTML_FILE = "NewGUIforClient.html"
+CLIENT_GUI_HTML_FILE = "index.html"
 FAVICON_PREFIX = "favicon_stuff/"
 PROGRESS_CONFIG_FILE = "progress_config.json"
 
@@ -139,7 +155,9 @@ def limit_connections_per_ip():
         max_allowed = MAX_CONNECTIONS_PER_IP
 
     if current_count >= max_allowed:
-        logger.warning(f"Connection limit exceeded for IP {client_ip}: {current_count}/{max_allowed}")
+        logger.warning(
+            f"Connection limit exceeded for IP {client_ip}: {current_count}/{max_allowed}"
+        )
         return jsonify({"error": "Too many concurrent connections"}), 429
 
     # Increment counter
@@ -160,7 +178,10 @@ def decrement_ip_connections(response: Response) -> Response:
 api_port = get_config("api.port", 9090)
 socketio: SocketIO = SocketIO(
     app,
-    cors_allowed_origins=[f"http://localhost:{api_port}", f"http://127.0.0.1:{api_port}"],
+    cors_allowed_origins=[
+        f"http://localhost:{api_port}",
+        f"http://127.0.0.1:{api_port}",
+    ],
     ping_interval=10,  # More frequent pings to detect disconnections faster
     ping_timeout=20,  # Shorter timeout to close dead connections quickly
     async_mode="threading",  # Use threading for better performance
@@ -176,7 +197,9 @@ structured_logger = create_enhanced_logger("api-server", logger)
 
 # --- Global Singleton Monitor ---
 # This monitor will be shared across all requests.
-file_monitor: UnifiedFileMonitor = UnifiedFileMonitor(os.path.join(PROJECT_ROOT, "received_files"))
+file_monitor: UnifiedFileMonitor = UnifiedFileMonitor(
+    os.path.join(PROJECT_ROOT, "received_files")
+)
 
 # Add Sentry error handlers
 if SENTRY_INITIALIZED:
@@ -185,10 +208,19 @@ if SENTRY_INITIALIZED:
     def handle_internal_error(error):
         """Handle internal server errors with Sentry"""
         capture_error(
-            error, "api-server", {"endpoint": request.endpoint, "method": request.method, "url": request.url}
+            error,
+            "api-server",
+            {
+                "endpoint": request.endpoint,
+                "method": request.method,
+                "url": request.url,
+            },
         )
         return jsonify(
-            {"error": "Internal server error", "message": "An error occurred while processing your request"}
+            {
+                "error": "Internal server error",
+                "message": "An error occurred while processing your request",
+            }
         ), 500
 
     @app.errorhandler(Exception)
@@ -205,11 +237,12 @@ if SENTRY_INITIALIZED:
             },
         )
         logger.error(f"Unexpected error in {request.endpoint}: {error}")
-        return jsonify({"error": "Unexpected error", "message": "An unexpected error occurred"}), 500
+        return jsonify(
+            {"error": "Unexpected error", "message": "An unexpected error occurred"}
+        ), 500
 
 
 # Performance monitoring singleton and Connection health monitoring are already initialized above
-
 
 
 # --- CallbackMultiplexer for concurrent request handling ---
@@ -221,7 +254,9 @@ class CallbackMultiplexer:
         self._lock = threading.Lock()
         self._registered_executor: RealBackupExecutor | None = None
 
-    def register_job_callback(self, job_id: str, callback: Callable[[str, Any], None]) -> None:
+    def register_job_callback(
+        self, job_id: str, callback: Callable[[str, Any], None]
+    ) -> None:
         """Register a callback for a specific job."""
         with self._lock:
             self._job_callbacks[job_id] = callback
@@ -287,7 +322,11 @@ def _make_json_safe(value: Any, depth: int = 0, max_depth: int = 6) -> Any:
             return value.decode("utf-8", errors="replace")
 
     if isinstance(value, dict):
-        return {str(k): _make_json_safe(v, depth + 1, max_depth) for k, v in value.items() if k != "executor"}
+        return {
+            str(k): _make_json_safe(v, depth + 1, max_depth)
+            for k, v in value.items()
+            if k != "executor"
+        }
 
     if isinstance(value, (list, tuple, set)):
         return [_make_json_safe(item, depth + 1, max_depth) for item in value]
@@ -342,7 +381,8 @@ def broadcast_file_receipt(event_type: str, data: dict):
     try:
         if websocket_enabled and connected_clients:
             cast(Any, socketio).emit(
-                "file_receipt", {"event_type": event_type, "data": data, "timestamp": time.time()}
+                "file_receipt",
+                {"event_type": event_type, "data": data, "timestamp": time.time()},
             )
             print(f"[WEBSOCKET] Broadcasted file receipt event: {event_type}")
     except Exception as e:
@@ -398,7 +438,9 @@ def handle_connect():
     client_id = str(uuid_lib.uuid4())
     session["client_id"] = client_id
     connected_clients.add(client_id)
-    print(f"[WEBSOCKET] Client connected: {client_id} (Total: {len(connected_clients)})")
+    print(
+        f"[WEBSOCKET] Client connected: {client_id} (Total: {len(connected_clients)})"
+    )
 
     # Send initial status to new client
     emit(
@@ -417,7 +459,9 @@ def handle_disconnect():
     """Handle WebSocket client disconnection"""
     if client_id := session.get("client_id"):
         connected_clients.discard(client_id)
-        print(f"[WEBSOCKET] Client disconnected: {client_id} (Total: {len(connected_clients)})")
+        print(
+            f"[WEBSOCKET] Client disconnected: {client_id} (Total: {len(connected_clients)})"
+        )
 
 
 @socketio.on("request_status")
@@ -440,7 +484,10 @@ def handle_status_request(data: dict[str, Any] | None) -> None:
     status["connected"] = check_backup_server_status() and connection_established
     status["isConnected"] = status["connected"]
 
-    emit("status_response", {"status": status, "job_id": job_id, "timestamp": time.time()})
+    emit(
+        "status_response",
+        {"status": status, "job_id": job_id, "timestamp": time.time()},
+    )
 
 
 @socketio.on("ping")
@@ -464,7 +511,9 @@ def cleanup_stale_connections(stop_event: threading.Event | None = None) -> None
             # Sleep with shutdown awareness (15 second intervals)
             if stop_event:
                 if stop_event.wait(15):  # Wait 15 seconds or until stop signal
-                    logger.info("WebSocket cleanup thread stopping due to shutdown signal")
+                    logger.info(
+                        "WebSocket cleanup thread stopping due to shutdown signal"
+                    )
                     break
             else:
                 time.sleep(15)
@@ -480,9 +529,13 @@ def cleanup_stale_connections(stop_event: threading.Event | None = None) -> None
                     logger.debug(f"[WEBSOCKET] Removed excess client: {client_id}")
 
             # Also clear out any old clients every few cycles
-            if len(connected_clients) > MAX_CONNECTIONS // 2:  # If more than half our limit
+            if (
+                len(connected_clients) > MAX_CONNECTIONS // 2
+            ):  # If more than half our limit
                 # Remove oldest 25% of clients to keep connections fresh
-                clients_to_remove = list(connected_clients)[: len(connected_clients) // 4]
+                clients_to_remove = list(connected_clients)[
+                    : len(connected_clients) // 4
+                ]
                 for client_id in clients_to_remove:
                     connected_clients.discard(client_id)
                     logger.debug(f"[WEBSOCKET] Removed aging client: {client_id}")
@@ -492,7 +545,10 @@ def cleanup_stale_connections(stop_event: threading.Event | None = None) -> None
                 ip_connection_counts.clear()
                 logger.debug("[HTTP] Cleared IP connection counters")
 
-            if len(connected_clients) != initial_count or len(ip_connection_counts) > 10:
+            if (
+                len(connected_clients) != initial_count
+                or len(ip_connection_counts) > 10
+            ):
                 logger.debug(
                     f"[WEBSOCKET] Cleanup complete. Active clients: {len(connected_clients)}, IP counters: {len(ip_connection_counts)}"
                 )
@@ -529,7 +585,9 @@ def start_websocket_cleanup_thread():
         import os
         import sys
 
-        sys.path.append(os.path.join(os.path.dirname(__file__), "..", "Shared", "utils"))
+        sys.path.append(
+            os.path.join(os.path.dirname(__file__), "..", "Shared", "utils")
+        )
         from Shared.monitoring.thread_manager import create_managed_thread
 
         # Create managed cleanup thread
@@ -543,12 +601,16 @@ def start_websocket_cleanup_thread():
         )
 
         if cleanup_thread_name:
-            logger.info(f"WebSocket cleanup thread registered as: {cleanup_thread_name}")
+            logger.info(
+                f"WebSocket cleanup thread registered as: {cleanup_thread_name}"
+            )
         else:
             logger.warning(
                 "Failed to register WebSocket cleanup thread with thread manager, falling back to basic thread"
             )
-            cleanup_thread = threading.Thread(target=cleanup_stale_connections, daemon=True)
+            cleanup_thread = threading.Thread(
+                target=cleanup_stale_connections, daemon=True
+            )
             cleanup_thread.start()
 
     except ImportError:
@@ -587,7 +649,10 @@ def serve_client_assets(filename: str):
     """Serve client assets (CSS, JS, images, etc.)"""
     # Don't serve the main HTML file through this route
     if filename in {CLIENT_GUI_HTML_FILE, "index.html"}:
-        return "<h1>Not Found</h1><p>The requested URL was not found on the server.</p>", 404
+        return (
+            "<h1>Not Found</h1><p>The requested URL was not found on the server.</p>",
+            404,
+        )
 
     try:
         # Handle favicon requests specially - check both locations
@@ -652,7 +717,9 @@ def serve_client_assets(filename: str):
         logger.debug(f"Asset not found: {filename}")  # Changed from error to debug
         return "", 404
     except Exception as e:
-        logger.debug(f"Error serving asset {filename}: {e}")  # Debug level to reduce noise
+        logger.debug(
+            f"Error serving asset {filename}: {e}"
+        )  # Debug level to reduce noise
         return "", 404  # Return 404 instead of 500 for missing assets
 
 
@@ -750,7 +817,9 @@ def health_check():
         try:
             cpu_usage = psutil.cpu_percent(interval=0.1)
             memory_usage = psutil.virtual_memory().percent
-            active_connections = len(connected_clients) if "connected_clients" in globals() else 0
+            active_connections = (
+                len(connected_clients) if "connected_clients" in globals() else 0
+            )
         except Exception:
             cpu_usage = memory_usage = active_connections = 0
 
@@ -812,7 +881,9 @@ def api_connect():
             print(f"[DEBUG] Form data received: {config}")
 
         if not config:
-            return jsonify({"success": False, "error": "No configuration data provided"}), 400
+            return jsonify(
+                {"success": False, "error": "No configuration data provided"}
+            ), 400
 
         # Normalize field naming (accept legacy 'server' alias for 'host')
         if "server" in config:
@@ -827,9 +898,16 @@ def api_connect():
         # Validate required fields
         required_fields = ["host", "port", "username"]
 
-        if missing_fields := [field for field in required_fields if field not in config or not config[field]]:
+        if missing_fields := [
+            field
+            for field in required_fields
+            if field not in config or not config[field]
+        ]:
             return jsonify(
-                {"success": False, "error": f"Missing required fields: {', '.join(missing_fields)}"}
+                {
+                    "success": False,
+                    "error": f"Missing required fields: {', '.join(missing_fields)}",
+                }
             ), 400
 
         # Update server configuration
@@ -837,11 +915,14 @@ def api_connect():
             server_config.update(cast(dict[str, Any], config))
 
         update_server_status(
-            "CONNECT", f"Testing connection to {server_config['host']}:{server_config['port']}..."
+            "CONNECT",
+            f"Testing connection to {server_config['host']}:{server_config['port']}...",
         )
 
         # Test if backup server is reachable
-        server_reachable = check_backup_server_status(server_config["host"], server_config["port"])
+        server_reachable = check_backup_server_status(
+            server_config["host"], server_config["port"]
+        )
 
         message = ""
         if server_reachable:
@@ -849,12 +930,16 @@ def api_connect():
             connection_timestamp = datetime.now()
             message = f"Connected to backup server at {server_config['host']}:{server_config['port']}"
             update_server_status("READY", "Connected successfully. Ready for backup.")
-            print(f"[DEBUG] Connection established at {connection_timestamp.isoformat()}")
+            print(
+                f"[DEBUG] Connection established at {connection_timestamp.isoformat()}"
+            )
         else:
             connection_established = False
             connection_timestamp = None
             message = "Connection failed: Backup server not responding"
-            update_server_status("ERROR", "Connection test failed: Backup server not responding")
+            update_server_status(
+                "ERROR", "Connection test failed: Backup server not responding"
+            )
             print("[DEBUG] Connection failed - server not reachable")
 
         return jsonify(
@@ -887,7 +972,13 @@ def api_disconnect():
         update_server_status("READY", "Disconnected from backup server")
         print("[DEBUG] Connection terminated")
 
-        return jsonify({"success": True, "connected": False, "message": "Disconnected successfully"})
+        return jsonify(
+            {
+                "success": True,
+                "connected": False,
+                "message": "Disconnected successfully",
+            }
+        )
 
     except Exception as e:
         error_msg = f"Disconnect error: {e!s}"
@@ -910,7 +1001,12 @@ def api_start_backup_working():
         active_backup_jobs[job_id] = {
             "phase": "INITIALIZING",
             "message": "Initializing backup job...",
-            "progress": {"percentage": 0, "current_file": "", "bytes_transferred": 0, "total_bytes": 0},
+            "progress": {
+                "percentage": 0,
+                "current_file": "",
+                "bytes_transferred": 0,
+                "total_bytes": 0,
+            },
             "status": "initializing",
             "events": [],
             "connected": True,
@@ -922,7 +1018,9 @@ def api_start_backup_working():
     try:
         api_server_dir = os.path.dirname(os.path.abspath(__file__))
         project_root = os.path.dirname(api_server_dir)
-        client_exe_path = os.path.join(project_root, "build", "Release", "EncryptedBackupClient.exe")
+        client_exe_path = os.path.join(
+            project_root, "build", "Release", "EncryptedBackupClient.exe"
+        )
 
         backup_executor = RealBackupExecutor(client_exe_path)
         with active_backup_jobs_lock:
@@ -930,9 +1028,13 @@ def api_start_backup_working():
 
         # Register executor with callback multiplexer for thread-safe callback routing
         callback_multiplexer.set_executor(backup_executor)
-        print(f"[Job {job_id}] RealBackupExecutor instance created with client: {client_exe_path}")
+        print(
+            f"[Job {job_id}] RealBackupExecutor instance created with client: {client_exe_path}"
+        )
     except Exception as e:
-        return jsonify({"success": False, "error": f"Failed to initialize backup executor: {e}"}), 500
+        return jsonify(
+            {"success": False, "error": f"Failed to initialize backup executor: {e}"}
+        ), 500
 
     if "file" not in request.files:
         return jsonify({"success": False, "error": "No file uploaded"}), 400
@@ -958,9 +1060,14 @@ def api_start_backup_working():
 
         file.save(temp_file_path)
 
-        username: str = str(request.form.get("username") or server_config.get("username", "default_user"))
+        username: str = str(
+            request.form.get("username")
+            or server_config.get("username", "default_user")
+        )
         server_ip: str = str(
-            request.form.get("host") or request.form.get("server") or server_config.get("host", "127.0.0.1")
+            request.form.get("host")
+            or request.form.get("server")
+            or server_config.get("host", "127.0.0.1")
         )
         server_port_val: Any = request.form.get("port", server_config.get("port", 1256))
         server_port: int = int(server_port_val or 1256)
@@ -983,7 +1090,9 @@ def api_start_backup_working():
                     if "progress" in data_dict:
                         job_data["progress"]["percentage"] = data_dict["progress"]
                     if "bytes_transferred" in data_dict:
-                        job_data["progress"]["bytes_transferred"] = data_dict["bytes_transferred"]
+                        job_data["progress"]["bytes_transferred"] = data_dict[
+                            "bytes_transferred"
+                        ]
                     if "total_bytes" in data_dict:
                         job_data["progress"]["total_bytes"] = data_dict["total_bytes"]
                 else:
@@ -996,7 +1105,12 @@ def api_start_backup_working():
                 try:
                     cast(Any, socketio).emit(
                         "progress_update",
-                        {"job_id": job_id, "phase": phase, "data": data, "timestamp": time.time()},
+                        {
+                            "job_id": job_id,
+                            "phase": phase,
+                            "data": data,
+                            "timestamp": time.time(),
+                        },
                     )
                 except Exception as e:
                     print(f"[WEBSOCKET] Broadcast failed: {e}")
@@ -1008,7 +1122,9 @@ def api_start_backup_working():
             active_backup_jobs[job_id]["backing_up"] = True
             active_backup_jobs[job_id]["phase"] = "BACKUP_IN_PROGRESS"
             active_backup_jobs[job_id]["progress"]["current_file"] = original_filename
-            active_backup_jobs[job_id]["message"] = f"Starting backup of {original_filename}..."
+            active_backup_jobs[job_id]["message"] = (
+                f"Starting backup of {original_filename}..."
+            )
 
         def run_backup(
             executor: RealBackupExecutor,
@@ -1019,11 +1135,17 @@ def api_start_backup_working():
             try:
                 expected_size = os.path.getsize(temp_file_path_for_thread)
                 # Use streaming hash calculation to prevent memory overflow on large files
-                from Shared.filesystem.streaming_file_utils import calculate_file_hash_streaming
+                from Shared.filesystem.streaming_file_utils import (
+                    calculate_file_hash_streaming,
+                )
 
-                expected_hash = calculate_file_hash_streaming(temp_file_path_for_thread, "sha256")
+                expected_hash = calculate_file_hash_streaming(
+                    temp_file_path_for_thread, "sha256"
+                )
                 if expected_hash is None:
-                    raise RuntimeError("Failed to calculate file hash - file may be inaccessible")
+                    raise RuntimeError(
+                        "Failed to calculate file hash - file may be inaccessible"
+                    )
                 logger.info(
                     f"[Job {job_id}] Calculated verification data: Size={expected_size}, Hash={expected_hash[:8]}..."
                 )
@@ -1048,7 +1170,9 @@ def api_start_backup_working():
                     with active_backup_jobs_lock:
                         if job_id in active_backup_jobs:
                             active_backup_jobs[job_id]["phase"] = "VERIFICATION_FAILED"
-                            active_backup_jobs[job_id]["message"] = f"CRITICAL: {reason}"
+                            active_backup_jobs[job_id]["message"] = (
+                                f"CRITICAL: {reason}"
+                            )
                             active_backup_jobs[job_id]["backing_up"] = False
 
                 monitor = file_monitor
@@ -1077,7 +1201,9 @@ def api_start_backup_working():
                     if job_id in active_backup_jobs:
                         if result and result.get("success"):
                             active_backup_jobs[job_id]["phase"] = "COMPLETED"
-                            active_backup_jobs[job_id]["message"] = "Backup completed successfully!"
+                            active_backup_jobs[job_id]["message"] = (
+                                "Backup completed successfully!"
+                            )
                             active_backup_jobs[job_id]["progress"]["percentage"] = 100
                         else:
                             error_msg = (
@@ -1086,7 +1212,9 @@ def api_start_backup_working():
                                 else "Backup executor returned None"
                             )
                             active_backup_jobs[job_id]["phase"] = "FAILED"
-                            active_backup_jobs[job_id]["message"] = f"Backup failed: {error_msg}"
+                            active_backup_jobs[job_id]["message"] = (
+                                f"Backup failed: {error_msg}"
+                            )
                         active_backup_jobs[job_id]["backing_up"] = False
 
             except Exception as e:
@@ -1111,7 +1239,8 @@ def api_start_backup_working():
                 update_server_status("READY", "Ready for new backup.")
 
         backup_thread = threading.Thread(
-            target=run_backup, args=(backup_executor, temp_file_path, original_filename, temp_dir)
+            target=run_backup,
+            args=(backup_executor, temp_file_path, original_filename, temp_dir),
         )
         backup_thread.daemon = True
         backup_thread.start()
@@ -1121,10 +1250,16 @@ def api_start_backup_working():
             f"Backup job {job_id} started successfully",
             operation="start_backup",
             duration_ms=duration_ms,
-            context={"job_id": job_id, "username": username, "filename": original_filename},
+            context={
+                "job_id": job_id,
+                "username": username,
+                "filename": original_filename,
+            },
         )
 
-        log_performance_metrics(logger, "start_backup", duration_ms, True, job_id=job_id, username=username)
+        log_performance_metrics(
+            logger, "start_backup", duration_ms, True, job_id=job_id, username=username
+        )
 
         return jsonify(
             {
@@ -1148,7 +1283,9 @@ def api_start_backup_working():
             context={"exception": str(e)},
         )
 
-        log_performance_metrics(logger, "start_backup", duration_ms, False, error=str(e))
+        log_performance_metrics(
+            logger, "start_backup", duration_ms, False, error=str(e)
+        )
 
         print(f"[ERROR] {error_msg}")
         update_server_status("ERROR", error_msg)
@@ -1239,7 +1376,11 @@ def api_check_file_receipt(filename: str):
         monitor = file_monitor
         if not monitor:
             return jsonify(
-                {"success": False, "error": "File receipt monitoring not available", "received": False}
+                {
+                    "success": False,
+                    "error": "File receipt monitoring not available",
+                    "received": False,
+                }
             ), 503
 
         receipt_info = monitor.check_file_receipt(filename)
@@ -1258,7 +1399,9 @@ def api_list_received_files():
     try:
         monitor = file_monitor
         if not monitor:
-            return jsonify({"success": False, "error": "File receipt monitoring not available"}), 503
+            return jsonify(
+                {"success": False, "error": "File receipt monitoring not available"}
+            ), 503
 
         files_info = monitor.list_received_files()
         return jsonify(files_info)
@@ -1275,7 +1418,12 @@ def api_monitor_status():
     try:
         monitor = file_monitor
         if not monitor:
-            return jsonify({"monitoring_active": False, "error": "File receipt monitoring not initialized"})
+            return jsonify(
+                {
+                    "monitoring_active": False,
+                    "error": "File receipt monitoring not initialized",
+                }
+            )
 
         status = monitor.get_monitoring_status()
         return jsonify(status)
@@ -1310,7 +1458,9 @@ if __name__ == "__main__":
     log_monitor_info = create_log_monitor_info(api_log_file, "API Server")
     print("* Logging Information:")
     print(f"* Log File: {log_monitor_info.get('file_path', api_log_file)}")
-    print(f"* Live Monitor (PowerShell): {log_monitor_info.get('powershell_cmd', 'N/A')}")
+    print(
+        f"* Live Monitor (PowerShell): {log_monitor_info.get('powershell_cmd', 'N/A')}"
+    )
     print("* Console Output: Visible in this window (dual output enabled)")
     print()
 
@@ -1325,7 +1475,9 @@ if __name__ == "__main__":
         print(f"[MISSING] HTML Client: {client_html} NOT FOUND")
 
     # Check C++ client
-    client_exe = os.path.join(PROJECT_ROOT, "build", "Release", "EncryptedBackupClient.exe")
+    client_exe = os.path.join(
+        PROJECT_ROOT, "build", "Release", "EncryptedBackupClient.exe"
+    )
     if os.path.exists(client_exe):
         print(f"[OK] C++ Client: {client_exe}")
     else:
@@ -1392,7 +1544,9 @@ if __name__ == "__main__":
 def api_perf_job(job_id: str):
     try:
         if not (summary := perf_monitor.get_job_summary(job_id)):
-            return jsonify({"success": False, "error": f"No performance data for job_id={job_id}"}), 404
+            return jsonify(
+                {"success": False, "error": f"No performance data for job_id={job_id}"}
+            ), 404
         return jsonify({"success": True, "job": summary})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
@@ -1408,7 +1562,9 @@ def api_cancel_job(job_id: str):
         if not job:
             return jsonify({"success": False, "error": f"Unknown job_id={job_id}"}), 404
         if not executor:
-            return jsonify({"success": False, "error": "No executor associated with this job"}), 400
+            return jsonify(
+                {"success": False, "error": "No executor associated with this job"}
+            ), 400
         ok = False
         try:
             # executor is dynamically attached; cast to Any for type checker
@@ -1429,11 +1585,15 @@ def api_cancel_job(job_id: str):
             if job_id in active_backup_jobs:
                 job_ref = active_backup_jobs[job_id]
                 job_ref["phase"] = "CANCELLED" if ok else "CANCEL_REQUESTED"
-                job_ref["message"] = "Backup cancelled" if ok else "Cancellation requested"
+                job_ref["message"] = (
+                    "Backup cancelled" if ok else "Cancellation requested"
+                )
                 if cancel_reason:
                     job_ref["cancel_reason"] = cancel_reason
                 if ok:
-                    job_ref["progress"]["percentage"] = max(job_ref["progress"].get("percentage", 0), 0)
+                    job_ref["progress"]["percentage"] = max(
+                        job_ref["progress"].get("percentage", 0), 0
+                    )
                 job_snapshot = _sanitize_job_snapshot(job_ref)
                 global last_known_status
                 last_known_status = job_snapshot
@@ -1476,15 +1636,24 @@ def api_cancel_all_jobs():
             with active_backup_jobs_lock:
                 job_ref = active_backup_jobs.get(jid)
                 if job_ref:
-                    job_ref["phase"] = "CANCELLED" if ok else job_ref.get("phase", "UNKNOWN")
-                    job_ref["message"] = "Backup cancelled" if ok else job_ref.get("message", "")
+                    job_ref["phase"] = (
+                        "CANCELLED" if ok else job_ref.get("phase", "UNKNOWN")
+                    )
+                    job_ref["message"] = (
+                        "Backup cancelled" if ok else job_ref.get("message", "")
+                    )
                     job_snapshots[jid] = _sanitize_job_snapshot(job_ref)
             results[jid] = ok
         # Broadcast
         try:
             if websocket_enabled and connected_clients:
                 cast(Any, socketio).emit(
-                    "jobs_cancelled", {"results": results, "jobs": job_snapshots, "timestamp": time.time()}
+                    "jobs_cancelled",
+                    {
+                        "results": results,
+                        "jobs": job_snapshots,
+                        "timestamp": time.time(),
+                    },
                 )
         except Exception as be:
             print(f"[WEBSOCKET] Cancel-all broadcast failed: {be}")
@@ -1503,7 +1672,12 @@ def api_cancelable_jobs():
                 # A job is cancelable if we have an executor and it is not in a terminal phase
                 has_executor = jid in job_executors
                 phase = job.get("phase")
-                if not has_executor or phase in ["COMPLETED", "FAILED", "ERROR", "CANCELLED"]:
+                if not has_executor or phase in [
+                    "COMPLETED",
+                    "FAILED",
+                    "ERROR",
+                    "CANCELLED",
+                ]:
                     continue
                 snapshot = _sanitize_job_snapshot(job)
                 items.append(
