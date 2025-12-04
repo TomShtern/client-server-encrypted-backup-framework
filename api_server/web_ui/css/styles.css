@@ -872,6 +872,87 @@ html.theme-light .label-text {
   color: var(--text-primary);
 }
 
+/* Light mode floating label states - ensure proper color */
+html.theme-light .floating-label .label-text {
+  color: var(--text-secondary);
+}
+
+html.theme-light .floating-label input:focus ~ .label-text,
+html.theme-light .floating-label input:not(:placeholder-shown) ~ .label-text {
+  color: var(--accent);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   LIGHT MODE - Progress Ring & Status Panel
+   ═══════════════════════════════════════════════════════════════ */
+
+html.theme-light .status-panel {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: var(--border);
+}
+
+html.theme-light .center {
+  background: radial-gradient(
+    ellipse at center,
+    rgba(9, 105, 218, 0.03) 0%,
+    rgba(14, 165, 233, 0.02) 50%,
+    transparent 70%
+  );
+}
+
+html.theme-light .kpi .pct {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-400) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: none;
+}
+
+html.theme-light .kpi .phase-status {
+  color: var(--text-secondary);
+}
+
+html.theme-light .kpi .eta {
+  color: var(--text-muted);
+}
+
+html.theme-light #progressRing circle:first-of-type {
+  stroke: rgba(9, 105, 218, 0.1);
+}
+
+html.theme-light .progress-glow {
+  background: radial-gradient(
+    circle at center,
+    rgba(9, 105, 218, 0.08) 0%,
+    transparent 60%
+  );
+}
+
+html.theme-light .ring-decoration::before,
+html.theme-light .ring-decoration::after {
+  border-color: rgba(9, 105, 218, 0.1);
+}
+
+/* Light mode stats cards */
+html.theme-light #statsGrid .stat {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: var(--border);
+}
+
+html.theme-light #statsGrid .stat:hover {
+  border-color: var(--accent);
+  box-shadow: 0 4px 12px rgba(9, 105, 218, 0.1);
+}
+
+/* Light mode wave animations - reduce opacity */
+html.theme-light .wave-layer {
+  opacity: 0.3;
+}
+
+html.theme-light .status-bg-animation {
+  opacity: 0.5;
+}
+
 /* Global focus indicator - enhanced for accessibility
    Uses specific selectors instead of universal * for better performance */
 a:focus-visible,
@@ -1104,9 +1185,16 @@ button.ghost:hover:not(:disabled) {
 }
 
 button[disabled] {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
+  filter: grayscale(30%);
+  transform: none !important;
+  pointer-events: none;
+}
+
+button[disabled]:hover {
   transform: none;
+  box-shadow: none;
 }
 
 /* File drop zone styles defined below in "DROP ZONE - NEW CLOUD DESIGN" section */
@@ -2407,10 +2495,28 @@ svg {
   padding: var(--space-md);
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
   border: 1px solid rgba(255, 255, 255, var(--border-opacity-subtle));
+  border-left: 3px solid transparent;
   border-radius: var(--radius-lg);
   transition: all 0.25s var(--ease-smooth);
   position: relative;
   overflow: hidden;
+}
+
+/* Color-coded left borders for visual hierarchy */
+#statsGrid .stat:nth-child(1) {
+  border-left-color: var(--primary-400);
+}
+
+#statsGrid .stat:nth-child(2) {
+  border-left-color: var(--accent-400);
+}
+
+#statsGrid .stat:nth-child(3) {
+  border-left-color: var(--success);
+}
+
+#statsGrid .stat:nth-child(4) {
+  border-left-color: var(--warning);
 }
 
 #statsGrid .stat::before {
@@ -2425,6 +2531,7 @@ svg {
 #statsGrid .stat:hover {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
   border-color: rgba(88, 166, 255, 0.25);
+  border-left-width: 4px;
   transform: translateY(var(--lift-default));
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2),
     0 0 20px rgba(88, 166, 255, 0.08);

@@ -1282,7 +1282,7 @@ class App {
       dom.progressPct.textContent = progressText;
     }
 
-    const etaText = etaSeconds ? formatDuration(etaSeconds) : 'ETA –';
+    const etaText = etaSeconds ? formatDuration(etaSeconds) : '–';
     if (dom.etaText.textContent !== etaText) {
       dom.etaText.textContent = etaText;
     }
