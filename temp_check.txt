@@ -234,55 +234,55 @@ class ProfessionalGUIEnhancements {
 
     // File type icon mapping
     static FILE_TYPE_ICONS = {
-        // Documents
-        pdf: { icon: 'ðŸ“„', badge: 'pdf', class: 'pdf' },
-        doc: { icon: 'ðŸ“', badge: 'doc', class: 'doc' },
-        docx: { icon: 'ðŸ“', badge: 'doc', class: 'doc' },
-        txt: { icon: 'ðŸ“„', badge: 'txt', class: 'default' },
-        rtf: { icon: 'ðŸ“', badge: 'rtf', class: 'doc' },
+  // Documents
+  pdf: { icon: '📄', badge: 'pdf', class: 'pdf' },
+  doc: { icon: '📝', badge: 'doc', class: 'doc' },
+  docx: { icon: '📝', badge: 'doc', class: 'doc' },
+  txt: { icon: '📄', badge: 'txt', class: 'default' },
+  rtf: { icon: '📝', badge: 'rtf', class: 'doc' },
 
-        // Spreadsheets
-        xls: { icon: 'ðŸ“Š', badge: 'xls', class: 'doc' },
-        xlsx: { icon: 'ðŸ“Š', badge: 'xlsx', class: 'doc' },
-        csv: { icon: 'ðŸ“Š', badge: 'csv', class: 'doc' },
+  // Spreadsheets
+  xls: { icon: '📊', badge: 'xls', class: 'doc' },
+  xlsx: { icon: '📊', badge: 'xlsx', class: 'doc' },
+  csv: { icon: '📊', badge: 'csv', class: 'doc' },
 
-        // Images
-        jpg: { icon: 'ðŸ–¼ï¸', badge: 'jpg', class: 'img' },
-        jpeg: { icon: 'ðŸ–¼ï¸', badge: 'jpeg', class: 'img' },
-        png: { icon: 'ðŸ–¼ï¸', badge: 'png', class: 'img' },
-        gif: { icon: 'ðŸ–¼ï¸', badge: 'gif', class: 'img' },
-        svg: { icon: 'ðŸ–¼ï¸', badge: 'svg', class: 'img' },
-        webp: { icon: 'ðŸ–¼ï¸', badge: 'webp', class: 'img' },
+  // Images
+  jpg: { icon: '🖼️', badge: 'jpg', class: 'img' },
+  jpeg: { icon: '🖼️', badge: 'jpeg', class: 'img' },
+  png: { icon: '🖼️', badge: 'png', class: 'img' },
+  gif: { icon: '🖼️', badge: 'gif', class: 'img' },
+  svg: { icon: '🖼️', badge: 'svg', class: 'img' },
+  webp: { icon: '🖼️', badge: 'webp', class: 'img' },
 
-        // Videos
-        mp4: { icon: 'ðŸŽ¥', badge: 'mp4', class: 'video' },
-        avi: { icon: 'ðŸŽ¥', badge: 'avi', class: 'video' },
-        mkv: { icon: 'ðŸŽ¥', badge: 'mkv', class: 'video' },
-        mov: { icon: 'ðŸŽ¥', badge: 'mov', class: 'video' },
+  // Videos
+  mp4: { icon: '🎥', badge: 'mp4', class: 'video' },
+  avi: { icon: '🎥', badge: 'avi', class: 'video' },
+  mkv: { icon: '🎥', badge: 'mkv', class: 'video' },
+  mov: { icon: '🎥', badge: 'mov', class: 'video' },
 
-        // Audio
-        mp3: { icon: 'ðŸŽµ', badge: 'mp3', class: 'audio' },
-        wav: { icon: 'ðŸŽµ', badge: 'wav', class: 'audio' },
-        flac: { icon: 'ðŸŽµ', badge: 'flac', class: 'audio' },
+  // Audio
+  mp3: { icon: '🎵', badge: 'mp3', class: 'audio' },
+  wav: { icon: '🎵', badge: 'wav', class: 'audio' },
+  flac: { icon: '🎵', badge: 'flac', class: 'audio' },
 
-        // Archives
-        zip: { icon: 'ðŸ“¦', badge: 'zip', class: 'archive' },
-        rar: { icon: 'ðŸ“¦', badge: 'rar', class: 'archive' },
-        '7z': { icon: 'ðŸ“¦', badge: '7z', class: 'archive' },
-        tar: { icon: 'ðŸ“¦', badge: 'tar', class: 'archive' },
-        gz: { icon: 'ðŸ“¦', badge: 'gz', class: 'archive' },
+  // Archives
+  zip: { icon: '📦', badge: 'zip', class: 'archive' },
+  rar: { icon: '📦', badge: 'rar', class: 'archive' },
+  '7z': { icon: '📦', badge: '7z', class: 'archive' },
+  tar: { icon: '📦', badge: 'tar', class: 'archive' },
+  gz: { icon: '📦', badge: 'gz', class: 'archive' },
 
-        // Code
-        js: { icon: 'ðŸ’»', badge: 'js', class: 'code' },
-        py: { icon: 'ðŸ’»', badge: 'py', class: 'code' },
-        html: { icon: 'ðŸ’»', badge: 'html', class: 'code' },
-        css: { icon: 'ðŸ’»', badge: 'css', class: 'code' },
-        json: { icon: 'ðŸ’»', badge: 'json', class: 'code' },
-        xml: { icon: 'ðŸ’»', badge: 'xml', class: 'code' },
+  // Code
+  js: { icon: '💻', badge: 'js', class: 'code' },
+  py: { icon: '💻', badge: 'py', class: 'code' },
+  html: { icon: '💻', badge: 'html', class: 'code' },
+  css: { icon: '💻', badge: 'css', class: 'code' },
+  json: { icon: '💻', badge: 'json', class: 'code' },
+  xml: { icon: '💻', badge: 'xml', class: 'code' },
 
-        // Default
-        default: { icon: 'ðŸ“„', badge: 'file', class: 'default' }
-    };
+  // Default
+  default: { icon: '📄', badge: 'file', class: 'default' }
+};
 
     // Get file type info
     static getFileTypeInfo(filename) {

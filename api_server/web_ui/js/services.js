@@ -159,12 +159,12 @@ class SocketClient {
   constructor({ url = DEFAULT_SOCKET_URL, options = {}, onConnect, onDisconnect, onError, onStatus, onProgress, onFileReceipt }) {
     this.url = url ?? DEFAULT_SOCKET_URL;
     this.options = { ...DEFAULT_OPTIONS, ...options };
-    this.onConnect = typeof onConnect === 'function' ? onConnect : () => {};
-    this.onDisconnect = typeof onDisconnect === 'function' ? onDisconnect : () => {};
-    this.onError = typeof onError === 'function' ? onError : () => {};
-    this.onStatus = typeof onStatus === 'function' ? onStatus : () => {};
-    this.onProgress = typeof onProgress === 'function' ? onProgress : () => {};
-    this.onFileReceipt = typeof onFileReceipt === 'function' ? onFileReceipt : () => {};
+    this.onConnect = typeof onConnect === 'function' ? onConnect : () => { };
+    this.onDisconnect = typeof onDisconnect === 'function' ? onDisconnect : () => { };
+    this.onError = typeof onError === 'function' ? onError : () => { };
+    this.onStatus = typeof onStatus === 'function' ? onStatus : () => { };
+    this.onProgress = typeof onProgress === 'function' ? onProgress : () => { };
+    this.onFileReceipt = typeof onFileReceipt === 'function' ? onFileReceipt : () => { };
 
     this.socket = null;
     this.currentJobId = null;
@@ -300,7 +300,7 @@ class ConnectionMonitor {
   constructor({ api, interval = DEFAULT_INTERVAL, onResult }) {
     this.api = api;
     this.interval = interval;
-    this.onResult = typeof onResult === 'function' ? onResult : () => {};
+    this.onResult = typeof onResult === 'function' ? onResult : () => { };
     this.timer = null;
     this.inFlight = null;
   }
@@ -895,14 +895,14 @@ class LogStore {
     const hasLogEntries = this.#container.querySelector('.log-entry');
 
     if (forceRebuild || (!hasLogEntries && filteredEntries.length > 0)) {
-       // Clear container (preserve empty state element)
-       const children = Array.from(this.#container.children);
-       for (const child of children) {
-         if (child.id !== 'logsEmptyState') {
-           child.remove();
-         }
-       }
-       this.#lastRenderedId = 0;
+      // Clear container (preserve empty state element)
+      const children = Array.from(this.#container.children);
+      for (const child of children) {
+        if (child.id !== 'logsEmptyState') {
+          child.remove();
+        }
+      }
+      this.#lastRenderedId = 0;
     }
 
     // Find entries that haven't been rendered yet

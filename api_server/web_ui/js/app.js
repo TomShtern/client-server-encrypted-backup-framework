@@ -234,7 +234,7 @@ class App {
     // Set initial idle state (no transfer running)
     document.documentElement.classList.add('app-idle');
 
-      try {
+    try {
       this.#bindEvents();
       this.#setupVisibilityHandler();
       this.state.subscribe((snapshot) => this.#render(snapshot));
@@ -491,7 +491,7 @@ class App {
       input.classList.add('error');
       icon.classList.remove('success');
       icon.classList.add('error', 'show');
-      icon.textContent = '✕';
+      icon.textContent = '✗';
     }
   }
 
@@ -1282,7 +1282,7 @@ class App {
       dom.progressPct.textContent = progressText;
     }
 
-    const etaText = etaSeconds ? formatDuration(etaSeconds) : 'ETA —';
+    const etaText = etaSeconds ? formatDuration(etaSeconds) : 'ETA –';
     if (dom.etaText.textContent !== etaText) {
       dom.etaText.textContent = etaText;
     }
@@ -1334,7 +1334,7 @@ class App {
     }
 
     // Update elapsed time with animation
-    const elapsedText = state.elapsedSeconds ? formatDuration(state.elapsedSeconds) : '—';
+    const elapsedText = state.elapsedSeconds ? formatDuration(state.elapsedSeconds) : '–';
     if (dom.stats.elapsed.textContent !== elapsedText) {
       animateOnce(dom.stats.elapsed, 'updating');
       dom.stats.elapsed.textContent = elapsedText;
@@ -1505,11 +1505,11 @@ globalThis.addEventListener('DOMContentLoaded', () => {
     if (savedUser && typeof savedUser === 'string' && savedUser.trim()) {
       dom.usernameInput.value = savedUser.trim();
     }
-  } catch {}
+  } catch { }
   dom.serverInput.addEventListener('input', () => {
-    try { localStorage.setItem('cyberbackup-server', dom.serverInput.value.trim()); } catch {}
+    try { localStorage.setItem('cyberbackup-server', dom.serverInput.value.trim()); } catch { }
   });
   dom.usernameInput.addEventListener('input', () => {
-    try { localStorage.setItem('cyberbackup-username', dom.usernameInput.value.trim()); } catch {}
+    try { localStorage.setItem('cyberbackup-username', dom.usernameInput.value.trim()); } catch { }
   });
 });

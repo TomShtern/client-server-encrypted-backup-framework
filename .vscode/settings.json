@@ -136,5 +136,6 @@
     "VCPKG_TARGET_TRIPLET": "x64-windows"
   },
   "cmake.generator": "Visual Studio 17 2022",
-  "cmake.platform": "x64"
+  "cmake.platform": "x64",
+  "markdown.validate.enabled": true
 }

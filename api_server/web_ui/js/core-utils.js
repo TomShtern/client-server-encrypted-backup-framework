@@ -124,9 +124,9 @@ const domUtils = {
 
   isVisible(element) {
     return element &&
-           element.offsetWidth > 0 &&
-           element.offsetHeight > 0 &&
-           getComputedStyle(element).display !== 'none';
+      element.offsetWidth > 0 &&
+      element.offsetHeight > 0 &&
+      getComputedStyle(element).display !== 'none';
   },
 
   addCleanupListener(element, event, handler, options = {}) {
@@ -163,7 +163,7 @@ const BYTE_UNITS = ['B', 'KB', 'MB', 'GB', 'TB'];
 
 function formatBytes(bytes) {
   if (!Number.isFinite(bytes) || bytes < 0) {
-    return '—';
+    return '–';
   }
   if (bytes === 0) {
     return '0 B';
@@ -185,7 +185,7 @@ function formatBytes(bytes) {
 
 function formatSpeed(bytesPerSecond) {
   if (!Number.isFinite(bytesPerSecond) || bytesPerSecond < 0) {
-    return '—';
+    return '–';
   }
   if (bytesPerSecond === 0) {
     return '0 B/s';
@@ -207,7 +207,7 @@ function formatSpeed(bytesPerSecond) {
 
 function formatDuration(seconds) {
   if (!Number.isFinite(seconds) || seconds < 0) {
-    return '—';
+    return '–';
   }
   if (seconds < 1) {
     return `${seconds.toFixed(1)} s`;
@@ -227,7 +227,7 @@ function formatDuration(seconds) {
 
 function formatLatency(ms) {
   if (!Number.isFinite(ms) || ms <= 0) {
-    return '—';
+    return '–';
   }
   return `${Math.max(1, Math.round(ms))} ms`;
 }
@@ -621,7 +621,7 @@ class ToastManager {
 
   show(message, variant = 'info', duration = DEFAULT_DURATION) {
     if (!this.#stack) {
-      return () => {};
+      return () => { };
     }
     const toast = document.createElement('div');
     toast.className = `toast ${variant}`;
@@ -741,7 +741,7 @@ const API_CONFIG = {
   showFileProtocolWarning(toastFn) {
     if (typeof toastFn === 'function') {
       toastFn(
-        '⚠️ Running from file:// - API features disabled. Use HTTP server for full functionality.',
+        '⚠️ Running from file:// - API features disabled. Use HTTP server for full functionality.',
         'warn',
         8000
       );
