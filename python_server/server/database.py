@@ -34,8 +34,8 @@ from .exceptions import ServerError
 try:
     import sys
 
-    sys.path.append(
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..")
+    sys.path.insert(
+        0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..")
     )
     from Shared.monitoring.observability import MetricsCollector as _MetricsCollector
     from Shared.monitoring.observability import (
@@ -223,14 +223,14 @@ class DatabaseConnectionPool:
             import os
             import sys
 
-            shared_path = os.path.join(
+            # Ensure project root is in path (should be handled by top-level, but safe to ensure)
+            project_root = os.path.join(
                 os.path.dirname(os.path.abspath(__file__)),
                 "..",
                 "..",
-                "Shared",
-                "utils",
             )
-            sys.path.append(shared_path)
+            if project_root not in sys.path:
+                sys.path.insert(0, project_root)
             try:
                 from Shared.monitoring.thread_manager import create_managed_thread
 

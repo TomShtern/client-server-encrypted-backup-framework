@@ -433,8 +433,8 @@ header {
   top: 0;
   margin-top: 0;
   z-index: 100;
-  -webkit-backdrop-filter: blur(8px) saturate(180%);
-  backdrop-filter: blur(8px) saturate(180%);
+  /* Replaced backdrop-filter with solid background for performance */
+  background: rgba(22, 27, 34, 0.98);
   transition: all 0.3s ease;
 }
 
@@ -599,9 +599,8 @@ main#mainContent {
 
 .stack,
 .card {
-  background: rgba(22, 27, 34, 0.7);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  /* Replaced backdrop-filter with solid background for performance */
+  background: rgba(22, 27, 34, 0.98);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--radius-xl);
   padding: var(--space-lg) var(--space-xl);
@@ -757,7 +756,8 @@ label,
 .floating-label input:focus {
   outline: none;
   border-color: var(--focus);
-  box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.2), 0 2px 8px rgba(88, 166, 255, 0.25), inset 0 1px 2px rgba(0, 0, 0, 0.05);
+  /* Simplified to single box-shadow for performance */
+  box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.25);
   background: var(--surface);
   transform: translateY(-1px);
 }
@@ -1009,9 +1009,8 @@ button {
   padding: 14px 28px;
   border-radius: var(--radius-lg);
   border: 1px solid var(--border);
-  background: linear-gradient(135deg, rgba(51, 65, 85, 0.8) 0%, rgba(30, 41, 59, 0.6) 100%);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
+  /* Replaced backdrop-filter and gradient with solid background for performance */
+  background: rgba(51, 65, 85, 0.95);
   color: var(--fg);
   font-size: var(--fs-16);
   font-weight: var(--weight-semibold);
@@ -1031,7 +1030,8 @@ button:hover:not(:disabled):not(.ghost) {
   background: var(--surface-hover);
   border-color: rgba(88, 166, 255, 0.5);
   transform: translateY(-3px) scale(1.01);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 32px rgba(88, 166, 255, 0.15);
+  /* Simplified to single box-shadow for performance */
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
 button.ghost:hover:not(:disabled) {
@@ -1055,7 +1055,7 @@ button.primary {
   padding: 16px 40px;
   letter-spacing: 0.5px;
   text-transform: uppercase;
-  box-shadow: 0 4px 16px rgba(88, 166, 255, 0.4), 0 8px 32px rgba(88, 166, 255, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  /* Removed box-shadow for performance */
   position: relative;
   overflow: hidden;
 }
@@ -1076,13 +1076,16 @@ button.primary:hover::before {
 button.primary:hover:not(:disabled) {
   background: linear-gradient(135deg, #58a6ff 0%, #388bfd 100%);
   border-color: rgba(88, 166, 255, 0.6);
-  box-shadow: 0 6px 24px rgba(88, 166, 255, 0.5), 0 12px 48px rgba(88, 166, 255, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  /* Removed box-shadow for performance */
   transform: translateY(-2px) scale(1.02);
 }
 
 /* Morphing Button State */
 #primaryActionBtn {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  /* Specify only properties that actually change for performance */
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              background 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 #primaryActionBtn.morphing {
@@ -1208,7 +1211,9 @@ button[disabled]:hover {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%), var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  /* Specify only properties that actually change for performance */
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: var(--shadow);
   min-height: 52px;
   width: 100%;
@@ -1229,7 +1234,9 @@ button[disabled]:hover {
   background: linear-gradient(135deg, rgba(88, 166, 255, 0.15) 0%, rgba(34, 211, 238, 0.08) 100%), var(--surface-alt);
   border: 1px solid rgba(88, 166, 255, 0.3);
   font-size: 18px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  /* Specify only properties that actually change for performance */
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              background 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 2px 8px rgba(88, 166, 255, 0.1);
 }
 
@@ -1403,23 +1410,15 @@ svg {
   position: relative;
   display: grid;
   place-items: center;
-  /* Optimized: Single drop-shadow is much faster */
-  filter: drop-shadow(0 4px 16px rgba(88, 166, 255, 0.3));
+  /* Removed expensive filter: drop-shadow for performance */
   margin: var(--space-xl) auto var(--space-xl);
 }
 
-/* Conic gradient shadow for neon tube glow */
+/* Conic gradient shadow for neon tube glow - DISABLED for performance */
 .center::before {
-  content: '';
-  position: absolute;
-  width: var(--ring-size);
-  height: var(--ring-size);
-  background: conic-gradient(from 0deg, transparent 0%, rgba(88, 166, 255, 0.2) 50%, transparent 100%);
-  filter: blur(20px);
-  z-index: -1;
-  border-radius: 50%;
-  animation: rotate-glow 4s linear infinite;
-  will-change: transform;
+  /* Disabled expensive conic-gradient with blur(20px) for performance */
+  /* This was causing significant GPU overhead */
+  display: none;
 }
 
 @keyframes rotate-glow {
@@ -1714,7 +1713,9 @@ svg {
   background:
     radial-gradient(circle at 50% 50%, rgba(88, 166, 255, 0.03) 0%, transparent 70%),
     var(--surface-alt);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  /* Specify only properties that actually change for performance */
+  transition: border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              background 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
   position: relative;
   overflow: hidden;
@@ -1799,7 +1800,7 @@ svg {
 .cloud-upload-icon {
   width: 64px;
   height: 64px;
-  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.2));
+  /* Removed expensive filter: drop-shadow for performance */
   transition: transform 0.3s ease;
 }
 
@@ -2302,7 +2303,7 @@ svg {
   height: var(--ring-size, 420px);
   max-width: 500px;
   max-height: 500px;
-  filter: drop-shadow(0 0 25px rgba(112, 0, 255, 0.4));
+  /* Removed expensive filter: drop-shadow for performance */
   overflow: visible;
 }
 
@@ -2316,7 +2317,7 @@ svg {
 .status-panel .center #progressRing #progressArc {
   stroke-width: 10px;
   stroke-linecap: round;
-  filter: drop-shadow(0 0 15px rgba(255, 0, 85, 0.6));
+  /* Removed expensive filter: drop-shadow for performance */
 }
 
 /* Inner glass circle backdrop */
@@ -2971,7 +2972,8 @@ section.logs.stack>.phase {
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 11px;
   position: relative;
-  transition: all 0.25s ease;
+  /* Specify only properties that actually change for performance */
+  transition: background 0.25s ease, border-color 0.25s ease;
 }
 
 .switch-thumb {
@@ -2982,7 +2984,9 @@ section.logs.stack>.phase {
   border-radius: 50%;
   top: 1px;
   left: 1px;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  /* Specify only properties that actually change for performance */
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              background 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 

@@ -1,0 +1,77 @@
+# CyberBackup Framework - Deep Architectural & Security Audit Report
+
+**Date:** December 4, 2025
+**Audit Scope:** Full Stack (C++ Client, Python Server, Shared Components)
+**Focus:** Architecture, Security, Protocol Integrity, and Codebase Hygiene
+
+## 🧠 Executive "Deep Thinking" Summary
+
+The CyberBackup Framework demonstrates a robust core architecture with a clear separation of concerns between the high-performance native client (C++) and the managed backend (Python). The system adheres to critical safety protocols (UTF-8, Subprocess Management) but exhibits noticeable "architectural drift" in its GUI layer (`FletV2`) and configuration management.
+
+**Key Verdict:**
+*   **Core Security:** 🟢 **STRONG** (Protocol verified, Memory safe, DoS protected)
+*   **Operational Safety:** 🟢 **STRONG** (Subprocess lifecycle is excellent)
+*   **GUI Architecture:** 🟠 **MIXED** (Good navigation, poor state management performance)
+*   **Configuration:** 🔴 **WEAK** (Backend ignores unified configuration)
+
+---
+
+## 🛡️ I. Core Security & Protocol Analysis
+
+### 1. Binary Protocol Integrity (✅ VERIFIED)
+The binary handshake between C++ and Python is byte-perfect.
+*   **Endianness:** The C++ client explicitly handles Little-Endian conversion (`hostToLittleEndian16/32`), perfectly matching the Python server's `struct.pack('<BHI', ...)` expectation.
+*   **Packet Structure:** The 7-byte header (Version: 1, Code: 2, Size: 4) is consistently implemented on both sides.
+
+### 2. DoS Prevention (✅ VERIFIED)
+The system is resilient against basic Denial of Service attacks:
+*   **Pre-Allocation Check:** The Python server (`network_server.py`) validates `payload_size` against `MAX_PAYLOAD_READ_LIMIT` *before* reading the body.
+*   **Memory Mapping:** The C++ client uses `boost::iostreams::mapped_file_source`, preventing OOM crashes on the client side when transferring large files (verified 4GB+ support).
+
+### 3. Cryptographic Implementation (⚠️ WARNING)
+While the encryption algorithms (RSA-1024 + AES-256-CBC) are standard, the **Key Management** has a specific vulnerability:
+*   **Issue:** The C++ client caches the private key to disk in a file named `priv.key` in the current working directory (`Client/cpp/client.cpp` lines 608-609).
+*   **Risk:** This file is a raw binary DER dump. If the client directory is accessible, the private key is compromised.
+*   **Recommendation:** Refactor to keep the private key in memory *only* after decrypting from `me.info`, or use OS-level secure storage (Windows DPAPI).
+
+---
+
+## 🏗️ II. Architectural Health
+
+### 1. The "Configuration Gap" (❌ CRITICAL FAILURE)
+There is a complete disconnect between the "Unified Configuration" system and the actual Execution logic.
+*   **Finding:** `api_server/real_backup_executor.py` does **NOT** import or use `Shared.config.unified_config`.
+*   **Impact:** The executor uses hardcoded defaults or legacy `.info` parsing, effectively ignoring any global configuration changes made via the GUI or environment variables.
+*   **Action Required:** Immediate refactor of `real_backup_executor.py` to inject `UnifiedConfigurationManager`.
+
+### 2. FletV2 GUI Architecture
+The GUI is a mix of "Best Practice" and "Anti-Pattern":
+*   **The Good:** Navigation uses the native `NavigationRail` correctly. No custom routers.
+*   **The Bad:** Performance is severely compromised by **255 instances** of `page.update()`. This forces full-page repaints for minor state changes.
+*   **The Fix:** Strict enforcement of `control.update()` in `views/database_pro.py` and `views/files.py`.
+
+### 3. Client-Server Coupling
+The `FletV2` application uses a **Direct Object Pattern** (`server_adapter.py` imports `python_server`).
+*   **Trade-off:** This provides zero-latency monitoring but makes it impossible to run the GUI on a different machine from the server. This is an acceptable design choice for a "Desktop Admin Console" but limits future scalability.
+
+---
+
+## 📋 III. Consolidated Remediation Plan
+
+### Phase 1: Security Hardening (Immediate)
+1.  **Secure Key Storage:** Modify `Client/cpp/client.cpp` to strictly prevent writing `priv.key` to disk.
+2.  **Input Sanitization:** Enhance `Shared/validation/client_validation.py` to reject potential path traversal characters in *filenames* (currently only checks client IDs).
+
+### Phase 2: Architectural Alignment
+3.  **Bridge the Config Gap:** Refactor `real_backup_executor.py` to use `get_config()`.
+    ```python
+    from Shared.config.unified_config import get_config
+    # Use: get_config('server.host') instead of hardcoded '127.0.0.1'
+    ```
+4.  **GUI Performance:** Execute a "Search & Replace" campaign on `FletV2` to replace `page.update()` with specific control updates.
+
+### Phase 3: Code Hygiene
+5.  **Legacy Cleanup:** Archive `docs/Flet_Style_Components_Documentation.md` and remove `flet_server_gui` references to clarify the "Source of Truth" for AI agents.
+
+---
+*Report generated by Gemini Codebase Investigator Agent.*

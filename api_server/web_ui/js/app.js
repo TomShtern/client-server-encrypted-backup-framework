@@ -231,6 +231,14 @@ class App {
     this._lastRenderTime = 0;  // For render debouncing
     this._isTabVisible = true;  // Track tab visibility
 
+    // Cache stat card DOM queries (avoid querySelectorAll in render loop)
+    this._cachedStatCards = document.querySelectorAll('.stat');
+    this._cachedSpeedCard = document.querySelector('.stat:nth-child(2)');
+
+    // Speed update throttling
+    this._lastSpeedUpdate = 0;
+    this._speedUpdateThrottle = 100; // Max 10 updates/sec
+
     // Set initial idle state (no transfer running)
     document.documentElement.classList.add('app-idle');
 
@@ -831,40 +839,44 @@ class App {
     this.logs.add(message, { level, phase: phase || 'PROGRESS' });
 
     const now = Date.now();
-    this.state.mutate((draft) => {
-      draft.jobRunning = true;
-      draft.jobStatus = 'running';
-      draft.jobPhase = phase || draft.jobPhase;
-      draft.jobMessage = message;
-      draft.lastUpdated = now;
 
-      if (Number.isFinite(progressValue)) {
-        draft.progress = progressValue;
-      }
+    // Use RAF batching for smooth progress updates
+    performanceOptimizer.scheduleUpdate('socket-progress', () => {
+      this.state.mutate((draft) => {
+        draft.jobRunning = true;
+        draft.jobStatus = 'running';
+        draft.jobPhase = phase || draft.jobPhase;
+        draft.jobMessage = message;
+        draft.lastUpdated = now;
 
-      if (Number.isFinite(bytesTransferred)) {
-        draft.bytesTransferred = bytesTransferred;
-        if (this.lastSpeedSample) {
-          const deltaBytes = bytesTransferred - this.lastSpeedSample.bytes;
-          const deltaTime = (now - this.lastSpeedSample.time) / 1000;
-          if (deltaBytes >= 0 && deltaTime > 0) {
-            draft.speed = deltaBytes / deltaTime;
-          }
+        if (Number.isFinite(progressValue)) {
+          draft.progress = progressValue;
         }
-        this.lastSpeedSample = { bytes: bytesTransferred, time: now };
-      }
 
-      if (Number.isFinite(totalBytes)) {
-        draft.totalBytes = totalBytes;
-      }
+        if (Number.isFinite(bytesTransferred)) {
+          draft.bytesTransferred = bytesTransferred;
+          if (this.lastSpeedSample) {
+            const deltaBytes = bytesTransferred - this.lastSpeedSample.bytes;
+            const deltaTime = (now - this.lastSpeedSample.time) / 1000;
+            if (deltaBytes >= 0 && deltaTime > 0) {
+              draft.speed = deltaBytes / deltaTime;
+            }
+          }
+          this.lastSpeedSample = { bytes: bytesTransferred, time: now };
+        }
 
-      if (draft.startTimestamp) {
-        draft.elapsedSeconds = (now - draft.startTimestamp) / 1000;
-      }
+        if (Number.isFinite(totalBytes)) {
+          draft.totalBytes = totalBytes;
+        }
 
-      if (draft.totalBytes && draft.bytesTransferred && draft.speed > 0) {
-        draft.etaSeconds = Math.max((draft.totalBytes - draft.bytesTransferred) / draft.speed, 0);
-      }
+        if (draft.startTimestamp) {
+          draft.elapsedSeconds = (now - draft.startTimestamp) / 1000;
+        }
+
+        if (draft.totalBytes && draft.bytesTransferred && draft.speed > 0) {
+          draft.etaSeconds = Math.max((draft.totalBytes - draft.bytesTransferred) / draft.speed, 0);
+        }
+      });
     });
   }
 
@@ -1291,10 +1303,9 @@ class App {
   #renderStats(state) {
     // Apply transfer-active class during active transfers
     const isTransferring = state.jobStatus === 'running' && !state.paused;
-    const statCards = document.querySelectorAll('.stat');
-    const speedCard = document.querySelector('.stat:nth-child(2)'); // Speed is typically 2nd
 
-    statCards.forEach(card => {
+    // Use cached DOM queries instead of querySelectorAll on every render
+    this._cachedStatCards.forEach(card => {
       if (isTransferring) {
         card.classList.add('transfer-active');
       } else {
@@ -1303,11 +1314,11 @@ class App {
     });
 
     // Highlight speed card as primary stat during transfer
-    if (speedCard) {
+    if (this._cachedSpeedCard) {
       if (isTransferring) {
-        speedCard.classList.add('primary-stat');
+        this._cachedSpeedCard.classList.add('primary-stat');
       } else {
-        speedCard.classList.remove('primary-stat');
+        this._cachedSpeedCard.classList.remove('primary-stat');
       }
     }
 
@@ -1318,11 +1329,15 @@ class App {
       dom.stats.bytes.textContent = bytesText;
     }
 
-    // Update speed with animation (more frequent updates)
+    // Throttle speed updates to max 10/sec (reduce animation overhead)
+    const now = performance.now();
     const speedText = formatSpeed(state.speed);
-    if (dom.stats.speed.textContent !== speedText) {
-      animateOnce(dom.stats.speed, 'updating');
-      dom.stats.speed.textContent = speedText;
+    if (now - this._lastSpeedUpdate >= this._speedUpdateThrottle) {
+      if (dom.stats.speed.textContent !== speedText) {
+        animateOnce(dom.stats.speed, 'updating');
+        dom.stats.speed.textContent = speedText;
+        this._lastSpeedUpdate = now;
+      }
     }
 
     // Update size with animation

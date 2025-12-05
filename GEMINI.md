@@ -82,7 +82,7 @@ Current development focus: **FletV2 desktop GUI stabilization and enhancement**.
 ### 4. **FletV2 Desktop GUI (`FletV2/`)**
    - **Purpose**: Cross-platform Material Design 3 admin interface for server management
    - **Key Files**:
-     - `FletV2/main.py` - Application entry point (73K lines - comprehensive)
+     - `FletV2/main.py` - Application entry point (~1.6K lines)
      - `FletV2/theme.py` - Sophisticated theming (Material Design 3, Neumorphism, Glassmorphism)
      - `FletV2/server_adapter.py` - ServerBridge for Python server interaction
      - `FletV2/fletv2_gui_manager.py` - GUI lifecycle management
@@ -232,7 +232,7 @@ cmake --build build --config Release
 │   ├── development.json       # Development overrides
 │   └── database_config.py     # Database configuration
 ├── data/                      # UPDATED: Runtime data (REORGANIZED)
-│   ├── storage/               # Received backup files (was: received_files/)
+│   ├── received_files/        # Received backup files
 │   ├── database/              # Database files (defensive.db, backups)
 │   ├── keys/                  # RSA key storage
 │   ├── security/              # Security-related data
@@ -249,7 +249,7 @@ cmake --build build --config Release
 ```
 
 **IMPORTANT PATH CHANGES**:
-- ❌ `received_files/` → ✅ `data/storage/`
+
 - ❌ `Database/` → ✅ `data/database/`
 - ❌ `Shared/utils/` → ✅ `Shared/filesystem/`, `Shared/logging/`, `Shared/monitoring/`, `Shared/config/`
 

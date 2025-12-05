@@ -12,7 +12,8 @@ import sys
 import threading
 import time
 from datetime import datetime
-from logging.handlers import RotatingFileHandler
+
+# from logging.handlers import RotatingFileHandler # Removed redundant import
 from pathlib import Path
 from typing import Any
 
@@ -53,46 +54,18 @@ from Crypto.PublicKey import RSA  # noqa: E402
 from Crypto.Random import get_random_bytes  # noqa: E402
 
 from .config import (  # noqa: E402
-    AES_KEY_SIZE_BYTES as _AES_KEY_SIZE_BYTES,  # noqa: F401
-)
-from .config import (
-    CLIENT_SESSION_TIMEOUT as _CLIENT_SESSION_TIMEOUT,  # noqa: F401
-)
-from .config import (
-    CLIENT_SOCKET_TIMEOUT as _CLIENT_SOCKET_TIMEOUT,  # noqa: F401
-)
-from .config import (
+    AES_KEY_SIZE_BYTES,
+    CLIENT_SESSION_TIMEOUT,
     DEFAULT_PORT,
     FILE_STORAGE_DIR,
+    MAINTENANCE_INTERVAL,
     MAX_CLIENT_NAME_LENGTH,
+    MAX_CONCURRENT_CLIENTS,
+    PARTIAL_FILE_TIMEOUT,
+    RSA_PUBLIC_KEY_SIZE,
+    SERVER_LOG_FILENAME,
     SERVER_VERSION,
-)
-from .config import (
-    MAINTENANCE_INTERVAL as _MAINTENANCE_INTERVAL,  # noqa: F401
-)
-from .config import (
-    MAX_ACTUAL_FILENAME_LENGTH as _MAX_ACTUAL_FILENAME_LENGTH,  # noqa: F401
-)
-from .config import (
-    MAX_CONCURRENT_CLIENTS as _MAX_CONCURRENT_CLIENTS,  # noqa: F401
-)
-from .config import (
-    MAX_FILENAME_FIELD_SIZE as _MAX_FILENAME_FIELD_SIZE,  # noqa: F401
-)
-from .config import (
-    MAX_ORIGINAL_FILE_SIZE as _MAX_ORIGINAL_FILE_SIZE,  # noqa: F401
-)
-from .config import (
-    MAX_PAYLOAD_READ_LIMIT as _MAX_PAYLOAD_READ_LIMIT,  # noqa: F401
-)
-from .config import (
-    PARTIAL_FILE_TIMEOUT as _PARTIAL_FILE_TIMEOUT,  # noqa: F401
-)
-from .config import (
-    RSA_PUBLIC_KEY_SIZE as _RSA_PUBLIC_KEY_SIZE,  # noqa: F401
-)
-from .config import (
-    SETTINGS_FILE as _SETTINGS_FILE,  # noqa: F401
+    SETTINGS_FILE,
 )
 
 # Import protocol constants and configuration (refactored for modularity)
@@ -115,31 +88,10 @@ from .server_singleton import ensure_single_server_instance  # noqa: E402
 # Remaining server-specific constants:
 
 # Behavior Configuration
-CLIENT_SOCKET_TIMEOUT = (
-    60.0  # Timeout for individual socket operations with a client # noqa: F811
-)
-CLIENT_SESSION_TIMEOUT = (
-    10 * 60
-)  # Overall inactivity timeout for a client session (10 minutes) # noqa: F811
-PARTIAL_FILE_TIMEOUT = (
-    15 * 60
-)  # Timeout for incomplete multi-packet file transfers (15 minutes) # noqa: F811
-MAINTENANCE_INTERVAL = 20.0  # How often to run maintenance tasks (seconds) # noqa: F811
-MAX_PAYLOAD_READ_LIMIT = (
-    16 * 1024 * 1024 + 1024
-)  # Max size for a single payload read (16MB chunk + headers) # noqa: F811
-MAX_ORIGINAL_FILE_SIZE = (
-    4 * 1024 * 1024 * 1024
-)  # Max original file size (e.g., 4GB) - for sanity checking # noqa: F811
-MAX_CONCURRENT_CLIENTS = 50  # Max number of concurrent client connections # noqa: F811
+# Behavior Configuration - Imported from config.py
+# CLIENT_SOCKET_TIMEOUT, CLIENT_SESSION_TIMEOUT, PARTIAL_FILE_TIMEOUT, etc. are now used directly from config import
 
 # MAX_CLIENT_NAME_LENGTH imported from config.py (line 39)
-MAX_FILENAME_FIELD_SIZE = 255  # Size of the filename field in protocol # noqa: F811
-MAX_ACTUAL_FILENAME_LENGTH = (
-    250  # Practical limit for actual filename within the field # noqa: F811
-)
-RSA_PUBLIC_KEY_SIZE = 160  # Bytes, X.509 format (for 1024-bit RSA - per protocol specification) # noqa: F811
-AES_KEY_SIZE_BYTES = 32  # 256-bit AES # noqa: F811
 
 # Logging Configuration
 DEFAULT_LOG_LINES_LIMIT = (
@@ -157,13 +109,14 @@ MAX_LOG_EXPORT_LINES = 50000  # Maximum number of lines to read from log file du
 VALID_LOG_EXPORT_FORMATS = {"text", "json", "csv"}
 
 # Settings Configuration
-SETTINGS_FILE = "server_settings.json"  # Settings persistence file # noqa: F811
+# Settings Configuration
+# SETTINGS_FILE imported from config.py
 
 # String constants for error messages and metrics
 METRIC_DB_QUERY_DURATION = "database.query.duration"
 ERROR_FILE_NOT_FOUND = "File not found"
 ERROR_ROW_ID_REQUIRED = "Row identifier is required"
-SERVER_LOG_FILENAME = "server.log"
+# SERVER_LOG_FILENAME imported from config.py
 SEPARATOR_LINE = "====================================================================="
 
 """
@@ -277,18 +230,18 @@ def retry(
 
 # Maintain compatibility: also log to the original server.log file
 # Now uses RotatingFileHandler to prevent unbounded growth
-
-LOG_FORMAT = "%(asctime)s - %(threadName)s - %(levelname)s - %(message)s"
-os.makedirs("logs", exist_ok=True)
-server_log_handler = RotatingFileHandler(
-    "logs/server.log",
-    mode="a",
-    maxBytes=10 * 1024 * 1024,  # 10 MB per file
-    backupCount=5,  # Keep 5 backup files
-)
-server_log_handler.setFormatter(logging.Formatter(LOG_FORMAT))
-server_log_handler.setLevel(logging.DEBUG)
-logger.addHandler(server_log_handler)
+# Redundant manual logging removed - using Shared.logging.logging_utils
+# LOG_FORMAT = "%(asctime)s - %(threadName)s - %(levelname)s - %(message)s"
+# os.makedirs("logs", exist_ok=True)
+# server_log_handler = RotatingFileHandler(
+#     "logs/server.log",
+#     mode="a",
+#     maxBytes=10 * 1024 * 1024,  # 10 MB per file
+#     backupCount=5,  # Keep 5 backup files
+# )
+# server_log_handler.setFormatter(logging.Formatter(LOG_FORMAT))
+# server_log_handler.setLevel(logging.DEBUG)
+# logger.addHandler(server_log_handler)
 
 # Protocol constants now imported from protocol.py module
 

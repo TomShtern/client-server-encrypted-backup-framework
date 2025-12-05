@@ -110,7 +110,6 @@
   "editor.experimentalGpuAcceleration": "on",
   "editor.bracketPairColorization.independentColorPoolPerBracketType": true,
   "editor.guides.bracketPairs": "active",
-  "sonarlint.pathToCompileCommands": "${workspaceFolder}\\vcpkg\\buildtrees\\pkgconf\\x64-windows-dbg\\compile_commands.json",
   "editor.fontSize": 17,
   "editor.minimap.sectionHeaderFontSize": 10,
   "debug.console.fontSize": 17,

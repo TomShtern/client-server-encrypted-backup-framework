@@ -29,12 +29,12 @@ The CyberBackup Web UI has a solid foundation with a cyber-tech aesthetic, but s
 
 ### Screenshots Captured
 
-| View | Resolution | Status |
-|------|------------|--------|
-| Desktop Dark Mode | 1280×800 | ✅ Good baseline |
-| Desktop Light Mode | 1280×800 | ⚠️ Theme inconsistencies |
-| Tablet | 768×900 | ❌ Layout cramped, header clipped |
-| Mobile | 375×812 | ❌ **Completely broken** - Status panel invisible |
+| View               | Resolution | Status                                           |
+|--------------------|------------|--------------------------------------------------|
+| Desktop Dark Mode  | 1280×800   | ✅ Good baseline                                  |
+| Desktop Light Mode | 1280×800   | ⚠️ Theme inconsistencies                         |
+| Tablet             | 768×900    | ❌ Layout cramped, header clipped                 |
+| Mobile             | 375×812    | ❌ **Completely broken** - Status panel invisible |
 
 ### Aesthetic Assessment
 
@@ -587,34 +587,34 @@ button[disabled]:hover {
 
 ### Phase 1: Critical Bug Fixes (Immediate)
 
-| Order | Task ID | Description | Est. Time |
-|-------|---------|-------------|-----------|
-| 1 | P0-1 | Fix "ETA ETA" duplicate | 5 min |
-| 2 | P0-2 | Add responsive grid breakpoints | 30 min |
+| Order | Task ID | Description                     | Est. Time |
+|-------|---------|---------------------------------|-----------|
+| 1     | P0-1    | Fix "ETA ETA" duplicate         | 5 min     |
+| 2     | P0-2    | Add responsive grid breakpoints | 30 min    |
 
 ### Phase 2: High Priority Fixes
 
-| Order | Task ID | Description | Est. Time |
-|-------|---------|-------------|-----------|
-| 3 | P1-1 | Fix light mode label colors | 15 min |
-| 4 | P1-2 | Add light mode progress ring styles | 30 min |
-| 5 | P1-3 | Fix header clipping on mobile | 15 min |
+| Order | Task ID | Description                         | Est. Time |
+|-------|---------|-------------------------------------|-----------|
+| 3     | P1-1    | Fix light mode label colors         | 15 min    |
+| 4     | P1-2    | Add light mode progress ring styles | 30 min    |
+| 5     | P1-3    | Fix header clipping on mobile       | 15 min    |
 
 ### Phase 3: Polish & Enhancements
 
-| Order | Task ID | Description | Est. Time |
-|-------|---------|-------------|-----------|
-| 6 | P2-2 | Stats card visual hierarchy | 15 min |
-| 7 | P2-3 | Connection popover positioning | 10 min |
-| 8 | P2-1 | Typography upgrade (optional) | 20 min |
+| Order | Task ID | Description                    | Est. Time |
+|-------|---------|--------------------------------|-----------|
+| 6     | P2-2    | Stats card visual hierarchy    | 15 min    |
+| 7     | P2-3    | Connection popover positioning | 10 min    |
+| 8     | P2-1    | Typography upgrade (optional)  | 20 min    |
 
 ### Phase 4: Nice-to-Have
 
-| Order | Task ID | Description | Est. Time |
-|-------|---------|-------------|-----------|
-| 9 | P3-1 | Scanline effect | 10 min |
-| 10 | P3-2 | Disabled button states | 5 min |
-| 11 | P3-3 | Loading animation | 5 min |
+| Order | Task ID | Description            | Est. Time |
+|-------|---------|------------------------|-----------|
+| 9     | P3-1    | Scanline effect        | 10 min    |
+| 10    | P3-2    | Disabled button states | 5 min     |
+| 11    | P3-3    | Loading animation      | 5 min     |
 
 ---
 
@@ -662,11 +662,11 @@ button[disabled]:hover {
 
 ## File Summary
 
-| File | Changes Required |
-|------|-----------------|
-| `js/app.js` | P0-1: 1 line fix |
+| File             | Changes Required                                           |
+|------------------|------------------------------------------------------------|
+| `js/app.js`      | P0-1: 1 line fix                                           |
 | `css/styles.css` | P0-2, P1-1, P1-2, P1-3, P2-1, P2-2, P2-3, P3-1, P3-2, P3-3 |
-| `index.html` | P2-1 (optional font preload) |
+| `index.html`     | P2-1 (optional font preload)                               |
 
 **Total Estimated Lines:** ~250 lines of CSS, 1 line of JS
 
@@ -674,13 +674,13 @@ button[disabled]:hover {
 
 ## Appendix: Screenshots Reference
 
-| Filename | Description |
-|----------|-------------|
-| `ui_viewport.png` | Desktop dark mode (baseline) |
-| `ui_scrolled.png` | Activity logs section |
-| `ui_light_mode.png` | Light mode with issues visible |
-| `ui_tablet.png` | Tablet layout (broken) |
-| `ui_mobile.png` | Mobile layout (severely broken) |
+| Filename            | Description                     |
+|---------------------|---------------------------------|
+| `ui_viewport.png`   | Desktop dark mode (baseline)    |
+| `ui_scrolled.png`   | Activity logs section           |
+| `ui_light_mode.png` | Light mode with issues visible  |
+| `ui_tablet.png`     | Tablet layout (broken)          |
+| `ui_mobile.png`     | Mobile layout (severely broken) |
 
 ---
 
