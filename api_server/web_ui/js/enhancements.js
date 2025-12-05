@@ -9,11 +9,18 @@ class ProfessionalGUIEnhancements {
         this.init();
     }
 
+    // Cleanup method to prevent memory leaks
+    static cleanup() {
+        ProfessionalGUIEnhancements.rippleController.destroy();
+        if (ProfessionalGUIEnhancements.chartInstance) {
+            ProfessionalGUIEnhancements.chartInstance.destroy();
+        }
+    }
+
     init() {
         this.setupSidebarEnhancements();
         // Visual effects only
-        ProfessionalGUIEnhancements.initDataParticles();
-        ProfessionalGUIEnhancements.initRippleEffects();
+                ProfessionalGUIEnhancements.initRippleEffects();
         ProfessionalGUIEnhancements.initFloatingLabels();
         ProfessionalGUIEnhancements.addEnhancementStyles();
 
@@ -60,50 +67,30 @@ class ProfessionalGUIEnhancements {
         }
     }
 
-    // Static method: Initialize data particles
-    // PERFORMANCE: Disabled by default to reduce CPU usage from continuous animations
-    // To re-enable, uncomment the code below and call initDataParticles()
-    static initDataParticles() {
-        // Particles disabled  for performance - they cause constant repaints
-        console.log('[Performance] Data particles disabled for better performance');
-        return;
-
-        /* ORIGINAL CODE - DISABLED FOR PERFORMANCE
-        const container = document.getElementById('dataParticles');
-        if (!container) return;
-
-        // Clear existing
-        container.innerHTML = '';
-
-        // Create particles
-        const particleCount = window.innerWidth < 768 ? 20 : 50;
-
-        for (let i = 0; i < particleCount; i++) {
-            const particle = document.createElement('div');
-            particle.className = 'particle';
-
-            // Random positioning and sizing
-            const size = Math.random() * 3 + 1;
-            particle.style.width = `${size}px`;
-            particle.style.height = `${size}px`;
-            particle.style.left = `${Math.random() * 100}%`;
-            particle.style.top = `${Math.random() * 100}%`;
-
-            // Random animation properties
-            const duration = Math.random() * 20 + 10;
-            const delay = Math.random() * 5;
-            particle.style.animationDuration = `${duration}s`;
-            particle.style.animationDelay = `-${delay}s`;
-            particle.style.opacity = Math.random() * 0.5 + 0.1;
-
-            container.appendChild(particle);
-        }
-        */
-    }
-
+  
     // Static method: Initialize ripple effects
     static initRippleEffects() {
-        document.addEventListener('click', (e) => {
+        ProfessionalGUIEnhancements.rippleController.init();
+    }
+
+    // Ripple controller for proper event listener cleanup
+    static rippleController = {
+        handler: null,
+        init() {
+            // Remove any existing listener first
+            this.destroy();
+
+            // Store reference to handler
+            this.handler = (e) => this.createRipple(e);
+            document.addEventListener('click', this.handler);
+        },
+        destroy() {
+            if (this.handler) {
+                document.removeEventListener('click', this.handler);
+                this.handler = null;
+            }
+        },
+        createRipple(e) {
             const target = e.target.closest('.ripple');
             if (!target) return;
 
@@ -131,8 +118,8 @@ class ProfessionalGUIEnhancements {
             setTimeout(() => {
                 circle.remove();
             }, 600);
-        });
-    }
+        }
+    };
 
     // Static method: Initialize floating labels
     static initFloatingLabels() {
@@ -363,16 +350,6 @@ class ProfessionalGUIEnhancements {
         }
     }
 
-    // Helper function for file size formatting
-    static formatBytes(bytes, decimals = 2) {
-        if (bytes === 0) return '0 B';
-        const k = 1024;
-        const dm = decimals < 0 ? 0 : decimals;
-        const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-    }
-
     // Connection dropdown toggle
     static setupConnectionDropdown() {
         const statusBadge = document.getElementById('connStatus');
@@ -436,6 +413,9 @@ class ProfessionalGUIEnhancements {
 
     // Speed chart implementation (inner class)
     static SpeedChart = class {
+        // Private field declarations
+        #resizeHandler = null;
+
         constructor(canvasId) {
             this.canvas = document.getElementById(canvasId);
             if (!this.canvas) return;
@@ -445,9 +425,80 @@ class ProfessionalGUIEnhancements {
             this.maxDataPoints = 30; // 30 seconds of data
             this.maxSpeed = 0;
 
+            // Cache colors from CSS variables (theme-responsive)
+            this.colors = this.#getColorsFromCSS();
+
             // Setup canvas size
             this.resizeCanvas();
-            window.addEventListener('resize', () => this.resizeCanvas());
+            this.#attachResizeListener();
+            this.#attachThemeChangeListener();
+        }
+
+        /**
+         * Convert hex color to RGBA format.
+         * Handles both 3-digit and 6-digit hex colors.
+         * @private
+         * @param {string} hex - Hex color code (e.g., '#58a6ff')
+         * @param {number} alpha - Alpha value (0-1)
+         * @returns {string} RGBA color string
+         */
+        #hexToRgba(hex, alpha) {
+            // Remove # if present
+            hex = hex.replace('#', '');
+
+            // Expand 3-digit hex to 6-digit
+            if (hex.length === 3) {
+                hex = hex.split('').map(c => c + c).join('');
+            }
+
+            // Parse hex to RGB
+            const r = parseInt(hex.substring(0, 2), 16);
+            const g = parseInt(hex.substring(2, 4), 16);
+            const b = parseInt(hex.substring(4, 6), 16);
+
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        }
+
+        /**
+         * Get colors from CSS custom properties (theme-aware).
+         * Reads from root element to get current theme colors.
+         * @private
+         * @returns {Object} Colors object with grid and line colors
+         */
+        #getColorsFromCSS() {
+            const root = document.documentElement;
+            const computedStyle = getComputedStyle(root);
+
+            return {
+                grid: computedStyle.getPropertyValue('--border').trim(),
+                line: computedStyle.getPropertyValue('--focus').trim(),
+            };
+        }
+
+        /**
+         * Listen for theme changes and update colors accordingly.
+         * Triggered when html element class changes (theme toggle).
+         * @private
+         */
+        #attachThemeChangeListener() {
+            // Observe class changes on html element for theme switches
+            const observer = new MutationObserver(() => {
+                this.colors = this.#getColorsFromCSS();
+                if (this.dataPoints.length > 0) {
+                    this.draw(); // Redraw chart with new colors
+                }
+            });
+
+            observer.observe(document.documentElement, {
+                attributes: true,
+                attributeFilter: ['class'],
+            });
+        }
+
+        #attachResizeListener() {
+            // Store handler reference for cleanup
+            this.#resizeHandler = () => this.resizeCanvas();
+            window.addEventListener('resize', this.#resizeHandler);
         }
 
         resizeCanvas() {
@@ -485,8 +536,8 @@ class ProfessionalGUIEnhancements {
             // Clear canvas
             this.ctx.clearRect(0, 0, width, height);
 
-            // Draw grid lines
-            this.ctx.strokeStyle = '#30363d';
+            // Draw grid lines (color from CSS --border variable for theme support)
+            this.ctx.strokeStyle = this.colors.grid;
             this.ctx.lineWidth = 1;
             for (let i = 0; i <= 4; i++) {
                 const y = padding + (chartHeight / 4) * i;
@@ -496,8 +547,8 @@ class ProfessionalGUIEnhancements {
                 this.ctx.stroke();
             }
 
-            // Draw line chart
-            this.ctx.strokeStyle = '#58a6ff';
+            // Draw line chart (color from CSS --focus variable for theme support)
+            this.ctx.strokeStyle = this.colors.line;
             this.ctx.lineWidth = 2;
             this.ctx.beginPath();
 
@@ -519,9 +570,10 @@ class ProfessionalGUIEnhancements {
             this.ctx.lineTo(padding, height - padding);
             this.ctx.closePath();
 
+            // Create gradient with theme-aware colors
             const gradient = this.ctx.createLinearGradient(0, padding, 0, height - padding);
-            gradient.addColorStop(0, 'rgba(88, 166, 255, 0.2)');
-            gradient.addColorStop(1, 'rgba(88, 166, 255, 0.0)');
+            gradient.addColorStop(0, this.#hexToRgba(this.colors.line, 0.2));
+            gradient.addColorStop(1, this.#hexToRgba(this.colors.line, 0.0));
             this.ctx.fillStyle = gradient;
             this.ctx.fill();
         }
@@ -534,6 +586,17 @@ class ProfessionalGUIEnhancements {
                 const height = this.canvas.height / window.devicePixelRatio;
                 this.ctx.clearRect(0, 0, width, height);
             }
+        }
+
+        destroy() {
+            // Remove resize listener to prevent memory leak
+            if (this.#resizeHandler) {
+                window.removeEventListener('resize', this.#resizeHandler);
+                this.#resizeHandler = null;
+            }
+            this.canvas = null;
+            this.ctx = null;
+            this.dataPoints = [];
         }
     }
 
@@ -636,8 +699,7 @@ class ProfessionalGUIEnhancements {
         ProfessionalGUIEnhancements.setupSpeedChart();
 
         // Enhanced interactions
-        ProfessionalGUIEnhancements.initDataParticles();
-        ProfessionalGUIEnhancements.initRippleEffects();
+                ProfessionalGUIEnhancements.initRippleEffects();
         ProfessionalGUIEnhancements.initFloatingLabels();
 
         // Watch for file selection changes to update icons/badges
@@ -660,20 +722,7 @@ class ProfessionalGUIEnhancements {
             });
         }
 
-        // Responsive particle count on resize - DISABLED for performance
-        // Particles are disabled by default. To re-enable, uncomment initDataParticles() in line 64
-
-        /*
-        let resizeTimeout;
-        window.addEventListener('resize', () => {
-            clearTimeout(resizeTimeout);
-            resizeTimeout = setTimeout(() => {
-                ProfessionalGUIEnhancements.initDataParticles();
-            }, 250);
-        });
-        */
-
-        // Initialize new professional enhancements
+  // Initialize new professional enhancements
         new ProfessionalGUIEnhancements();
     }
 
@@ -776,3 +825,17 @@ if (document.readyState === 'loading') {
 } else {
     ProfessionalGUIEnhancements.initializeEnhancements();
 }
+
+// Cleanup on page unload to prevent memory leaks
+window.addEventListener('beforeunload', ProfessionalGUIEnhancements.cleanup);
+
+// Also cleanup on page visibility changes (development mode handling)
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+        // Page hidden, potential module reload - clean up
+        ProfessionalGUIEnhancements.cleanup();
+    } else if (document.visibilityState === 'visible') {
+        // Page visible again, reinitialize
+        ProfessionalGUIEnhancements.initRippleEffects();
+    }
+});

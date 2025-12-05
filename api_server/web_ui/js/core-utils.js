@@ -6,6 +6,10 @@
 // --- utils/dom.js ---
 /**
  * Gets a DOM element by ID with optional fallback
+ * @param {string} id - The element ID
+ * @param {boolean} [required=true] - Whether the element is required (throws if not found)
+ * @returns {HTMLElement|null} The DOM element or null if not found and not required
+ * @throws {Error} When element is required but not found
  */
 function getElement(id, required = true) {
   const el = document.getElementById(id);
@@ -17,6 +21,8 @@ function getElement(id, required = true) {
 
 /**
  * Gets a DOM element by ID, returns null if not found (no throw)
+ * @param {string} id - The element ID
+ * @returns {HTMLElement|null} The DOM element or null if not found
  */
 function getOptionalElement(id) {
   return document.getElementById(id);
@@ -24,6 +30,10 @@ function getOptionalElement(id) {
 
 /**
  * Query for a DOM element using CSS selector and throw if not found
+ * @param {string} selector - The CSS selector
+ * @param {Document|HTMLElement} [parent=document] - The parent element to query within
+ * @returns {HTMLElement} The matching DOM element
+ * @throws {Error} When element is not found for the selector
  */
 function querySelector(selector, parent = document) {
   const el = parent.querySelector(selector);
@@ -112,7 +122,16 @@ const dom = {
 /**
  * Utility functions for DOM manipulation and error-safe operations
  */
+/**
+ * Utility functions for DOM manipulation and error-safe operations
+ */
 const domUtils = {
+  /**
+   * Safely executes a DOM operation with error handling
+   * @param {Function} operation - The DOM operation to execute
+   * @param {string} [context='DOM operation'] - Context for error logging
+   * @returns {*} The result of the operation or null if failed
+   */
   safeExecute(operation, context = 'DOM operation') {
     try {
       return operation();
@@ -122,6 +141,11 @@ const domUtils = {
     }
   },
 
+  /**
+   * Checks if an element is visible
+   * @param {HTMLElement} element - The element to check
+   * @returns {boolean} True if element is visible
+   */
   isVisible(element) {
     return element &&
       element.offsetWidth > 0 &&
@@ -129,11 +153,25 @@ const domUtils = {
       getComputedStyle(element).display !== 'none';
   },
 
+  /**
+   * Adds an event listener and returns a cleanup function
+   * @param {HTMLElement} element - The element to add listener to
+   * @param {string} event - The event type
+   * @param {Function} handler - The event handler
+   * @param {Object} [options={}] - Event listener options
+   * @returns {Function} Cleanup function to remove the listener
+   */
   addCleanupListener(element, event, handler, options = {}) {
     element.addEventListener(event, handler, options);
     return () => element.removeEventListener(event, handler, options);
   },
 
+  /**
+   * Creates a debounced function
+   * @param {Function} func - The function to debounce
+   * @param {number} wait - Delay in milliseconds
+   * @returns {Function} Debounced function
+   */
   debounce(func, wait) {
     let timeout;
     return function executedFunction(...args) {
@@ -146,6 +184,12 @@ const domUtils = {
     };
   },
 
+  /**
+   * Creates a throttled function
+   * @param {Function} func - The function to throttle
+   * @param {number} limit - Throttle limit in milliseconds
+   * @returns {Function} Throttled function
+   */
   throttle(func, limit) {
     let inThrottle;
     return function executedFunction(...args) {
@@ -161,6 +205,11 @@ const domUtils = {
 // --- utils/formatters.js ---
 const BYTE_UNITS = ['B', 'KB', 'MB', 'GB', 'TB'];
 
+/**
+ * Formats bytes to human-readable string with appropriate units
+ * @param {number} bytes - The number of bytes to format
+ * @returns {string} Formatted string (e.g., "1.5 KB", "2.3 MB", "–" for invalid input)
+ */
 function formatBytes(bytes) {
   if (!Number.isFinite(bytes) || bytes < 0) {
     return '–';
@@ -183,6 +232,11 @@ function formatBytes(bytes) {
   return `${value.toFixed(precision)} ${BYTE_UNITS[exponent]}`;
 }
 
+/**
+ * Formats bytes per second to human-readable speed string
+ * @param {number} bytesPerSecond - The speed in bytes per second
+ * @returns {string} Formatted speed string (e.g., "1.5 KB/s", "2.3 MB/s", "–" for invalid input)
+ */
 function formatSpeed(bytesPerSecond) {
   if (!Number.isFinite(bytesPerSecond) || bytesPerSecond < 0) {
     return '–';
@@ -205,6 +259,11 @@ function formatSpeed(bytesPerSecond) {
   return `${value.toFixed(precision)} ${BYTE_UNITS[exponent]}/s`;
 }
 
+/**
+ * Formats seconds to human-readable duration string
+ * @param {number} seconds - The duration in seconds
+ * @returns {string} Formatted duration string (e.g., "1h 23m", "45s", "0.5s", "–" for invalid input)
+ */
 function formatDuration(seconds) {
   if (!Number.isFinite(seconds) || seconds < 0) {
     return '–';
@@ -225,6 +284,11 @@ function formatDuration(seconds) {
   return `${secs}s`;
 }
 
+/**
+ * Formats milliseconds to human-readable latency string
+ * @param {number} ms - The latency in milliseconds
+ * @returns {string} Formatted latency string (e.g., "45 ms", "–" for invalid input)
+ */
 function formatLatency(ms) {
   if (!Number.isFinite(ms) || ms <= 0) {
     return '–';
@@ -232,6 +296,11 @@ function formatLatency(ms) {
   return `${Math.max(1, Math.round(ms))} ms`;
 }
 
+/**
+ * Formats a numeric value to percentage string
+ * @param {number} value - The value to format (0-100)
+ * @returns {string} Formatted percentage string (e.g., "45%", "0%" for invalid input)
+ */
 function formatPercentage(value) {
   if (!Number.isFinite(value)) {
     return '0%';
@@ -239,6 +308,12 @@ function formatPercentage(value) {
   return `${Math.min(100, Math.max(0, value)).toFixed(0)}%`;
 }
 
+/**
+ * Parses server address string into host and port components
+ * Supports formats like "host", "host:port", "http://host:port", "https://host:port"
+ * @param {string} input - The server address string to parse
+ * @returns {{host: string, port: number}|null} Parsed host and port, or null if invalid
+ */
 function parseServerAddress(input) {
   if (!input || typeof input !== 'string') {
     return null;
@@ -268,14 +343,54 @@ function parseServerAddress(input) {
   return { host: hostPart, port: parsedPort };
 }
 
+/**
+ * Clamps a numeric value between minimum and maximum bounds
+ * @param {number} value - The value to clamp
+ * @param {{min: number, max: number}} bounds - The minimum and maximum bounds
+ * @returns {number} The clamped value
+ */
+function clamp(value, { min, max }) {
+  return Math.min(Math.max(value, min), max);
+}
+
+/**
+ * Validates and parses numeric input from an HTML input element
+ * @param {HTMLInputElement} input - The input element to validate
+ * @param {{min: number, max: number}} bounds - The minimum and maximum allowed values
+ * @returns {number|null} The parsed and clamped number, or null if invalid/empty
+ */
+function validateNumericInput(input, { min, max }) {
+  const raw = input.value.trim();
+  if (raw.length === 0) {
+    return null;
+  }
+  const numeric = Number.parseInt(raw, 10);
+  if (!Number.isFinite(numeric)) {
+    return null;
+  }
+  return clamp(numeric, { min, max });
+}
+
 // --- utils/performance-optimizer.js ---
+/**
+ * Manages performance-critical updates using requestAnimationFrame batching
+ * Prevents excessive DOM updates by batching multiple updates into a single frame
+ */
 class PerformanceOptimizer {
+  /**
+   * Creates a new PerformanceOptimizer instance
+   */
   constructor() {
     this.pendingUpdates = new Map();
     this.rafId = null;
     this.isScheduled = false;
   }
 
+  /**
+   * Schedules an update to be executed in the next animation frame
+   * @param {string} key - Unique identifier for the update
+   * @param {Function} updateFn - Function to execute when update is flushed
+   */
   scheduleUpdate(key, updateFn) {
     this.pendingUpdates.set(key, updateFn);
 
@@ -285,6 +400,9 @@ class PerformanceOptimizer {
     }
   }
 
+  /**
+   * Executes all pending updates and clears the queue
+   */
   flush() {
     if (this.pendingUpdates.size === 0) {
       this.isScheduled = false;
@@ -303,6 +421,9 @@ class PerformanceOptimizer {
     this.isScheduled = false;
   }
 
+  /**
+   * Cancels all pending updates and stops the animation frame
+   */
   cancel() {
     if (this.rafId) {
       cancelAnimationFrame(this.rafId);
@@ -313,6 +434,12 @@ class PerformanceOptimizer {
   }
 }
 
+/**
+ * Creates a debounced function that uses both setTimeout and requestAnimationFrame
+ * @param {Function} fn - The function to debounce
+ * @param {number} [wait=16] - Delay in milliseconds (approximately 1 frame)
+ * @returns {Function} Debounced function
+ */
 function rafDebounce(fn, wait = 16) {
   let timeoutId = null;
   let rafId = null;
@@ -337,6 +464,12 @@ function rafDebounce(fn, wait = 16) {
   };
 }
 
+/**
+ * Creates a throttled function that uses requestAnimationFrame
+ * @param {Function} fn - The function to throttle
+ * @param {number} [limit=16] - Throttle limit in milliseconds (approximately 1 frame)
+ * @returns {Function} Throttled function
+ */
 function rafThrottle(fn, limit = 16) {
   let inThrottle = false;
   let rafId = null;
@@ -355,52 +488,18 @@ function rafThrottle(fn, limit = 16) {
   };
 }
 
-class DOMBatcher {
-  constructor() {
-    this.reads = [];
-    this.writes = [];
-    this.scheduled = false;
-  }
-
-  read(readFn) {
-    return new Promise((resolve) => {
-      this.reads.push(() => {
-        const result = readFn();
-        resolve(result);
-      });
-      this.schedule();
-    });
-  }
-
-  write(writeFn) {
-    return new Promise((resolve) => {
-      this.writes.push(() => {
-        writeFn();
-        resolve();
-      });
-      this.schedule();
-    });
-  }
-
-  schedule() {
-    if (!this.scheduled) {
-      this.scheduled = true;
-      requestAnimationFrame(() => this.flush());
-    }
-  }
-
-  flush() {
-    const reads = this.reads.splice(0);
-    reads.forEach(read => read());
-
-    const writes = this.writes.splice(0);
-    writes.forEach(write => write());
-
-    this.scheduled = false;
-  }
-}
-
+/**
+ * Smoothly animates numeric value changes with easing
+ * Uses requestAnimationFrame for smooth 60fps animations
+ */
 class SmoothCounter {
+  /**
+   * Creates a new SmoothCounter instance
+   * @param {HTMLElement} element - The DOM element to update
+   * @param {Object} [options] - Animation options
+   * @param {number} [options.duration=300] - Animation duration in milliseconds
+   * @param {Function} [options.formatFn] - Function to format the display value
+   */
   constructor(element, options = {}) {
     this.element = element;
     this.targetValue = 0;
@@ -412,6 +511,10 @@ class SmoothCounter {
     this.startValue = 0;
   }
 
+  /**
+   * Sets a new target value and starts animation
+   * @param {number} value - The target value
+   */
   setValue(value) {
     if (value === this.targetValue) return;
 
@@ -426,6 +529,10 @@ class SmoothCounter {
     this.animate();
   }
 
+  /**
+   * Animation loop using requestAnimationFrame
+   * @param {DOMHighResTimeStamp} timestamp - The current time
+   */
   animate(timestamp) {
     if (!this.startTime) {
       this.startTime = timestamp;
@@ -448,6 +555,10 @@ class SmoothCounter {
     }
   }
 
+  /**
+   * Sets the value immediately without animation
+   * @param {number} value - The value to set
+   */
   setImmediate(value) {
     if (this.rafId) {
       cancelAnimationFrame(this.rafId);
@@ -458,6 +569,9 @@ class SmoothCounter {
     this.element.textContent = this.formatFn(value);
   }
 
+  /**
+   * Cleans up the animation frame
+   */
   destroy() {
     if (this.rafId) {
       cancelAnimationFrame(this.rafId);
@@ -465,29 +579,14 @@ class SmoothCounter {
   }
 }
 
-function createIntersectionObserver(callback, options = {}) {
-  const defaultOptions = {
-    root: null,
-    rootMargin: '0px',
-    threshold: 0.1,
-    ...options
-  };
-
-  return new IntersectionObserver(callback, defaultOptions);
-}
-
-function measurePerformance(label, fn) {
-  const start = performance.now();
-  const result = fn();
-  const end = performance.now();
-  console.log(`[Performance] ${label}: ${(end - start).toFixed(2)}ms`);
-  return result;
-}
-
 const performanceOptimizer = new PerformanceOptimizer();
-const domBatcher = new DOMBatcher();
 
 // --- state/state-store.js ---
+/**
+ * Creates a shallow clone of a value
+ * @param {*} value - The value to clone
+ * @returns {*} The cloned value
+ */
 function shallowClone(value) {
   if (value === null || typeof value !== 'object') {
     return value;
@@ -500,6 +599,12 @@ function shallowClone(value) {
   return { ...value };
 }
 
+/**
+ * Performs shallow equality comparison between two objects
+ * @param {*} objA - First object to compare
+ * @param {*} objB - Second object to compare
+ * @returns {boolean} True if objects are shallowly equal
+ */
 function shallowEqual(objA, objB) {
   if (objA === objB) return true;
   if (typeof objA !== 'object' || typeof objB !== 'object' || objA === null || objB === null) {
@@ -518,12 +623,20 @@ function shallowEqual(objA, objB) {
   return true;
 }
 
+/**
+ * Reactive state container with requestAnimationFrame batching
+ * Provides a centralized way to manage application state with efficient updates
+ */
 class StateStore {
   #state;
   #listeners;
   #pendingUpdate;
   #updateScheduled;
 
+  /**
+   * Creates a new StateStore instance
+   * @param {*} initialState - The initial state
+   */
   constructor(initialState) {
     this.#state = shallowClone(initialState);
     this.#listeners = new Set();
@@ -531,10 +644,19 @@ class StateStore {
     this.#updateScheduled = false;
   }
 
+  /**
+   * Gets the current state snapshot
+   * @returns {*} The current state
+   */
   get snapshot() {
     return this.#state;
   }
 
+  /**
+   * Updates state with a patch object
+   * Updates are batched and executed in the next animation frame
+   * @param {*} patch - Partial state update
+   */
   update(patch) {
     if (!this.#pendingUpdate) {
       this.#pendingUpdate = {};
@@ -548,6 +670,10 @@ class StateStore {
     }
   }
 
+  /**
+   * Flushes pending updates to state and notifies listeners
+   * @private
+   */
   #flushUpdate() {
     if (!this.#pendingUpdate) {
       this.#updateScheduled = false;
@@ -565,6 +691,10 @@ class StateStore {
     this.#updateScheduled = false;
   }
 
+  /**
+   * Updates state immediately without batching
+   * @param {*} patch - Partial state update
+   */
   updateImmediate(patch) {
     const next = { ...this.#state, ...patch };
     if (!shallowEqual(this.#state, next)) {
@@ -573,6 +703,11 @@ class StateStore {
     }
   }
 
+  /**
+   * Mutates state directly using a mutator function
+   * Useful for complex updates that need reference equality detection
+   * @param {Function} mutator - Function that receives and mutates the state
+   */
   mutate(mutator) {
     const next = { ...this.#state };
     mutator(next);
@@ -583,6 +718,11 @@ class StateStore {
     }
   }
 
+  /**
+   * Notifies all listeners of state changes
+   * @param {*} state - The new state
+   * @private
+   */
   #notifyListeners(state) {
     queueMicrotask(() => {
       for (const listener of this.#listeners) {
@@ -595,6 +735,12 @@ class StateStore {
     });
   }
 
+  /**
+   * Subscribes a listener to state changes
+   * Returns an unsubscribe function
+   * @param {Function} listener - Function to call when state changes
+   * @returns {Function} Unsubscribe function
+   */
   subscribe(listener) {
     if (typeof listener !== 'function') {
       throw new TypeError('Listener must be a function');
@@ -610,15 +756,30 @@ class StateStore {
 // --- ui/toasts.js ---
 const DEFAULT_DURATION = 4000;
 
+/**
+ * Manages toast notifications with accessibility features
+ * Supports multiple variants and automatic cleanup
+ */
 class ToastManager {
   #stack;
   #activeToasts;
 
+  /**
+   * Creates a new ToastManager instance
+   * @param {HTMLElement} stackElement - The container element for toasts
+   */
   constructor(stackElement) {
     this.#stack = stackElement;
     this.#activeToasts = new Set();
   }
 
+  /**
+   * Shows a toast notification
+   * @param {string} message - The toast message
+   * @param {string} [variant='info'] - Toast variant (info, success, warning, error)
+   * @param {number} [duration=4000] - Duration in milliseconds (0 for persistent)
+   * @returns {Function} Function to close the toast manually
+   */
   show(message, variant = 'info', duration = DEFAULT_DURATION) {
     if (!this.#stack) {
       return () => { };
@@ -648,6 +809,9 @@ class ToastManager {
     return close;
   }
 
+  /**
+   * Clears all active toast notifications
+   */
   clear() {
     for (const toast of this.#activeToasts) {
       toast.remove();
@@ -657,25 +821,43 @@ class ToastManager {
 }
 
 // --- ui/accessibility.js ---
+/**
+ * Manages screen reader announcements using live regions
+ * Queues announcements to prevent overlap and ensure proper timing
+ */
 class ScreenReaderAnnouncer {
+  #pendingMessages = [];
+  #isAnnouncing = false;
+
+  /**
+   * Creates a new ScreenReaderAnnouncer instance
+   * @param {HTMLElement} liveRegion - The live region element for announcements
+   */
   constructor(liveRegion) {
     this.liveRegion = liveRegion;
-    this._pendingMessages = [];
-    this._isAnnouncing = false;
   }
 
+  /**
+   * Announces a message to screen readers
+   * Messages are queued and announced sequentially
+   * @param {string} message - The message to announce
+   */
   announce(message) {
     if (!this.liveRegion) return;
-    this._pendingMessages.push(String(message));
-    if (!this._isAnnouncing) {
+    this.#pendingMessages.push(String(message));
+    if (!this.#isAnnouncing) {
       void this.#flushQueue();
     }
   }
 
+  /**
+   * Flushes the message queue to announce pending messages
+   * @private
+   */
   async #flushQueue() {
-    this._isAnnouncing = true;
-    while (this._pendingMessages.length > 0) {
-      const next = this._pendingMessages.shift();
+    this.#isAnnouncing = true;
+    while (this.#pendingMessages.length > 0) {
+      const next = this.#pendingMessages.shift();
       if (!next) {
         continue;
       }
@@ -687,11 +869,14 @@ class ScreenReaderAnnouncer {
         });
       });
     }
-    this._isAnnouncing = false;
+    this.#isAnnouncing = false;
   }
 }
 
 // --- utils/api-config.js ---
+/**
+ * API Configuration utilities for cross-origin and protocol detection
+ */
 /**
  * API Configuration utilities for cross-origin and protocol detection
  */
@@ -703,6 +888,7 @@ const API_CONFIG = {
 
   /**
    * Check if the page is opened via file:// protocol
+   * @returns {boolean} True if page is opened via file:// protocol
    */
   isFileProtocol() {
     return globalThis.location?.protocol === 'file:';
@@ -753,3 +939,54 @@ const API_CONFIG = {
     );
   }
 };
+
+// --- utils/timer-manager.js ---
+/**
+ * Unified timer management utility
+ * Handles setInterval/clearInterval patterns with automatic cleanup
+ */
+/**
+ * Unified timer management utility
+ * Handles setInterval/clearInterval patterns with automatic cleanup
+ */
+class TimerManager {
+  #timerId = null;
+
+  /**
+   * Start a timer, automatically clearing any existing timer first
+   * @param {Function} callback - Function to execute repeatedly
+   * @param {number} interval - Interval in milliseconds
+   * @returns {void}
+   */
+  start(callback, interval) {
+    this.stop();
+    this.#timerId = globalThis.setInterval(callback, interval);
+  }
+
+  /**
+   * Stop the timer if it exists
+   * @returns {void}
+   */
+  stop() {
+    if (this.#timerId) {
+      globalThis.clearInterval(this.#timerId);
+      this.#timerId = null;
+    }
+  }
+
+  /**
+   * Check if timer is currently running
+   * @returns {boolean} True if timer is active
+   */
+  isRunning() {
+    return this.#timerId !== null;
+  }
+
+  /**
+   * Get the current timer ID (for debugging)
+   * @returns {number|null} Timer ID or null if not running
+   */
+  getTimerId() {
+    return this.#timerId;
+  }
+}

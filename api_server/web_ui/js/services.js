@@ -21,7 +21,14 @@ function normalizeResponse(response) {
   return (isJson ? response.json() : response.text()).then((payload) => ({ response, payload }));
 }
 
+/**
+ * REST API client for communicating with the CyberBackup server.
+ * Handles connection, backup operations, and status polling.
+ */
 class ApiClient {
+  /**
+   * @param {string} [baseUrl=''] - Base URL for API endpoints (e.g., 'http://localhost:9090')
+   */
   constructor(baseUrl = '') {
     this.baseUrl = baseUrl;
   }
@@ -33,6 +40,12 @@ class ApiClient {
     return `${this.baseUrl}${path}`;
   }
 
+  /**
+   * Performs a health check on the API server.
+   * @async
+   * @returns {Promise<Object>} Health status payload including system metrics
+   * @throws {Error} If health check fails
+   */
   async health() {
     const { response, payload } = await withTimeout(
       fetch(this.#buildUrl('/api/health'), {
@@ -46,6 +59,16 @@ class ApiClient {
     return payload;
   }
 
+  /**
+   * Connects to the backup server with the provided configuration.
+   * @async
+   * @param {Object} config - Connection configuration
+   * @param {string} config.username - Username for the backup server
+   * @param {string} config.host - Backup server host
+   * @param {number} config.port - Backup server port
+   * @returns {Promise<Object>} Connection response with server details
+   * @throws {Error} If connection fails
+   */
   async connect(config) {
     const body = JSON.stringify(config);
     const { response, payload } = await withTimeout(
@@ -61,6 +84,12 @@ class ApiClient {
     return payload;
   }
 
+  /**
+   * Disconnects from the backup server.
+   * @async
+   * @returns {Promise<Object>} Disconnection response
+   * @throws {Error} If disconnection fails
+   */
   async disconnect() {
     const { response, payload } = await withTimeout(
       fetch(this.#buildUrl('/api/disconnect'), { method: 'POST' }),
@@ -71,6 +100,19 @@ class ApiClient {
     return payload;
   }
 
+  /**
+   * Starts a backup operation for the specified file.
+   * @async
+   * @param {Object} options - Backup options
+   * @param {File} options.file - File to backup (required)
+   * @param {string} [options.username] - Username for authentication
+   * @param {string} [options.host] - Backup server host
+   * @param {number} [options.port] - Backup server port
+   * @param {Object} [options.options={}] - Additional backup options (chunk_size_mb, retry_limit, etc.)
+   * @returns {Promise<Object>} Backup job information including job_id
+   * @throws {TypeError} If file is not a File instance
+   * @throws {Error} If backup start fails
+   */
   async startBackup({ file, username, host, port, options = {} }) {
     if (!(file instanceof File)) {
       throw new TypeError('A valid file must be provided');
@@ -99,6 +141,13 @@ class ApiClient {
     return payload;
   }
 
+  /**
+   * Retrieves the current status of a backup job.
+   * @async
+   * @param {string} [jobId] - Job ID to check status for. If omitted, returns general status
+   * @returns {Promise<Object>} Job status including progress, bytes_transferred, etc.
+   * @throws {Error} If status request fails
+   */
   async status(jobId) {
     const origin = globalThis.location?.origin ?? 'http://localhost';
     const url = new URL(this.#buildUrl('/api/status'), origin);
@@ -115,14 +164,32 @@ class ApiClient {
     return payload;
   }
 
+  /**
+   * Pauses the currently running backup job.
+   * @async
+   * @returns {Promise<Object>} Pause operation response
+   * @throws {Error} If pause command fails
+   */
   async pause() {
     return this.#command('/api/pause');
   }
 
+  /**
+   * Resumes the currently paused backup job.
+   * @async
+   * @returns {Promise<Object>} Resume operation response
+   * @throws {Error} If resume command fails
+   */
   async resume() {
     return this.#command('/api/resume');
   }
 
+  /**
+   * Stops the currently running backup job.
+   * @async
+   * @returns {Promise<Object>} Stop operation response
+   * @throws {Error} If stop command fails
+   */
   async stop() {
     return this.#command('/api/stop');
   }
@@ -155,7 +222,22 @@ const DEFAULT_SOCKET_URL =
     ? globalThis.location.origin
     : '';
 
+/**
+ * WebSocket client for real-time communication with the backup server.
+ * Handles connection events, progress updates, and status notifications using Socket.IO.
+ */
 class SocketClient {
+  /**
+   * @param {Object} config - Socket client configuration
+   * @param {string} [config.url] - WebSocket server URL (defaults to current origin)
+   * @param {Object} [config.options={}] - Socket.IO options (transports, reconnection settings, etc.)
+   * @param {Function} [config.onConnect] - Callback when socket connects
+   * @param {Function} [config.onDisconnect] - Callback when socket disconnects (receives disconnect reason)
+   * @param {Function} [config.onError] - Callback for connection errors
+   * @param {Function} [config.onStatus] - Callback for status updates
+   * @param {Function} [config.onProgress] - Callback for progress updates during backup
+   * @param {Function} [config.onFileReceipt] - Callback when file is received by server
+   */
   constructor({ url = DEFAULT_SOCKET_URL, options = {}, onConnect, onDisconnect, onError, onStatus, onProgress, onFileReceipt }) {
     this.url = url ?? DEFAULT_SOCKET_URL;
     this.options = { ...DEFAULT_OPTIONS, ...options };
@@ -171,6 +253,11 @@ class SocketClient {
     this.ioFactory = null;
   }
 
+  /**
+   * Starts the WebSocket connection and sets up event listeners.
+   * Loads Socket.IO library from CDN if not already available.
+   * @async
+   */
   async start() {
     try {
       const ioFactory = await this.#ensureIoFactory();
@@ -218,6 +305,9 @@ class SocketClient {
     this.socket.connect();
   }
 
+  /**
+   * Closes the WebSocket connection.
+   */
   stop() {
     if (this.socket) {
       this.socket.disconnect();
@@ -225,15 +315,27 @@ class SocketClient {
     }
   }
 
+  /**
+   * Sets the current job ID to watch for progress updates.
+   * Automatically requests status for the specified job.
+   * @param {string} jobId - Job ID to monitor
+   */
   watchJob(jobId) {
     this.currentJobId = jobId;
     this.requestStatus(jobId);
   }
 
+  /**
+   * Clears the current job ID being watched.
+   */
   clearJob() {
     this.currentJobId = null;
   }
 
+  /**
+   * Requests status update for a specific job ID.
+   * @param {string} jobId - Job ID to request status for
+   */
   requestStatus(jobId) {
     if (!this.socket || !jobId) {
       return;
@@ -296,29 +398,48 @@ function getQualityLabel(quality) {
 // --- services/connection-monitor.js ---
 const DEFAULT_INTERVAL = 15000;  // Reduced from 7000ms for performance
 
+/**
+ * Periodically monitors the connection health to the API/backup server.
+ * Evaluates connection quality and provides metrics to subscribers.
+ */
 class ConnectionMonitor {
+  /**
+   * @param {Object} config - Monitor configuration
+   * @param {ApiClient} config.api - API client instance for health checks
+   * @param {number} [config.interval=15000] - Polling interval in milliseconds
+   * @param {Function} [config.onResult] - Callback receiving health check results
+   */
   constructor({ api, interval = DEFAULT_INTERVAL, onResult }) {
     this.api = api;
     this.interval = interval;
     this.onResult = typeof onResult === 'function' ? onResult : () => { };
-    this.timer = null;
+    this.#timerManager = new TimerManager();
     this.inFlight = null;
   }
 
+  #timerManager;
+
+  /**
+   * Starts periodic health checking.
+   * Performs an immediate health check and sets up interval polling.
+   */
   start() {
-    this.stop();
+    this.#timerManager.start(() => this.#tick(), this.interval);
     this.#tick();
-    this.timer = globalThis.setInterval(() => this.#tick(), this.interval);
   }
 
+  /**
+   * Stops periodic health checking.
+   * Clears any pending health check request.
+   */
   stop() {
-    if (this.timer) {
-      globalThis.clearInterval(this.timer);
-      this.timer = null;
-    }
+    this.#timerManager.stop();
     this.inFlight = null;
   }
 
+  /**
+   * Forces an immediate health check, bypassing any rate limiting.
+   */
   forcePing() {
     this.#tick(true);
   }
@@ -392,7 +513,28 @@ class ConnectionMonitor {
 const RECENT_STORAGE_KEY = 'cyberbackup-recent-files';
 const MAX_RECENT = 5;
 
+/**
+ * Manages file selection, drag-drop, recent files, and UI updates.
+ * Handles file persistence to localStorage and announces selections for accessibility.
+ */
 class FileManager {
+  /**
+   * @param {Object} config - File manager configuration
+   * @param {HTMLElement} [config.dropZone] - Drop zone element for drag-drop
+   * @param {HTMLInputElement} [config.fileInput] - File input element
+   * @param {HTMLElement} [config.selectButton] - Button to open file picker
+   * @param {HTMLElement} [config.clearButton] - Button to clear selected file
+   * @param {HTMLElement} [config.recentButton] - Button to show recent files
+   * @param {HTMLElement} [config.nameLabel] - Display element for file name
+   * @param {HTMLElement} [config.infoLabel] - Display element for file info (size, type)
+   * @param {HTMLElement} [config.fileIcon] - Display element for file icon
+   * @param {HTMLElement} [config.fileNameDisplay] - Display element for file name (new design)
+   * @param {HTMLElement} [config.fileMetadata] - Display element for file metadata
+   * @param {HTMLElement} [config.fileTypeBadge] - Display element for file type badge
+   * @param {HTMLElement} [config.fileModified] - Display element for modification date
+   * @param {ScreenReaderAnnouncer} [config.announcer] - Screen reader announcer instance
+   * @param {Function} [config.onRecent] - Callback when recent file is selected
+   */
   constructor({ dropZone, fileInput, selectButton, clearButton, recentButton, nameLabel, infoLabel, fileIcon, fileNameDisplay, fileMetadata, fileTypeBadge, fileModified, announcer, onRecent }) {
     this.dropZone = dropZone;
     this.fileInput = fileInput;
@@ -420,10 +562,17 @@ class FileManager {
     this.#updateUI();
   }
 
+  /**
+   * Gets the currently selected file.
+   * @type {File|null}
+   */
   get file() {
     return this.currentFile;
   }
 
+  /**
+   * Clears the currently selected file and resets the UI.
+   */
   clear() {
     this.currentFile = null;
     this.currentFileMeta = null;
@@ -433,66 +582,78 @@ class FileManager {
     this.#updateUI();
   }
 
+  // Handler references for cleanup
+  #selectButtonHandler = null;
+  #fileInputHandler = null;
+  #clearButtonHandler = null;
+  #recentButtonHandler = null;
+  #dragOverHandler = null;
+  #dragLeaveHandler = null;
+  #dropHandler = null;
+  #dropZoneClickHandler = null;
+
   #attachEvents() {
     // Select button click (optional - may not exist in new design)
     if (this.selectButton) {
-      this.selectButton.addEventListener('click', (e) => {
+      this.#selectButtonHandler = (e) => {
         e.stopPropagation(); // Prevent bubbling if inside drop zone
         this.fileInput?.click();
-      });
+      };
+      this.selectButton.addEventListener('click', this.#selectButtonHandler);
     }
 
     // File input change
     if (this.fileInput) {
-      this.fileInput.addEventListener('change', (event) => {
+      this.#fileInputHandler = (event) => {
         const input = event.target;
         const file = input.files?.[0];
         if (file) {
           this.#handleFile(file);
         }
-      });
+      };
+      this.fileInput.addEventListener('change', this.#fileInputHandler);
     }
 
     // Clear button (optional)
     if (this.clearButton) {
-      this.clearButton.addEventListener('click', (e) => {
+      this.#clearButtonHandler = (e) => {
         e.stopPropagation(); // Prevent bubbling
         this.clear();
         this.announcer?.announce('File cleared');
-      });
+      };
+      this.clearButton.addEventListener('click', this.#clearButtonHandler);
     }
 
     // Recent files button (optional)
     if (this.recentButton) {
-      this.recentButton.addEventListener('click', () => this.#showRecent());
+      this.#recentButtonHandler = () => this.#showRecent();
+      this.recentButton.addEventListener('click', this.#recentButtonHandler);
     }
 
     // Drop zone drag and drop + click to select
     if (this.dropZone) {
-      const onDragOver = (event) => {
+      this.#dragOverHandler = (event) => {
         event.preventDefault();
         this.dropZone?.classList.add('drag-over');
       };
-      const onDragLeave = () => this.dropZone?.classList.remove('drag-over');
-      const onDrop = (event) => {
+      this.#dragLeaveHandler = () => this.dropZone?.classList.remove('drag-over');
+      this.#dropHandler = (event) => {
         event.preventDefault();
         this.dropZone?.classList.remove('drag-over');
         if (event.dataTransfer?.files?.[0]) {
           this.#handleFile(event.dataTransfer.files[0]);
         }
       };
-
-      // Click on drop zone to open file picker
-      const onClick = (event) => {
+      this.#dropZoneClickHandler = (event) => {
         // Don't trigger if clicking on a button inside
         if (event.target.tagName === 'BUTTON' || event.target.closest('button')) return;
         this.fileInput?.click();
       };
 
-      this.dropZone.addEventListener('dragover', onDragOver);
-      this.dropZone.addEventListener('dragleave', onDragLeave);
-      this.dropZone.addEventListener('drop', onDrop);
-      this.dropZone.addEventListener('click', onClick);
+      this.dropZone.addEventListener('dragover', this.#dragOverHandler);
+      this.dropZone.addEventListener('dragleave', this.#dragLeaveHandler);
+      this.dropZone.addEventListener('drop', this.#dropHandler);
+      this.dropZone.addEventListener('click', this.#dropZoneClickHandler);
     }
   }
 
@@ -644,12 +805,76 @@ class FileManager {
       return [];
     }
   }
+
+  /**
+   * Cleans up all event listeners and references.
+   * Must be called before destroying the manager instance to prevent memory leaks.
+   */
+  destroy() {
+    // Remove select button listener
+    if (this.selectButton && this.#selectButtonHandler) {
+      this.selectButton.removeEventListener('click', this.#selectButtonHandler);
+      this.#selectButtonHandler = null;
+    }
+
+    // Remove file input listener
+    if (this.fileInput && this.#fileInputHandler) {
+      this.fileInput.removeEventListener('change', this.#fileInputHandler);
+      this.#fileInputHandler = null;
+    }
+
+    // Remove clear button listener
+    if (this.clearButton && this.#clearButtonHandler) {
+      this.clearButton.removeEventListener('click', this.#clearButtonHandler);
+      this.#clearButtonHandler = null;
+    }
+
+    // Remove recent button listener
+    if (this.recentButton && this.#recentButtonHandler) {
+      this.recentButton.removeEventListener('click', this.#recentButtonHandler);
+      this.#recentButtonHandler = null;
+    }
+
+    // Remove drop zone listeners
+    if (this.dropZone) {
+      if (this.#dragOverHandler) {
+        this.dropZone.removeEventListener('dragover', this.#dragOverHandler);
+        this.#dragOverHandler = null;
+      }
+      if (this.#dragLeaveHandler) {
+        this.dropZone.removeEventListener('dragleave', this.#dragLeaveHandler);
+        this.#dragLeaveHandler = null;
+      }
+      if (this.#dropHandler) {
+        this.dropZone.removeEventListener('drop', this.#dropHandler);
+        this.#dropHandler = null;
+      }
+      if (this.#dropZoneClickHandler) {
+        this.dropZone.removeEventListener('click', this.#dropZoneClickHandler);
+        this.#dropZoneClickHandler = null;
+      }
+    }
+
+    // Clear references
+    this.dropZone = null;
+    this.fileInput = null;
+    this.selectButton = null;
+    this.clearButton = null;
+    this.recentButton = null;
+  }
 }
 
 // --- services/theme-manager.js ---
 const THEME_STORAGE_KEY = 'cyberbackup-theme';
 
+/**
+ * Manages application theme switching between dark and light modes.
+ * Persists theme preference to localStorage and updates DOM accordingly.
+ */
 class ThemeManager {
+  /**
+   * @param {HTMLElement} [toggleElement] - Button or checkbox element to toggle theme
+   */
   constructor(toggleElement) {
     this.toggleElement = toggleElement;
     this.root = document.documentElement;
@@ -668,6 +893,10 @@ class ThemeManager {
     }
   }
 
+  /**
+   * Toggles between dark and light theme.
+   * Updates DOM, localStorage, and toggle element state.
+   */
   toggle() {
     this.current = this.current === 'theme-dark' ? 'theme-light' : 'theme-dark';
     this.apply(this.current);
@@ -675,6 +904,10 @@ class ThemeManager {
     this.#updateLabel();
   }
 
+  /**
+   * Applies a theme class to the document root.
+   * @param {string} themeClass - Theme class name ('theme-dark' or 'theme-light')
+   */
   apply(themeClass) {
     this.root.classList.remove('theme-dark', 'theme-light');
     this.root.classList.add(themeClass);
@@ -719,6 +952,7 @@ class ThemeManager {
 
 // --- services/log-store.js ---
 const LEVEL_PRIORITY = new Set(['info', 'warn', 'error']);
+const MAX_LOG_ENTRIES = 500; // Synchronize with DOM limit below
 
 function normalizeLevel(level) {
   if (!level) return 'info';
@@ -745,6 +979,10 @@ const LEVEL_ICONS = {
   </svg>`,
 };
 
+/**
+ * Stores and renders activity logs with filtering, search, and export capabilities.
+ * Manages in-memory log entries and renders them incrementally for performance.
+ */
 class LogStore {
   #entries;
   #filter;
@@ -757,6 +995,9 @@ class LogStore {
   #renderPending;
   #rowTemplate;
 
+  /**
+   * @param {HTMLElement} container - Container element for log entries
+   */
   constructor(container) {
     this.#entries = [];
     this.#filter = 'all';
@@ -810,6 +1051,10 @@ class LogStore {
     });
   }
 
+  /**
+   * Sets the log filter to show only entries of a specific level.
+   * @param {string} filter - Filter value: 'all', 'info', 'warn', or 'error'
+   */
   setFilter(filter) {
     if (this.#filter === filter) return;
     this.#filter = filter;
@@ -818,10 +1063,22 @@ class LogStore {
     this.render(true);
   }
 
+  /**
+   * Enables or disables automatic scrolling to new log entries.
+   * @param {boolean} enabled - True to auto-scroll, false to disable
+   */
   setAutoScroll(enabled) {
     this.#autoScroll = Boolean(enabled);
   }
 
+  /**
+   * Adds a new log entry to the store.
+   * @param {string} message - Log message
+   * @param {Object} [options] - Log options
+   * @param {string} [options.level='info'] - Log level: 'info', 'warn', or 'error'
+   * @param {string} [options.phase] - Optional phase/stage identifier
+   * @param {Date} [options.timestamp=now] - Timestamp for the log entry
+   */
   add(message, { level = 'info', phase, timestamp = new Date() } = {}) {
     const entry = {
       id: this.#nextId++,
@@ -832,20 +1089,27 @@ class LogStore {
     };
     this.#entries.push(entry);
 
-    // Keep only last 500 entries in memory
-    if (this.#entries.length > 500) {
+    // Keep only last MAX_LOG_ENTRIES entries in memory
+    if (this.#entries.length > MAX_LOG_ENTRIES) {
       this.#entries.shift(); // Remove oldest
     }
 
     this.#requestRender();
   }
 
+  /**
+   * Clears all log entries.
+   */
   clear() {
     this.#entries = [];
     this.#lastRenderedId = 0;
     this.render(true);
   }
 
+  /**
+   * Exports all log entries as a formatted string.
+   * @returns {string} Log entries formatted as ISO timestamp with level and message
+   */
   export() {
     const lines = [];
     for (const entry of this.#entries) {
@@ -871,6 +1135,11 @@ class LogStore {
     requestAnimationFrame(() => this.render());
   }
 
+  /**
+   * Renders new log entries to the DOM.
+   * Uses incremental rendering for performance - only renders new entries since last render.
+   * @param {boolean} [forceRebuild=false] - If true, clears and rebuilds entire log view
+   */
   render(forceRebuild = false) {
     this.#renderPending = false;
     if (!this.#container) return;
@@ -918,11 +1187,10 @@ class LogStore {
       this.#container.append(fragment);
     }
 
-    // Trim DOM if too many entries (keep last 400 visible)
+    // Trim DOM if too many entries (keep last MAX_LOG_ENTRIES visible)
     const logEntries = this.#container.querySelectorAll('.log-entry');
-    const maxVisible = 400;
-    if (logEntries.length > maxVisible) {
-      const excess = logEntries.length - maxVisible;
+    if (logEntries.length > MAX_LOG_ENTRIES) {
+      const excess = logEntries.length - MAX_LOG_ENTRIES;
       for (let i = 0; i < excess; i++) {
         logEntries[i].remove();
       }
@@ -972,23 +1240,19 @@ const SETTINGS_LIMITS = {
   retryLimit: { min: 0, max: 20 },
 };
 
-function clamp(value, { min, max }) {
-  return Math.min(Math.max(value, min), max);
-}
-
-function parseNumericInput(input, { min, max }) {
-  const raw = input.value.trim();
-  if (raw.length === 0) {
-    return null;
-  }
-  const numeric = Number.parseInt(raw, 10);
-  if (!Number.isFinite(numeric)) {
-    return null;
-  }
-  return clamp(numeric, { min, max });
-}
-
+/**
+ * Manages advanced backup settings like chunk size and retry limit.
+ * Persists settings to localStorage and validates input ranges.
+ */
 class AdvancedSettings {
+  /**
+   * @param {Object} config - Settings configuration
+   * @param {HTMLInputElement} [config.chunkInput] - Input field for chunk size (MB)
+   * @param {HTMLInputElement} [config.retryInput] - Input field for retry limit
+   * @param {HTMLElement} [config.resetButton] - Button to reset settings to defaults
+   * @param {ToastManager} [config.toast] - Toast notification manager
+   * @param {ScreenReaderAnnouncer} [config.announcer] - Screen reader announcer instance
+   */
   constructor({ chunkInput, retryInput, resetButton, toast, announcer }) {
     this.chunkInput = chunkInput;
     this.retryInput = retryInput;
@@ -1000,9 +1264,14 @@ class AdvancedSettings {
     this.#bindEvents();
   }
 
+  /**
+   * Gets the current settings as an options object for backup operations.
+   * Returns an object with chunk_size_mb and/or retry_limit keys if valid.
+   * @returns {Object} Options object with validated settings
+   */
   getOptions() {
-    const chunk = parseNumericInput(this.chunkInput, SETTINGS_LIMITS.chunkSize);
-    const retry = parseNumericInput(this.retryInput, SETTINGS_LIMITS.retryLimit);
+    const chunk = validateNumericInput(this.chunkInput, SETTINGS_LIMITS.chunkSize);
+    const retry = validateNumericInput(this.retryInput, SETTINGS_LIMITS.retryLimit);
     const options = {};
 
     if (chunk !== null) {
@@ -1016,6 +1285,10 @@ class AdvancedSettings {
     return options;
   }
 
+  /**
+   * Resets all settings to their default values.
+   * Updates localStorage and shows a toast notification.
+   */
   reset() {
     this.#applyValue(this.chunkInput, SETTINGS_DEFAULTS.chunkSize, SETTINGS_STORAGE_KEYS.chunk);
     this.#applyValue(this.retryInput, SETTINGS_DEFAULTS.retryLimit, SETTINGS_STORAGE_KEYS.retry);
@@ -1058,7 +1331,7 @@ class AdvancedSettings {
       return;
     }
 
-    const parsed = parseNumericInput(input, limits);
+    const parsed = validateNumericInput(input, limits);
     if (parsed === null) {
       input.setAttribute('aria-invalid', 'true');
       this.toast?.show(`Enter a value between ${limits.min} and ${limits.max}`, 'warn', 3200);

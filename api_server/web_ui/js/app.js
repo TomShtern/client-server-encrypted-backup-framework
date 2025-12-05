@@ -91,10 +91,58 @@ class ErrorBoundary {
   }
 }
 
-const CIRCUMFERENCE = 282.743; // Precomputed circumference for r=45 circle
-const STATUS_INTERVAL_MS = 5000;  // Reduced from 2500ms for performance
-const GENERAL_STATUS_INTERVAL_MS = 15000;  // Reduced from 12000ms for performance
-const RENDER_DEBOUNCE_MS = 50;  // Minimum time between render calls
+// Async mutex for serializing concurrent operations
+class AsyncMutex {
+  constructor() {
+    this.queue = Promise.resolve();
+  }
+
+  async acquire() {
+    const currentQueue = this.queue;
+    let resolveQueue;
+    this.queue = new Promise(resolve => {
+      resolveQueue = resolve;
+    });
+    await currentQueue;
+    return resolveQueue;
+  }
+
+  async run(fn) {
+    const release = await this.acquire();
+    try {
+      return await fn();
+    } finally {
+      release();
+    }
+  }
+}
+
+/** Precomputed circumference for r=45 circle (used for progress ring SVG animation) */
+const CIRCUMFERENCE = 282.743;
+
+/**
+ * Poll interval for active job status (during file transfer).
+ * 5000ms provides responsive real-time feedback while minimizing server load.
+ * Trade-off: Lower = more responsive UI but higher CPU/network; Higher = smoother but stale data.
+ * @type {number}
+ */
+const STATUS_INTERVAL_MS = 5000;
+
+/**
+ * Poll interval for general connection health checks (when no job is active).
+ * 15000ms reduces unnecessary requests when idle, sufficient for detecting disconnections.
+ * Only checked when jobStatus !== 'running' to avoid polling conflicts with active job status.
+ * @type {number}
+ */
+const GENERAL_STATUS_INTERVAL_MS = 15000;
+
+/**
+ * Minimum time between render cycle invocations (in milliseconds).
+ * 50ms ensures smooth 60fps rendering (16.67ms per frame) while batching rapid state updates.
+ * Prevents excessive DOM reflows when multiple state changes occur within a single frame.
+ * @type {number}
+ */
+const RENDER_DEBOUNCE_MS = 50;
 
 /**
  * Add an animation class and remove it when the animation ends.
@@ -139,6 +187,30 @@ const INITIAL_STATE = {
 };
 
 class App {
+  // Private fields for performance optimization
+  #cachedLogEntries = [];
+  #searchDebouncedHandler = null;
+
+  // Other private fields used in the class
+  #jobStatusInterval = null;
+  #generalStatusInterval = null;
+  #lastConnectionState = null;
+  #generalStatusTimer;
+  #jobStatusTimer;
+
+  // Rendering and performance optimization
+  #lastRenderTime = 0;
+  #isTabVisible = true;
+  #cachedStatCards;
+  #cachedSpeedCard;
+  #pendingRender = null;
+  #prevRenderState = null;
+  #lastSpeedUpdate = 0;
+  #speedUpdateThrottle = 100;
+
+  documentKeyHandler = null;
+  modalKeyHandler = null;
+
   constructor() {
     // Get the correct API base URL for cross-origin requests
     const apiBaseUrl = API_CONFIG.getApiBaseUrl();
@@ -220,24 +292,19 @@ class App {
       onFileReceipt: (payload) => this.#handleFileReceipt(payload),
     });
 
-    this.generalStatusTimer = null;
-    this.jobStatusTimer = null;
+    this.#generalStatusTimer = new TimerManager();
+    this.#jobStatusTimer = new TimerManager();
     this.lastSpeedSample = null;
     this.lastConnectionState = null;
     this.previousFocus = null;
     this.modalKeyHandler = null;
+    this.documentKeyHandler = null;  // For document keydown listener cleanup
     this.modalFocusables = [];
-    this.actionLock = false;
-    this._lastRenderTime = 0;  // For render debouncing
-    this._isTabVisible = true;  // Track tab visibility
+    this.actionMutex = new AsyncMutex();  // Serialize primary action operations
 
     // Cache stat card DOM queries (avoid querySelectorAll in render loop)
-    this._cachedStatCards = document.querySelectorAll('.stat');
-    this._cachedSpeedCard = document.querySelector('.stat:nth-child(2)');
-
-    // Speed update throttling
-    this._lastSpeedUpdate = 0;
-    this._speedUpdateThrottle = 100; // Max 10 updates/sec
+    this.#cachedStatCards = document.querySelectorAll('.stat');
+    this.#cachedSpeedCard = document.querySelector('.stat:nth-child(2)');
 
     // Set initial idle state (no transfer running)
     document.documentElement.classList.add('app-idle');
@@ -259,6 +326,12 @@ class App {
     }
   }
 
+  /**
+   * Initializes the application by starting services and loading initial state.
+   * Starts connection monitoring, WebSocket connection, and performs initial status check.
+   * @async
+   * @returns {Promise<void>}
+   */
   async init() {
     return ErrorBoundary.withErrorHandling(async () => {
       this.connectionMonitor.start();
@@ -268,6 +341,37 @@ class App {
       // Fallback to basic functionality
       this.logs.add('Application started in safe mode with limited functionality', { level: 'warn' });
     });
+  }
+
+  /**
+   * Cleans up all application resources and event listeners.
+   * Must be called before unloading the page or closing the application.
+   * Stops all timers, monitors, WebSocket connection, and removes event listeners.
+   * Removes all event listeners and destroys service instances to prevent memory leaks.
+   */
+  destroy() {
+    // Remove document keydown listener
+    if (this.documentKeyHandler) {
+      document.removeEventListener('keydown', this.documentKeyHandler);
+      this.documentKeyHandler = null;
+    }
+
+    // Remove modal keydown listener
+    if (this.modalKeyHandler) {
+      dom.modal.removeEventListener('keydown', this.modalKeyHandler);
+      this.modalKeyHandler = null;
+    }
+
+    // Stop timers
+    this.#generalStatusTimer?.stop();
+    this.#jobStatusTimer?.stop();
+
+    // Destroy file manager (removes all drop zone and input listeners)
+    this.fileManager?.destroy();
+
+    // Stop monitoring and socket
+    this.connectionMonitor?.stop();
+    this.socket?.stop();
   }
 
   async #bootstrap() {
@@ -283,17 +387,14 @@ class App {
   #setupVisibilityHandler() {
     document.addEventListener('visibilitychange', () => {
       const isHidden = document.hidden;
-      this._isTabVisible = !isHidden;
+      this.#isTabVisible = !isHidden;
 
       if (isHidden) {
         // Pause all polling when tab is hidden
         document.documentElement.classList.add('tab-hidden');
         this.connectionMonitor.stop();
         this.#stopJobStatusLoop();
-        if (this.generalStatusTimer) {
-          clearInterval(this.generalStatusTimer);
-          this.generalStatusTimer = null;
-        }
+        this.#generalStatusTimer?.stop();
         console.log('[Performance] Tab hidden - polling paused');
       } else {
         // Resume polling when tab becomes visible
@@ -360,6 +461,7 @@ class App {
     if (dom.logClearBtn) {
       dom.logClearBtn.addEventListener('click', () => {
         this.logs.clear();
+        this.#invalidateLogCache(); // Clear cache when logs are cleared
         this.toast.show('Logs cleared', 'info', 1800);
       });
     }
@@ -368,16 +470,24 @@ class App {
     if (dom.logDemoBtn) {
       dom.logDemoBtn.addEventListener('click', () => {
         this.#generateDemoLogs();
+        this.#invalidateLogCache(); // Clear cache when new logs are added
       });
     }
 
-    // Log search functionality
+    // Log search functionality - Performance optimized with debouncing
     if (dom.logSearchInput) {
+      // Initialize debounced handler once
+      this.#searchDebouncedHandler = domUtils.debounce((query) => {
+        this.#filterLogsBySearch(query);
+      }, 300); // 300ms debounce delay
+
       dom.logSearchInput.addEventListener('input', (event) => {
         const query = event.target.value.trim().toLowerCase();
-        this.#filterLogsBySearch(query);
 
-        // Show/hide clear button
+        // Use debounced handler for actual filtering
+        this.#searchDebouncedHandler(query);
+
+        // Show/hide clear button immediately (no debounce needed)
         if (dom.searchClearBtn) {
           dom.searchClearBtn.hidden = !query;
         }
@@ -389,6 +499,7 @@ class App {
         if (dom.logSearchInput) {
           dom.logSearchInput.value = '';
           dom.searchClearBtn.hidden = true;
+          // Clear search immediately (no debounce needed for empty query)
           this.#filterLogsBySearch('');
         }
       });
@@ -423,52 +534,67 @@ class App {
       });
     }
 
-    document.addEventListener('keydown', (event) => this.#handleKeydown(event));
+    this.#attachDocumentKeydownListener();
+  }
+
+  #attachDocumentKeydownListener() {
+    // Remove any existing listener first to prevent accumulation
+    if (this.documentKeyHandler) {
+      document.removeEventListener('keydown', this.documentKeyHandler);
+    }
+
+    // Store handler reference for cleanup
+    this.documentKeyHandler = (event) => this.#handleKeydown(event);
+    document.addEventListener('keydown', this.documentKeyHandler);
   }
 
   async #handlePrimaryAction() {
-    const { connecting, connected, jobStatus } = this.state.snapshot;
-    if (connecting || this.actionLock) {
-      return;
-    }
+    // Use mutex to serialize concurrent primary action calls
+    await this.actionMutex.run(async () => {
+      // Check current state inside mutex to avoid stale snapshots
+      const { connecting, connected, jobStatus } = this.state.snapshot;
 
-    let connectionAttempted = false;
-    let connectionSucceeded = false;
-
-    try {
-      this.actionLock = true;
-      if (!connected) {
-        connectionAttempted = true;
-        await this.#connect();
-        connectionSucceeded = true;
+      // Don't proceed if already connecting
+      if (connecting) {
         return;
       }
 
-      if (jobStatus === 'running') {
-        this.toast.show('Backup already in progress', 'info');
-        return;
-      }
+      let connectionAttempted = false;
+      let connectionSucceeded = false;
 
-      const { file } = this.fileManager;
-      if (!file) {
-        this.toast.show('Please select a file to back up', 'error');
-        this.announcer.announce('Select a file before starting backup');
-        return;
-      }
+      try {
+        if (!connected) {
+          connectionAttempted = true;
+          await this.#connect();
+          connectionSucceeded = true;
+          return;
+        }
 
-      await this.#startBackup(file);
-    } catch (error) {
-      console.error('Primary action failed', error);
-      this.toast.show(error.message || 'Operation failed', 'error', 5000);
-    } finally {
-      this.actionLock = false;
-      const patch = { connecting: false };
-      // If connection was attempted but failed, ensure connected is false
-      if (connectionAttempted && !connectionSucceeded) {
-        patch.connected = false;
+        if (jobStatus === 'running') {
+          this.toast.show('Backup already in progress', 'info');
+          return;
+        }
+
+        const { file } = this.fileManager;
+        if (!file) {
+          this.toast.show('Please select a file to back up', 'error');
+          this.announcer.announce('Select a file before starting backup');
+          return;
+        }
+
+        await this.#startBackup(file);
+      } catch (error) {
+        console.error('Primary action failed', error);
+        this.toast.show(error.message || 'Operation failed', 'error', 5000);
+      } finally {
+        const patch = { connecting: false };
+        // If connection was attempted but failed, ensure connected is false
+        if (connectionAttempted && !connectionSucceeded) {
+          patch.connected = false;
+        }
+        this.state.update(patch);
       }
-      this.state.update(patch);
-    }
+    });
   }
 
   #validateInput(input, icon) {
@@ -804,13 +930,9 @@ class App {
     }
   }
 
-  #handleSocketProgress(payload) {
-    if (!payload) {
-      return;
-    }
-    const activeJobId = this.state.snapshot.jobId;
-    if (activeJobId && payload.job_id && payload.job_id !== activeJobId) {
-      return;
+  #parseProgressPayload(payload) {
+    if (!payload || !payload.phase) {
+      return null;
     }
 
     const { phase, data } = payload;
@@ -836,7 +958,23 @@ class App {
       message = phase || 'Progress update';
     }
 
-    this.logs.add(message, { level, phase: phase || 'PROGRESS' });
+    return {
+      phase,
+      message,
+      level,
+      progressValue,
+      bytesTransferred,
+      totalBytes
+    };
+  }
+
+  #logProgressEvent(parsedData) {
+    if (!parsedData) return;
+    this.logs.add(parsedData.message, { level: parsedData.level, phase: parsedData.phase || 'PROGRESS' });
+  }
+
+  #updateProgressState(parsedData) {
+    if (!parsedData) return;
 
     const now = Date.now();
 
@@ -845,28 +983,28 @@ class App {
       this.state.mutate((draft) => {
         draft.jobRunning = true;
         draft.jobStatus = 'running';
-        draft.jobPhase = phase || draft.jobPhase;
-        draft.jobMessage = message;
+        draft.jobPhase = parsedData.phase || draft.jobPhase;
+        draft.jobMessage = parsedData.message;
         draft.lastUpdated = now;
 
-        if (Number.isFinite(progressValue)) {
-          draft.progress = progressValue;
+        if (Number.isFinite(parsedData.progressValue)) {
+          draft.progress = parsedData.progressValue;
         }
 
-        if (Number.isFinite(bytesTransferred)) {
-          draft.bytesTransferred = bytesTransferred;
+        if (Number.isFinite(parsedData.bytesTransferred)) {
+          draft.bytesTransferred = parsedData.bytesTransferred;
           if (this.lastSpeedSample) {
-            const deltaBytes = bytesTransferred - this.lastSpeedSample.bytes;
+            const deltaBytes = parsedData.bytesTransferred - this.lastSpeedSample.bytes;
             const deltaTime = (now - this.lastSpeedSample.time) / 1000;
             if (deltaBytes >= 0 && deltaTime > 0) {
-              draft.speed = deltaBytes / deltaTime;
+              draft.speed = Math.max(0, deltaBytes / deltaTime);
             }
           }
-          this.lastSpeedSample = { bytes: bytesTransferred, time: now };
+          this.lastSpeedSample = { bytes: parsedData.bytesTransferred, time: now };
         }
 
-        if (Number.isFinite(totalBytes)) {
-          draft.totalBytes = totalBytes;
+        if (Number.isFinite(parsedData.totalBytes)) {
+          draft.totalBytes = parsedData.totalBytes;
         }
 
         if (draft.startTimestamp) {
@@ -878,6 +1016,22 @@ class App {
         }
       });
     });
+  }
+
+  #handleSocketProgress(payload) {
+    if (!payload) {
+      return;
+    }
+    const activeJobId = this.state.snapshot.jobId;
+    if (activeJobId && payload.job_id && payload.job_id !== activeJobId) {
+      return;
+    }
+
+    const parsedData = this.#parseProgressPayload(payload);
+    if (parsedData) {
+      this.#logProgressEvent(parsedData);
+      this.#updateProgressState(parsedData);
+    }
   }
 
   #handleFileReceipt(payload) {
@@ -942,11 +1096,7 @@ class App {
     }
   }
 
-  #applyStatus(status, latency) {
-    if (!status) {
-      return;
-    }
-
+  #parseStatusResponse(status, latency, previousState) {
     const connected = Boolean(status.connected);
     const jobRunning = Boolean(status.backing_up);
     const phase = status.phase || status.status || 'Idle';
@@ -954,80 +1104,82 @@ class App {
     const progress = status.progress?.percentage ?? status.progress?.progress ?? null;
     const bytesTransferred = status.progress?.bytes_transferred ?? status.progress?.bytesTransferred ?? null;
     const totalBytes = status.progress?.total_bytes ?? status.progress?.totalBytes ?? null;
-    const jobId = status.job_id ?? status.jobId ?? this.state.snapshot.jobId ?? null;
+    const jobId = status.job_id ?? status.jobId ?? previousState.jobId ?? null;
     const paused = Boolean(status.paused ?? status.progress?.paused ?? status.job_paused);
 
     const now = Date.now();
-    const {
-      speed: previousSpeed = 0,
-      totalBytes: previousTotalBytes,
-      bytesTransferred: previousTransferred,
-      progress: previousProgress,
-      connectionLatency: previousLatency,
-      connectionQuality: previousQuality,
-      elapsedSeconds: previousElapsedSeconds,
-      startTimestamp,
-      jobStatus: previousJobStatus,
-    } = this.state.snapshot;
 
+    return {
+      connected,
+      jobRunning,
+      phase,
+      message,
+      progress,
+      bytesTransferred,
+      totalBytes,
+      jobId,
+      paused,
+      now,
+      latency
+    };
+  }
+
+  #calculateTransferSpeed(bytesTransferred, now, previousSpeed = 0) {
     let speed = previousSpeed || 0;
     if (typeof bytesTransferred === 'number') {
       if (this.lastSpeedSample) {
         const deltaBytes = bytesTransferred - this.lastSpeedSample.bytes;
         const deltaTime = (now - this.lastSpeedSample.time) / 1000;
         if (deltaBytes >= 0 && deltaTime > 0) {
-          speed = deltaBytes / deltaTime;
+          speed = Math.max(0, deltaBytes / deltaTime);
         }
       }
       this.lastSpeedSample = { bytes: bytesTransferred, time: now };
     }
+    return speed;
+  }
 
-    const total = typeof totalBytes === 'number' ? totalBytes : previousTotalBytes;
-    const transferred = typeof bytesTransferred === 'number' ? bytesTransferred : previousTransferred;
-    const pct = progress ?? previousProgress;
+  #deriveUIState(parsed, previousState, speed) {
+    const total = typeof parsed.totalBytes === 'number' ? parsed.totalBytes : previousState.totalBytes;
+    const transferred = typeof parsed.bytesTransferred === 'number' ? parsed.bytesTransferred : previousState.bytesTransferred;
+    const pct = parsed.progress ?? previousState.progress;
 
     let etaSeconds = null;
     if (Number.isFinite(total) && Number.isFinite(transferred) && speed > 0 && total > transferred) {
       etaSeconds = (total - transferred) / speed;
     }
 
-    let elapsedSeconds = previousElapsedSeconds;
-    if (startTimestamp) {
-      elapsedSeconds = (now - startTimestamp) / 1000;
+    let elapsedSeconds = previousState.elapsedSeconds;
+    if (previousState.startTimestamp) {
+      elapsedSeconds = (parsed.now - previousState.startTimestamp) / 1000;
     }
 
-    const connectionQuality = latency
-      ? evaluateConnectionQuality({ latencyMs: latency })
-      : previousQuality;
+    const connectionQuality = parsed.latency
+      ? evaluateConnectionQuality({ latencyMs: parsed.latency })
+      : previousState.connectionQuality;
 
-    const nextState = {
-      jobId,
-      connected,
-      connectionLatency: latency ?? previousLatency,
+    return {
+      jobId: parsed.jobId,
+      connected: parsed.connected,
+      connectionLatency: parsed.latency ?? previousState.connectionLatency,
       connectionQuality,
-      jobRunning,
-      jobPhase: phase,
-      jobMessage: message,
-      jobStatus: this.#deriveJobStatus(status, previousJobStatus),
-      progress: Number.isFinite(pct) ? pct : previousProgress,
-      bytesTransferred: Number.isFinite(transferred) ? transferred : previousTransferred,
-      totalBytes: Number.isFinite(total) ? total : previousTotalBytes,
+      jobRunning: parsed.jobRunning,
+      jobPhase: parsed.phase,
+      jobMessage: parsed.message,
+      jobStatus: this.#deriveJobStatus({ phase: parsed.phase }, previousState.jobStatus),
+      progress: Number.isFinite(pct) ? pct : previousState.progress,
+      bytesTransferred: Number.isFinite(transferred) ? transferred : previousState.bytesTransferred,
+      totalBytes: Number.isFinite(total) ? total : previousState.totalBytes,
       speed,
       etaSeconds,
       elapsedSeconds,
-      lastUpdated: now,
-      paused,
+      lastUpdated: parsed.now,
+      paused: parsed.paused,
     };
+  }
 
-    if (!jobRunning) {
-      nextState.jobRunning = false;
-      nextState.paused = false;
-      if (this.state.snapshot.jobId && (!jobId || jobId === this.state.snapshot.jobId)) {
-        this.socket.clearJob();
-      }
-    }
-
-    if (!jobRunning && nextState.jobStatus === 'completed') {
+  #handleJobCompletion(jobRunning, jobStatus, jobId) {
+    if (!jobRunning && jobStatus === 'completed') {
       this.#stopJobStatusLoop();
       this.toast.show('Backup completed', 'success', 4000);
       this.announcer.announce('Backup completed successfully');
@@ -1039,29 +1191,61 @@ class App {
       }
     }
 
-    if (Array.isArray(status.events)) {
-      status.events.forEach((event) => {
-        if (!event) return;
-        const { phase: eventPhase, data } = event;
-        let messageText = '';
-        let level = 'info';
-        if (typeof data === 'string') {
-          messageText = data;
-        } else if (data && typeof data === 'object') {
-          messageText = data.message || JSON.stringify(data);
-          if (data.success === false) {
-            level = 'error';
-          }
-        }
-        if (!messageText) {
-          messageText = eventPhase || 'Event';
-        }
-        if (eventPhase && /error|fail/i.test(eventPhase)) {
+    if (!jobRunning) {
+      if (this.state.snapshot.jobId && (!jobId || jobId === this.state.snapshot.jobId)) {
+        this.socket.clearJob();
+      }
+    }
+  }
+
+  #processStatusEvents(events) {
+    if (!Array.isArray(events)) return;
+
+    events.forEach((event) => {
+      if (!event) return;
+      const { phase: eventPhase, data } = event;
+      let messageText = '';
+      let level = 'info';
+      if (typeof data === 'string') {
+        messageText = data;
+      } else if (data && typeof data === 'object') {
+        messageText = data.message || JSON.stringify(data);
+        if (data.success === false) {
           level = 'error';
         }
-        this.logs.add(messageText, { level, phase: eventPhase });
-      });
+      }
+      if (!messageText) {
+        messageText = eventPhase || 'Event';
+      }
+      if (eventPhase && /error|fail/i.test(eventPhase)) {
+        level = 'error';
+      }
+      this.logs.add(messageText, { level, phase: eventPhase });
+    });
+  }
+
+  #applyStatus(status, latency) {
+    if (!status) {
+      return;
     }
+
+    const previousState = this.state.snapshot;
+    const parsed = this.#parseStatusResponse(status, latency, previousState);
+
+    const speed = this.#calculateTransferSpeed(parsed.bytesTransferred, parsed.now, previousState.speed);
+    const nextState = this.#deriveUIState(parsed, previousState, speed);
+
+    // Handle job completion state
+    this.#handleJobCompletion(parsed.jobRunning, nextState.jobStatus, parsed.jobId);
+
+    // Reset job state if not running
+    if (!parsed.jobRunning) {
+      nextState.jobRunning = false;
+      nextState.paused = false;
+    }
+
+    // Process any status events
+    this.#processStatusEvents(status.events);
 
     this.state.update(nextState);
   }
@@ -1088,23 +1272,16 @@ class App {
   }
 
   #startJobStatusLoop(jobId) {
-    this.#stopJobStatusLoop();
     const poll = () => this.#refreshStatus(jobId);
-    this.jobStatusTimer = globalThis.setInterval(poll, STATUS_INTERVAL_MS);
+    this.#jobStatusTimer.start(poll, STATUS_INTERVAL_MS);
     poll();
   }
 
   #stopJobStatusLoop() {
-    if (this.jobStatusTimer) {
-      clearInterval(this.jobStatusTimer);
-      this.jobStatusTimer = null;
-    }
+    this.#jobStatusTimer.stop();
   }
 
   #startGeneralStatusLoop() {
-    if (this.generalStatusTimer) {
-      clearInterval(this.generalStatusTimer);
-    }
     const poll = () => {
       const { jobStatus, jobId } = this.state.snapshot;
       if (jobStatus === 'running' && jobId) {
@@ -1112,28 +1289,28 @@ class App {
       }
       this.#refreshStatus();
     };
-    this.generalStatusTimer = globalThis.setInterval(poll, GENERAL_STATUS_INTERVAL_MS);
+    this.#generalStatusTimer.start(poll, GENERAL_STATUS_INTERVAL_MS);
     poll();
   }
 
   #render(state) {
     // Debounce renders to avoid excessive DOM updates
     const now = performance.now();
-    if (now - this._lastRenderTime < RENDER_DEBOUNCE_MS) {
+    if (now - this.#lastRenderTime < RENDER_DEBOUNCE_MS) {
       // Skip this render, but schedule one for later
-      if (!this._pendingRender) {
-        this._pendingRender = setTimeout(() => {
-          this._pendingRender = null;
+      if (!this.#pendingRender) {
+        this.#pendingRender = setTimeout(() => {
+          this.#pendingRender = null;
           this.#render(this.state.snapshot);
         }, RENDER_DEBOUNCE_MS);
       }
       return;
     }
-    this._lastRenderTime = now;
+    this.#lastRenderTime = now;
 
     // Cache previous render state to avoid unnecessary DOM updates
-    if (!this._prevRenderState) {
-      this._prevRenderState = {};
+    if (!this.#prevRenderState) {
+      this.#prevRenderState = {};
     }
 
     // Update idle state based on job running status
@@ -1155,12 +1332,12 @@ class App {
         this.#renderButtons(state);
       }
 
-      this._prevRenderState = { ...state };
+      this.#prevRenderState = { ...state };
     });
   }
 
   #hasConnectionChanged(state) {
-    const prev = this._prevRenderState;
+    const prev = this.#prevRenderState;
     return !prev ||
       prev.connecting !== state.connecting ||
       prev.connected !== state.connected ||
@@ -1169,7 +1346,7 @@ class App {
   }
 
   #hasProgressChanged(state) {
-    const prev = this._prevRenderState;
+    const prev = this.#prevRenderState;
     return !prev ||
       prev.jobMessage !== state.jobMessage ||
       prev.jobPhase !== state.jobPhase ||
@@ -1178,7 +1355,7 @@ class App {
   }
 
   #hasStatsChanged(state) {
-    const prev = this._prevRenderState;
+    const prev = this.#prevRenderState;
     return !prev ||
       prev.bytesTransferred !== state.bytesTransferred ||
       prev.speed !== state.speed ||
@@ -1188,7 +1365,7 @@ class App {
   }
 
   #hasButtonsChanged(state) {
-    const prev = this._prevRenderState;
+    const prev = this.#prevRenderState;
     return !prev ||
       prev.connecting !== state.connecting ||
       prev.connected !== state.connected ||
@@ -1305,7 +1482,7 @@ class App {
     const isTransferring = state.jobStatus === 'running' && !state.paused;
 
     // Use cached DOM queries instead of querySelectorAll on every render
-    this._cachedStatCards.forEach(card => {
+    this.#cachedStatCards.forEach(card => {
       if (isTransferring) {
         card.classList.add('transfer-active');
       } else {
@@ -1314,11 +1491,11 @@ class App {
     });
 
     // Highlight speed card as primary stat during transfer
-    if (this._cachedSpeedCard) {
+    if (this.#cachedSpeedCard) {
       if (isTransferring) {
-        this._cachedSpeedCard.classList.add('primary-stat');
+        this.#cachedSpeedCard.classList.add('primary-stat');
       } else {
-        this._cachedSpeedCard.classList.remove('primary-stat');
+        this.#cachedSpeedCard.classList.remove('primary-stat');
       }
     }
 
@@ -1332,11 +1509,11 @@ class App {
     // Throttle speed updates to max 10/sec (reduce animation overhead)
     const now = performance.now();
     const speedText = formatSpeed(state.speed);
-    if (now - this._lastSpeedUpdate >= this._speedUpdateThrottle) {
+    if (now - this.#lastSpeedUpdate >= this.#speedUpdateThrottle) {
       if (dom.stats.speed.textContent !== speedText) {
         animateOnce(dom.stats.speed, 'updating');
         dom.stats.speed.textContent = speedText;
-        this._lastSpeedUpdate = now;
+        this.#lastSpeedUpdate = now;
       }
     }
 
@@ -1441,7 +1618,8 @@ class App {
   }
 
   #filterLogsBySearch(query) {
-    const entries = dom.logContainer.querySelectorAll('.log-entry');
+    // Use cached entries instead of expensive querySelectorAll
+    const entries = this.#getCachedLogEntries();
     let visibleCount = 0;
 
     for (const entry of entries) {
@@ -1464,6 +1642,55 @@ class App {
     // Show/hide empty state
     if (dom.logsEmptyState) {
       dom.logsEmptyState.style.display = visibleCount === 0 ? 'flex' : 'none';
+    }
+  }
+
+  #getCachedLogEntries() {
+    // Use try-catch to handle cases where DOM might not be ready
+    try {
+      const currentEntries = dom.logContainer.querySelectorAll('.log-entry');
+
+      // If cache is empty, size doesn't match, or appears stale, rebuild it
+      // This automatically handles when logs are added/removed from the DOM
+      if (this.#cachedLogEntries.length !== currentEntries.length) {
+        this.#cachedLogEntries = Array.from(currentEntries);
+      }
+
+      return this.#cachedLogEntries;
+    } catch (error) {
+      // Fallback to querySelectorAll if there's any issue with cache
+      console.warn('Cache fallback to querySelectorAll:', error);
+      return Array.from(dom.logContainer.querySelectorAll('.log-entry'));
+    }
+  }
+
+  #invalidateLogCache() {
+    // Clear cache when logs are added/removed
+    this.#cachedLogEntries = [];
+  }
+
+  /**
+   * Saves data to localStorage with error handling and user feedback.
+   * Handles quota exceeded errors and provides appropriate notifications.
+   * @param {string} key - The storage key
+   * @param {string} value - The value to store
+   * @throws {QuotaExceededError} When localStorage quota is exceeded
+   * @throws {DOMException} When localStorage operation fails
+   */
+  saveToLocalStorage(key, value) {
+    try {
+      localStorage.setItem(key, value);
+    } catch (error) {
+      // Log detailed warning
+      if (error.name === 'QuotaExceededError') {
+        console.warn(`localStorage quota exceeded for key "${key}". User settings may not persist.`);
+        this.logs?.add(`Storage quota exceeded - settings may not be saved`, { level: 'warn' });
+      } else {
+        console.warn(`Failed to save to localStorage: ${error.message}`, error);
+        this.logs?.add(`Failed to save settings to local storage`, { level: 'warn' });
+      }
+      // Show subtle toast notification (non-intrusive for background operation)
+      this.toast?.show(`⚠️ Settings may not persist (${error.name})`, 'warning', 3000);
     }
   }
 
@@ -1508,7 +1735,14 @@ class App {
 
 globalThis.addEventListener('DOMContentLoaded', () => {
   const app = new App();
-  void app.init();
+  app.init().catch(error => {
+    console.error('App initialization failed:', error);
+    // Show user-facing error using existing error boundary
+    ErrorBoundary.handle(error, 'App Initialization', () => {
+      // Fallback to basic functionality
+      console.warn('App started in safe mode with limited functionality');
+    });
+  });
   globalThis.cyberBackupApp = app;
   // Prefill server/username from localStorage if present
   try {
@@ -1520,11 +1754,18 @@ globalThis.addEventListener('DOMContentLoaded', () => {
     if (savedUser && typeof savedUser === 'string' && savedUser.trim()) {
       dom.usernameInput.value = savedUser.trim();
     }
-  } catch { }
+  } catch (error) {
+    console.warn('Failed to load saved settings from localStorage', error);
+  }
   dom.serverInput.addEventListener('input', () => {
-    try { localStorage.setItem('cyberbackup-server', dom.serverInput.value.trim()); } catch { }
+    app.saveToLocalStorage('cyberbackup-server', dom.serverInput.value.trim());
   });
   dom.usernameInput.addEventListener('input', () => {
-    try { localStorage.setItem('cyberbackup-username', dom.usernameInput.value.trim()); } catch { }
+    app.saveToLocalStorage('cyberbackup-username', dom.usernameInput.value.trim());
+  });
+
+  // Cleanup on page unload to prevent memory leaks
+  globalThis.addEventListener('beforeunload', () => {
+    app.destroy();
   });
 });
