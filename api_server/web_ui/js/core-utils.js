@@ -85,6 +85,12 @@ function initializeDom() {
   dom.fileName = getOptionalElement('fileName');
   dom.fileInfo = getOptionalElement('fileInfo');
   dom.primaryActionBtn = getElement('primaryActionBtn');
+  dom.primaryBtnText = getOptionalElement('primaryBtnText');
+  dom.primaryBtnSpinner = getOptionalElement('primaryBtnSpinner');
+  // Connection status message
+  dom.connectionStatusMessage = getOptionalElement('connectionStatusMessage');
+  dom.connectionStatusText = getOptionalElement('connectionStatusText');
+  dom.connectionStatusIcon = getOptionalElement('connectionStatusIcon');
   dom.pauseBtn = getElement('pauseBtn');
   dom.resumeBtn = getElement('resumeBtn');
   dom.stopBtn = getElement('stopBtn');
@@ -128,6 +134,18 @@ function initializeDom() {
   dom.modalCancelBtn = getElement('modalCancelBtn');
   dom.modalOkBtn = getElement('modalOkBtn');
   dom.srLive = getElement('srLive');
+
+  // --- Missing Elements added during Refactoring ---
+  dom.logContainer = getElement('logContainer'); // Standardized name
+  dom.clearFileBtn = getOptionalElement('clearFileBtn');
+  dom.connectionDetails = getOptionalElement('connectionDetails');
+  dom.speedChart = getOptionalElement('speedChart');
+  dom.toggleSpeedChart = getOptionalElement('toggleSpeedChart');
+  dom.speedChartContainer = getOptionalElement('speedChartContainer');
+  dom.dragOverlay = getOptionalElement('dragOverlay');
+  dom.shortcutModal = getOptionalElement('shortcutModal');
+  dom.shortcutBtn = getOptionalElement('shortcutBtn');
+  dom.closeShortcutBtn = getOptionalElement('closeShortcutBtn');
 }
 
 /**
@@ -216,143 +234,105 @@ const domUtils = {
 // --- utils/formatters.js ---
 const BYTE_UNITS = ['B', 'KB', 'MB', 'GB', 'TB'];
 
-/**
- * Formats bytes to human-readable string with appropriate units
- * @param {number} bytes - The number of bytes to format
- * @returns {string} Formatted string (e.g., "1.5 KB", "2.3 MB", "–" for invalid input)
- */
-function formatBytes(bytes) {
-  if (!Number.isFinite(bytes) || bytes < 0) {
-    return '–';
-  }
-  if (bytes === 0) {
-    return '0 B';
-  }
-  const exponent = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), BYTE_UNITS.length - 1);
-  const value = bytes / Math.pow(1024, exponent);
+const formatters = {
+  /**
+   * Formats a Date object to a time string (HH:mm:ss)
+   * @param {Date|string|number} date - The date to format
+   * @returns {string} Formatted time string
+   */
+  time(date) {
+    if (!date) return '--:--:--';
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return '--:--:--';
+    return d.toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  },
 
-  let precision;
-  if (value >= 100) {
-    precision = 0;
-  } else if (value >= 10) {
-    precision = 1;
-  } else {
-    precision = 2;
-  }
+  /**
+   * Formats bytes to human-readable string with appropriate units
+   * @param {number} bytes - The number of bytes to format
+   * @returns {string} Formatted string
+   */
+  formatBytes(bytes) {
+    if (!Number.isFinite(bytes) || bytes < 0) return '–';
+    if (bytes === 0) return '0 B';
+    const exponent = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), BYTE_UNITS.length - 1);
+    const value = bytes / Math.pow(1024, exponent);
+    const precision = value >= 100 ? 0 : (value >= 10 ? 1 : 2);
+    return `${value.toFixed(precision)} ${BYTE_UNITS[exponent]}`;
+  },
 
-  return `${value.toFixed(precision)} ${BYTE_UNITS[exponent]}`;
-}
+  /**
+   * Formats bytes per second to human-readable speed string
+   * @param {number} bytesPerSecond - The speed in bytes per second
+   * @returns {string} Formatted speed string
+   */
+  formatSpeed(bytesPerSecond) {
+    if (!Number.isFinite(bytesPerSecond) || bytesPerSecond < 0) return '–';
+    if (bytesPerSecond === 0) return '0 B/s';
+    return `${this.formatBytes(bytesPerSecond)}/s`;
+  },
 
-/**
- * Formats bytes per second to human-readable speed string
- * @param {number} bytesPerSecond - The speed in bytes per second
- * @returns {string} Formatted speed string (e.g., "1.5 KB/s", "2.3 MB/s", "–" for invalid input)
- */
-function formatSpeed(bytesPerSecond) {
-  if (!Number.isFinite(bytesPerSecond) || bytesPerSecond < 0) {
-    return '–';
-  }
-  if (bytesPerSecond === 0) {
-    return '0 B/s';
-  }
-  const exponent = Math.min(Math.floor(Math.log(bytesPerSecond) / Math.log(1024)), BYTE_UNITS.length - 1);
-  const value = bytesPerSecond / Math.pow(1024, exponent);
+  /**
+   * Formats seconds to human-readable duration string
+   * @param {number} seconds - The duration in seconds
+   * @returns {string} Formatted duration string
+   */
+  formatDuration(seconds) {
+    if (!Number.isFinite(seconds) || seconds < 0) return '–';
+    if (seconds < 1) return `${seconds.toFixed(1)} s`;
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = Math.floor(seconds % 60);
+    if (hrs > 0) return `${hrs}h ${mins.toString().padStart(2, '0')}m`;
+    if (mins > 0) return `${mins}m ${secs.toString().padStart(2, '0')}s`;
+    return `${secs}s`;
+  },
 
-  let precision;
-  if (value >= 100) {
-    precision = 0;
-  } else if (value >= 10) {
-    precision = 1;
-  } else {
-    precision = 2;
-  }
+  /**
+   * Formats milliseconds to human-readable latency string
+   * @param {number} ms - The latency in milliseconds
+   * @returns {string} Formatted latency string
+   */
+  formatLatency(ms) {
+    if (!Number.isFinite(ms) || ms <= 0) return '–';
+    return `${Math.max(1, Math.round(ms))} ms`;
+  },
 
-  return `${value.toFixed(precision)} ${BYTE_UNITS[exponent]}/s`;
-}
+  /**
+   * Formats a numeric value to percentage string
+   * @param {number} value - The value to format (0-100)
+   * @returns {string} Formatted percentage string
+   */
+  formatPercentage(value) {
+    if (!Number.isFinite(value)) return '0%';
+    return `${Math.min(100, Math.max(0, value)).toFixed(0)}%`;
+  },
 
-/**
- * Formats seconds to human-readable duration string
- * @param {number} seconds - The duration in seconds
- * @returns {string} Formatted duration string (e.g., "1h 23m", "45s", "0.5s", "–" for invalid input)
- */
-function formatDuration(seconds) {
-  if (!Number.isFinite(seconds) || seconds < 0) {
-    return '–';
-  }
-  if (seconds < 1) {
-    return `${seconds.toFixed(1)} s`;
-  }
-  const hrs = Math.floor(seconds / 3600);
-  const mins = Math.floor((seconds % 3600) / 60);
-  const secs = Math.floor(seconds % 60);
+  /**
+   * Parses server address string into host and port components
+   * @param {string} input - The server address string
+   * @returns {{host: string, port: number}|null} Parsed host and port
+   */
+  parseServerAddress(input) {
+    if (!input || typeof input !== 'string') return null;
+    let trimmed = input.trim();
+    if (trimmed.length === 0) return null;
+    if (trimmed.startsWith('http://')) trimmed = trimmed.slice(7);
+    else if (trimmed.startsWith('https://')) trimmed = trimmed.slice(8);
 
-  if (hrs > 0) {
-    return `${hrs}h ${mins.toString().padStart(2, '0')}m`;
-  }
-  if (mins > 0) {
-    return `${mins}m ${secs.toString().padStart(2, '0')}s`;
-  }
-  return `${secs}s`;
-}
+    // Remove trailing path
+    const slashIdx = trimmed.indexOf('/');
+    if (slashIdx > -1) trimmed = trimmed.slice(0, slashIdx);
 
-/**
- * Formats milliseconds to human-readable latency string
- * @param {number} ms - The latency in milliseconds
- * @returns {string} Formatted latency string (e.g., "45 ms", "–" for invalid input)
- */
-function formatLatency(ms) {
-  if (!Number.isFinite(ms) || ms <= 0) {
-    return '–';
-  }
-  return `${Math.max(1, Math.round(ms))} ms`;
-}
+    const hasColon = trimmed.includes(':');
+    if (!hasColon) return { host: trimmed, port: 1256 };
 
-/**
- * Formats a numeric value to percentage string
- * @param {number} value - The value to format (0-100)
- * @returns {string} Formatted percentage string (e.g., "45%", "0%" for invalid input)
- */
-function formatPercentage(value) {
-  if (!Number.isFinite(value)) {
-    return '0%';
+    const [hostPart, portPart] = trimmed.split(':');
+    const parsedPort = Number.parseInt(portPart, 10);
+    if (!Number.isFinite(parsedPort) || parsedPort <= 0 || parsedPort > 65535) return null;
+    return { host: hostPart, port: parsedPort };
   }
-  return `${Math.min(100, Math.max(0, value)).toFixed(0)}%`;
-}
-
-/**
- * Parses server address string into host and port components
- * Supports formats like "host", "host:port", "http://host:port", "https://host:port"
- * @param {string} input - The server address string to parse
- * @returns {{host: string, port: number}|null} Parsed host and port, or null if invalid
- */
-function parseServerAddress(input) {
-  if (!input || typeof input !== 'string') {
-    return null;
-  }
-  let trimmed = input.trim();
-  if (trimmed.length === 0) {
-    return null;
-  }
-
-  // Strip protocol if provided
-  if (trimmed.startsWith('http://')) trimmed = trimmed.slice(7);
-  else if (trimmed.startsWith('https://')) trimmed = trimmed.slice(8);
-  // Remove any trailing path
-  const slashIdx = trimmed.indexOf('/');
-  if (slashIdx > -1) trimmed = trimmed.slice(0, slashIdx);
-
-  const hasColon = trimmed.includes(':');
-  if (!hasColon) {
-    return { host: trimmed, port: 1256 };
-  }
-
-  const [hostPart, portPart] = trimmed.split(':');
-  const parsedPort = Number.parseInt(portPart, 10);
-  if (!Number.isFinite(parsedPort) || parsedPort <= 0 || parsedPort > 65535) {
-    return null;
-  }
-  return { host: hostPart, port: parsedPort };
-}
+};
 
 /**
  * Clamps a numeric value between minimum and maximum bounds

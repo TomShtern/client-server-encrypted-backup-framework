@@ -30,12 +30,11 @@
 
     <!-- Theme Variables -->
     <link rel="stylesheet" href="css/styles.css" />
-    <link rel="stylesheet" href="css/enhancements.css" />
     <!-- Main Application Styles -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!-- Preload Inter font for reduced FOIT (Flash of Invisible Text) -->
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
+    <!-- Inter font with display=swap for good LCP -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
 </head>
 
 <body>
@@ -351,6 +350,12 @@
                     <button id="stopBtn" class="interactive ripple action-btn" type="button" disabled>STOP</button>
                 </div>
 
+                <!-- Connection Status Message -->
+                <div id="connectionStatusMessage" class="connection-status-message" aria-live="polite">
+                    <span id="connectionStatusIcon" class="status-icon">ℹ</span>
+                    <span id="connectionStatusText">Ready to connect</span>
+                </div>
+
                 <div id="statsGrid" aria-label="Transfer statistics">
                     <div class="stat interactive">
                         <div class="stat-icon">
@@ -536,13 +541,17 @@
     </dialog>
 
     <!-- Socket.IO is now lazy-loaded on-demand for faster initial page load -->
-    <!-- See services.js SocketClient.#ensureIoFactory() -->
+    <!-- See core.js SocketClient.#ensureIoFactory() -->
+    <!-- Pre-loading with SRI for security (SEC-002) -->
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"
+        integrity="sha384-2huaZvOR9iDzHqslqwpR87isEmrfxqyWOF7hr7BY6KG0+hVKLoEXMPUJw3ynWuhO"
+        crossorigin="anonymous"></script>
 
     <!-- Application Scripts -->
     <script src="js/core-utils.js" defer></script>
-    <script src="js/services.js" defer></script>
+    <script src="js/core.js" defer></script>
+    <script src="js/ui.js" defer></script>
     <script src="js/app.js" defer></script>
-    <script src="js/enhancements.js" defer></script>
 </body>
 
 </html>

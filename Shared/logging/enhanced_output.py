@@ -22,13 +22,13 @@ USAGE:
 
 import logging
 import os
-import platform
 import sys
 from enum import Enum
 from typing import Any, Protocol, cast
 
-
 # Protocol for enhanced logger with custom methods
+
+
 class EnhancedLogger(Protocol):
     """Protocol for logger with enhanced methods."""
 
@@ -44,6 +44,7 @@ class EnhancedLogger(Protocol):
 # Try to detect terminal color support
 def _supports_color() -> bool:
     """Detect if terminal supports ANSI color codes."""
+    print("DEBUG: _supports_color() called", flush=True)
     try:
         # Check environment variables
         if os.getenv("NO_COLOR"):
@@ -52,17 +53,15 @@ def _supports_color() -> bool:
             return True
 
         # Check if we're in a terminal
+        print("DEBUG: checking isatty", flush=True)
         if not hasattr(sys.stdout, "isatty") or not sys.stdout.isatty():
             return False
 
         # Windows 10+ supports ANSI colors
-        if platform.system() == "Windows":
-            import ctypes
-
-            kernel32 = ctypes.windll.kernel32
-            # Enable ANSI color support on Windows
-            kernel32.SetConsoleMode(kernel32.GetStdHandle(-11), 7)
-            return True
+        if sys.platform == "win32":
+            # SAFEMODE: Disable native console mode setting to prevent hangs
+            # We rely on terminals supporting ANSI by default or not at all
+            return False
 
         # Most Unix terminals support colors
         return True
@@ -269,7 +268,9 @@ class EmojiLogger:
     _loggers: dict[str, logging.Logger] = {}
 
     @classmethod
-    def get_logger(cls, name: str, use_colors: bool = True, use_emojis: bool = True) -> logging.Logger:
+    def get_logger(
+        cls, name: str, use_colors: bool = True, use_emojis: bool = True
+    ) -> logging.Logger:
         """Get or create an enhanced logger with emoji and color support."""
 
         if name in cls._loggers:
@@ -333,7 +334,9 @@ class EmojiLogger:
         dynamic_logger.progress = progress
 
 
-def enhanced_print(message: str, level: LogLevel = LogLevel.INFO, prefix: str = "") -> None:
+def enhanced_print(
+    message: str, level: LogLevel = LogLevel.INFO, prefix: str = ""
+) -> None:
     """Enhanced print function with emoji and color support."""
     _, emoji, color = level.value  # Unpack but ignore level_name
 
@@ -396,7 +399,11 @@ def enhance_existing_logger(
                         original_fmt = handler.formatter._fmt
 
                     handler.setFormatter(
-                        EmojiFormatter(fmt=original_fmt, use_colors=use_colors, use_emojis=use_emojis)
+                        EmojiFormatter(
+                            fmt=original_fmt,
+                            use_colors=use_colors,
+                            use_emojis=use_emojis,
+                        )
                     )
             except (AttributeError, TypeError):
                 # Skip if we can't determine the stream

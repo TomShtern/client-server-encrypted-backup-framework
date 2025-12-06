@@ -1,4 +1,5 @@
 """
+print("DEBUG: Shared/__init__.py executing", flush=True)
 Shared module for the Client-Server Encrypted Backup Framework.
 
 This module contains shared utilities, configuration management,
@@ -14,11 +15,10 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 
 # Make commonly used modules easily accessible
-# Make commonly used modules easily accessible
-from .config import unified_config as config
 from . import crc
-from .validation import filename_validator
+from .config import unified_config as config
 from .logging import logging_utils
 from .monitoring import observability
+from .validation import filename_validator
 
 __all__ = ["config", "crc", "filename_validator", "logging_utils", "observability"]

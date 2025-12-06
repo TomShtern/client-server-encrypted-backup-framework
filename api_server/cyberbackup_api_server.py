@@ -29,6 +29,7 @@ See API_SERVER_UNIFICATION.md for details.
 """
 
 # Standard library imports
+print("DEBUG: Starting server...", flush=True)
 import contextlib
 import logging
 import os
@@ -42,6 +43,7 @@ from typing import Any, cast
 
 # CRITICAL: Set up paths and UTF-8 encoding before any other imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+print("DEBUG: sys.path done", flush=True)
 
 # Third-party imports
 from flask import (
@@ -53,13 +55,28 @@ from flask import (
     send_from_directory,
     session,
 )
+
+print("DEBUG: flask imported", flush=True)
 from flask_cors import CORS
+
+print("DEBUG: flask_cors imported", flush=True)
 from flask_socketio import SocketIO, emit
+
+print("DEBUG: flask_socketio imported", flush=True)
+
+print("DEBUG: Importing Shared explicitly...", flush=True)
+import Shared
+
+print(
+    f"DEBUG: Shared imported explicitly. File: {getattr(Shared, '__file__', 'unknown')}",
+    flush=True,
+)
 
 # First-party imports (ensure_imports() must be called first)
 from Shared.path_utils import setup_imports
 
 setup_imports()  # This must be called before any other first-party imports
+print("DEBUG: setup_imports done", flush=True)
 
 from python_server.server.connection_health import (
     get_connection_health_monitor,  # noqa: E402 # Moved from global scope
@@ -92,6 +109,7 @@ PYTHON_SERVER_PATH = os.path.join(PROJECT_ROOT, "python_server")
 SENTRY_INITIALIZED = init_sentry("api-server", traces_sample_rate=0.5)
 
 # Configure enhanced dual logging (console + file) with observability
+print("DEBUG: setup_dual_logging start", flush=True)
 logger, api_log_file = setup_dual_logging(
     logger_name=__name__,
     server_type="api-server",
@@ -99,6 +117,7 @@ logger, api_log_file = setup_dual_logging(
     file_level=logging.DEBUG,
     console_format="%(asctime)s - %(levelname)s - %(message)s",
 )
+print("DEBUG: setup_dual_logging done", flush=True)
 
 # Import our real backup executor (needs to be after setup_imports and logging)
 try:
