@@ -3,6 +3,45 @@
  * Bundled: api-client, socket-client, connection-metrics, connection-monitor, file-manager, theme-manager, log-store, advanced-settings
  */
 
+// --- Dual Server Status Helper ---
+/**
+ * Updates the dual server status indicators in the header.
+ * @param {Object} status - Status object
+ * @param {boolean} status.apiOnline - Whether the API server is online
+ * @param {boolean} status.backupOnline - Whether the backup server is online
+ * @param {number} [status.latency] - Optional latency in milliseconds
+ */
+function updateDualServerStatus({ apiOnline, backupOnline, latency }) {
+  const webServerEl = document.getElementById('webServerStatus');
+  const backupServerEl = document.getElementById('backupServerStatus');
+
+  if (webServerEl) {
+    const dot = webServerEl.querySelector('.status-dot');
+    const text = webServerEl.querySelector('.status-text');
+    if (dot) {
+      dot.className = 'status-dot ' + (apiOnline ? 'online' : 'offline');
+    }
+    if (text) {
+      text.textContent = apiOnline ? 'Online' : 'Offline';
+    }
+  }
+
+  if (backupServerEl) {
+    const dot = backupServerEl.querySelector('.status-dot');
+    const text = backupServerEl.querySelector('.status-text');
+    if (dot) {
+      dot.className = 'status-dot ' + (backupOnline ? 'online' : 'offline');
+    }
+    if (text) {
+      if (backupOnline) {
+        text.textContent = latency ? `Ready (${Math.round(latency)}ms)` : 'Ready';
+      } else {
+        text.textContent = 'Offline';
+      }
+    }
+  }
+}
+
 // --- services/api-client.js ---
 const DEFAULT_TIMEOUT = 20000;
 
@@ -354,7 +393,14 @@ class SocketClient {
     }
 
     try {
-      const module = await import('https://cdn.jsdelivr.net/npm/socket.io-client@4.7.5/dist/socket.io.esm.min.js');
+      // Add 5-second timeout to CDN load
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Socket.IO CDN load timeout after 5s')), 5000)
+      );
+
+      const loadPromise = import('https://cdn.jsdelivr.net/npm/socket.io-client@4.7.5/dist/socket.io.esm.min.js');
+
+      const module = await Promise.race([loadPromise, timeoutPromise]);
       this.ioFactory = module.io;
       return this.ioFactory;
     } catch (error) {
@@ -456,6 +502,7 @@ class ConnectionMonitor {
         const latency = performance.now() - started;
         console.log('[ConnectionMonitor] Health check response:', payload);
 
+
         const metrics = payload?.system_metrics || payload?.systemMetrics || null;
 
         // Check multiple possible response formats
@@ -485,17 +532,31 @@ class ConnectionMonitor {
           payload
         });
 
+        // Update dual server status indicators in the UI
+        updateDualServerStatus({
+          apiOnline: true, // If we got here, API is responding
+          backupOnline: isBackupRunning,
+          latency
+        });
+
         this.onResult({
           ok: true,
           latency,
           metrics,
           connected,
           quality,
+          apiServerOnline: true,
+          backupServerOnline: isBackupRunning,
           timestamp: Date.now(),
         });
       })
       .catch((error) => {
         console.error('[ConnectionMonitor] Health check failed:', error);
+        // API server is offline if health check fails
+        updateDualServerStatus({
+          apiOnline: false,
+          backupOnline: false
+        });
         this.onResult({ ok: false, error, timestamp: Date.now() });
       })
       .finally(() => {

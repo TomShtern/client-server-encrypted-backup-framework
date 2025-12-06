@@ -44,80 +44,91 @@ function querySelector(selector, parent = document) {
 }
 
 /**
- * Centralized DOM element cache containing all required UI elements
+ * Centralized DOM element cache - initialized as empty object
+ * Will be populated after DOMContentLoaded to avoid timing issues
  */
-const dom = {
-  container: querySelector('.container'),
-  statusOutput: getElement('statusOutput'),
-  connStatus: getElement('connStatus'),
-  connHealth: getElement('connHealth'),
-  connQuality: getElement('connQuality'),
-  themeToggle: getElement('themeToggle'),
-  serverInput: getElement('serverInput'),
-  usernameInput: getElement('usernameInput'),
-  serverValidIcon: getElement('serverValidIcon'),
-  usernameValidIcon: getElement('usernameValidIcon'),
-  serverHint: getElement('serverHint'),
-  usernameHint: getElement('usernameHint'),
-  fileDropZone: getElement('fileDropZone'),
-  fileInput: getElement('fileInput'),
+let dom = {};
+
+// Initialize DOM cache after document is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializeDom);
+} else {
+  // DOM already loaded
+  initializeDom();
+}
+
+function initializeDom() {
+  dom.container = querySelector('.container');
+  dom.statusOutput = getElement('statusOutput');
+  dom.connStatus = getOptionalElement('connStatus');  // Removed in new dual-server design
+  dom.connHealth = getElement('connHealth');
+  dom.connQuality = getOptionalElement('connQuality');  // Removed in new dual-server design
+  dom.themeToggle = getElement('themeToggle');
+  dom.serverInput = getElement('serverInput');
+  dom.usernameInput = getElement('usernameInput');
+  dom.serverValidIcon = getElement('serverValidIcon');
+  dom.usernameValidIcon = getElement('usernameValidIcon');
+  dom.serverHint = getElement('serverHint');
+  dom.usernameHint = getElement('usernameHint');
+  dom.fileDropZone = getElement('fileDropZone');
+  dom.fileInput = getElement('fileInput');
   // New File Card Elements
-  fileIcon: getOptionalElement('fileIcon'),
-  fileNameDisplay: getOptionalElement('fileNameDisplay'),
-  fileMetadata: getOptionalElement('fileMetadata'),
-  fileTypeBadge: getOptionalElement('fileTypeBadge'),
-  fileModified: getOptionalElement('fileModified'),
+  dom.fileIcon = getOptionalElement('fileIcon');
+  dom.fileNameDisplay = getOptionalElement('fileNameDisplay');
+  dom.fileMetadata = getOptionalElement('fileMetadata');
+  dom.fileTypeBadge = getOptionalElement('fileTypeBadge');
+  dom.fileModified = getOptionalElement('fileModified');
   // Optional elements that may not exist in new design
-  fileSelectBtn: getOptionalElement('chooseFileBtn'),
-  recentFilesBtn: getOptionalElement('recentFilesBtn'),
-  clearFileBtn: getOptionalElement('clearFileBtn'),
-  fileName: getOptionalElement('fileName'),
-  fileInfo: getOptionalElement('fileInfo'),
-  primaryActionBtn: getElement('primaryActionBtn'),
-  pauseBtn: getElement('pauseBtn'),
-  resumeBtn: getElement('resumeBtn'),
-  stopBtn: getElement('stopBtn'),
-  advChunkSize: getOptionalElement('advChunkSize'),
-  advRetryLimit: getOptionalElement('advRetryLimit'),
-  advResetBtn: getOptionalElement('advResetBtn'),
+  dom.fileSelectBtn = getOptionalElement('chooseFileBtn');
+  dom.recentFilesBtn = getOptionalElement('recentFilesBtn');
+  dom.clearFileBtn = getOptionalElement('clearFileBtn');
+  dom.fileName = getOptionalElement('fileName');
+  dom.fileInfo = getOptionalElement('fileInfo');
+  dom.primaryActionBtn = getElement('primaryActionBtn');
+  dom.pauseBtn = getElement('pauseBtn');
+  dom.resumeBtn = getElement('resumeBtn');
+  dom.stopBtn = getElement('stopBtn');
+  dom.advChunkSize = getOptionalElement('advChunkSize');
+  dom.advRetryLimit = getOptionalElement('advRetryLimit');
+  dom.advResetBtn = getOptionalElement('advResetBtn');
   // Advanced settings panel elements
-  advancedPanel: getOptionalElement('advancedPanel'),
-  advancedContent: getOptionalElement('advancedContent'),
-  phaseText: getElement('phaseText'),
-  progressRing: getElement('progressRing'),
-  progressArc: getElement('progressArc'),
-  progressPct: getElement('progressPct'),
-  etaText: getElement('etaText'),
-  stats: {
+  dom.advancedPanel = getOptionalElement('advancedPanel');
+  dom.advancedContent = getOptionalElement('advancedContent');
+  dom.phaseText = getElement('phaseText');
+  dom.progressRing = getElement('progressRing');
+  dom.progressArc = getElement('progressArc');
+  dom.progressPct = getElement('progressPct');
+  dom.etaText = getElement('etaText');
+  dom.stats = {
     bytes: getElement('statBytes'),
     speed: getElement('statSpeed'),
     size: getElement('statSize'),
     elapsed: getElement('statElapsed'),
-  },
+  };
   // Log filter buttons
-  logFilters: [
+  dom.logFilters = [
     getElement('filterAll'),
     getElement('filterInfo'),
     getElement('filterWarn'),
     getElement('filterError'),
-  ],
+  ];
   // Log filter segment indicator (for sliding animation)
-  segmentIndicator: getOptionalElement('segmentIndicator'),
-  logAutoscrollToggle: getOptionalElement('logAutoscrollToggle'),
-  logExportBtn: getOptionalElement('logExportBtn'),
-  logClearBtn: getOptionalElement('logClearBtn'),
-  logDemoBtn: getOptionalElement('logDemoBtn'),
-  logSearchInput: getOptionalElement('logSearchInput'),
-  searchClearBtn: getOptionalElement('searchClearBtn'),
-  logEntryCount: getOptionalElement('logEntryCount'),
-  logContainer: getElement('logContainer'),
-  logsEmptyState: getOptionalElement('logsEmptyState'),
-  toastStack: getElement('toastStack'),
-  modal: getElement('modalConfirm'),
-  modalCancelBtn: getElement('modalCancelBtn'),
-  modalOkBtn: getElement('modalOkBtn'),
-  srLive: getElement('srLive'),
-};
+  dom.segmentIndicator = getOptionalElement('segmentIndicator');
+  dom.logAutoscrollToggle = getOptionalElement('logAutoscrollToggle');
+  dom.logExportBtn = getOptionalElement('logExportBtn');
+  dom.logClearBtn = getOptionalElement('logClearBtn');
+  dom.logDemoBtn = getOptionalElement('logDemoBtn');
+  dom.logSearchInput = getOptionalElement('logSearchInput');
+  dom.searchClearBtn = getOptionalElement('searchClearBtn');
+  dom.logEntryCount = getOptionalElement('logEntryCount');
+  dom.logContainer = getElement('logContainer');
+  dom.logsEmptyState = getOptionalElement('logsEmptyState');
+  dom.toastStack = getElement('toastStack');
+  dom.modal = getElement('modalConfirm');
+  dom.modalCancelBtn = getElement('modalCancelBtn');
+  dom.modalOkBtn = getElement('modalOkBtn');
+  dom.srLive = getElement('srLive');
+}
 
 /**
  * Utility functions for DOM manipulation and error-safe operations
