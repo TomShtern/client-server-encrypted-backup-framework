@@ -1,0 +1,31 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "lsp": {
+    "pyright": {
+      "command": ["pyright-langserver", "--stdio"]
+    },
+    "typescript": {
+      "command": ["typescript-language-server", "--stdio"],
+      "extensions": [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".mts", ".cts"]
+    },
+    "eslint": {
+      "command": ["vscode-eslint-language-server", "--stdio"]
+    },
+    "clangd": {
+      "command": ["clangd"]
+    },
+    "css": {
+      "command": ["vscode-css-language-server", "--stdio"],
+      "extensions": [".css"]
+    },
+    "html": {
+      "command": ["vscode-html-language-server", "--stdio"],
+      "extensions": [".html", ".htm"]
+    },
+    "markdown": {
+      "command": ["vscode-markdown-language-server", "--stdio"],
+      "extensions": [".md", ".markdown"]
+    },
+
+  }
+}

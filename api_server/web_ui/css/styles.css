@@ -197,6 +197,9 @@
   /* Micro-interaction easing */
   --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
   --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Animation state control - pause when tab hidden */
+  --animation-play-state: running;
 }
 
 html.theme-light {
@@ -290,6 +293,20 @@ html.theme-light {
 
 ::-webkit-scrollbar-corner {
   background: transparent;
+}
+
+/* Pause all animations when tab is hidden (GPU optimization) */
+.wave-layer,
+.wave-layer.wave-1,
+.wave-layer.wave-2,
+.status-dot.online,
+.status-dot.connecting,
+.badge.connected,
+.badge.connecting,
+.ring-decoration::before,
+.ring-decoration::after,
+.logs-empty svg {
+  animation-play-state: var(--animation-play-state);
 }
 
 html {
@@ -1258,6 +1275,8 @@ button.ghost {
 
 #statsGrid .stat {
   animation: fadeInUp 0.5s ease-out backwards;
+  position: relative;
+  /* Contain absolute children (hit areas/overflow) */
 }
 
 #statsGrid .stat:nth-child(1) {
@@ -1522,7 +1541,6 @@ svg {
 /* Conic gradient shadow for neon tube glow - DISABLED for performance */
 .center::before {
   /* Disabled expensive conic-gradient with blur(20px) for performance */
-  /* This was causing significant GPU overhead */
   display: none;
 }
 
@@ -1561,8 +1579,8 @@ svg {
 /* Update animation when value changes */
 .kpi .pct.updating {
   animation:
-    pct-bounce 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55),
-    gradient-shift 8s ease-in-out infinite;
+    pct-bounce 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  /* gradient-shift removed for text paint performance */
 }
 
 @keyframes pct-bounce {
@@ -2308,9 +2326,10 @@ svg {
 .status-panel {
   position: relative;
   overflow: hidden;
-  background: rgba(15, 23, 42, 0.7);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  /* Optimization: Removed expensive backdrop-filter */
+  background: rgba(15, 23, 42, 0.95);
+  /* backdrop-filter: blur(8px); */
+  /* -webkit-backdrop-filter: blur(8px); */
 }
 
 .status-bg-animation {
@@ -2320,19 +2339,25 @@ svg {
   z-index: 0;
   overflow: hidden;
   border-radius: inherit;
+  /* Optimization: isolate this complex layer */
+  contain: strict;
 }
 
 /* Animated wave layers */
 .wave-layer {
   position: absolute;
-  width: 300%;
-  height: 300%;
+  /* Optimization: Reduce size from 300% to 150% to save fill-rate */
+  width: 150%;
+  height: 150%;
+  background-size: cover;
   background: radial-gradient(ellipse at center,
       rgba(88, 166, 255, 0.15) 0%,
       rgba(34, 211, 238, 0.08) 30%,
       transparent 60%);
-  animation: wave-float 15s ease-in-out infinite;
-  will-change: transform;
+  animation: wave-float 20s ease-in-out infinite;
+  transform: translateZ(0);
+  animation-play-state: var(--animation-play-state);
+  /* Force hardware layer - removed will-change for GPU optimization */
 }
 
 .wave-layer.wave-1 {
@@ -2348,11 +2373,12 @@ svg {
   top: -50%;
   left: -50%;
   animation-delay: -7.5s;
-  opacity: 0.7;
+  opacity: 0.4;
   background: radial-gradient(ellipse at 70% 30%,
       rgba(167, 139, 250, 0.15) 0%,
       rgba(236, 72, 153, 0.08) 40%,
       transparent 70%);
+  animation-play-state: var(--animation-play-state);
 }
 
 @keyframes wave-float {
@@ -2384,6 +2410,9 @@ svg {
   background-size: 40px 40px;
   mask-image: radial-gradient(ellipse at center, black 0%, transparent 70%);
   -webkit-mask-image: radial-gradient(ellipse at center, black 0%, transparent 70%);
+  /* Optimization: isolate mask */
+  contain: strict;
+  pointer-events: none;
 }
 
 .status-panel>*:not(.status-bg-animation) {
@@ -2466,7 +2495,8 @@ svg {
   border: 2px dashed rgba(0, 242, 255, 0.15);
   border-top-color: rgba(0, 242, 255, 0.4);
   border-bottom-color: rgba(255, 0, 85, 0.4);
-  animation: rotate-tech 20s linear infinite;
+  animation: rotate-tech 30s linear infinite;
+  animation-play-state: var(--animation-play-state);
 }
 
 /* Counter-rotating Inner Tech Ring */
@@ -2478,7 +2508,8 @@ svg {
   border: 1px solid transparent;
   border-left: 2px solid rgba(112, 0, 255, 0.3);
   border-right: 2px solid rgba(112, 0, 255, 0.3);
-  animation: rotate-tech-reverse 15s linear infinite;
+  animation: rotate-tech-reverse 25s linear infinite;
+  animation-play-state: var(--animation-play-state);
 }
 
 @keyframes rotate-tech {
@@ -2535,14 +2566,13 @@ svg {
   color: rgba(255, 255, 255, 0.6);
   margin-top: var(--space-md);
   font-family: 'SF Mono', Consolas, monospace;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.7);
   padding: var(--space-xs) var(--space-md);
   border-radius: var(--radius-full);
   border: 1px solid rgba(255, 255, 255, var(--border-opacity-subtle));
   font-weight: 500;
   font-variant-numeric: tabular-nums;
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  /* Removed backdrop-filter for GPU performance */
   transition: all var(--transition-fast);
   cursor: default;
 }
@@ -2561,11 +2591,12 @@ svg {
   height: 700px;
   border-radius: 50%;
   background: radial-gradient(circle,
-      rgba(0, 242, 255, 0.08) 0%,
-      rgba(112, 0, 255, 0.05) 30%,
-      rgba(255, 0, 85, 0.03) 60%,
-      transparent 70%);
-  filter: blur(80px);
+      rgba(0, 242, 255, 0.12) 0%,
+      rgba(112, 0, 255, 0.08) 20%,
+      rgba(112, 0, 255, 0.05) 35%,
+      rgba(255, 0, 85, 0.04) 50%,
+      transparent 65%);
+  /* Removed filter: blur(80px) - replaced with softer gradient stops for better performance */
   opacity: 1;
   pointer-events: none;
 }
@@ -2601,9 +2632,17 @@ svg {
   content: '';
   position: absolute;
   inset: 0;
+  bottom: -10px;
+  /* Stabilize hover jitter */
   background: linear-gradient(135deg, rgba(88, 166, 255, 0.05) 0%, transparent 50%);
+  background-size: 100% calc(100% - 10px);
+  /* Clip gradient to original height */
+  background-repeat: no-repeat;
   opacity: 0;
   transition: opacity 0.25s ease;
+  border-radius: inherit;
+  z-index: -1;
+  /* Ensure it stays behind content */
 }
 
 #statsGrid .stat:hover {
@@ -2823,9 +2862,8 @@ svg {
 section.logs.stack {
   grid-column: 1 / -1;
   grid-row: 2;
-  background: rgba(22, 27, 34, 0.7);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: rgba(22, 27, 34, 0.95);
+  /* Removed backdrop-filter for GPU performance */
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--radius-xl);
   padding: var(--space-lg);
@@ -3231,9 +3269,10 @@ section.logs.stack>.phase {
   color: var(--muted);
   opacity: 0.5;
   animation: float-gentle 3s ease-in-out infinite;
+  animation-play-state: var(--animation-play-state);
   position: relative;
   z-index: 1;
-  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15));
+  /* Removed filter: drop-shadow for GPU performance */
 }
 
 @keyframes float-gentle {
@@ -3534,8 +3573,8 @@ section.logs.stack>.phase {
 .drag-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(13, 17, 23, 0.9);
-  backdrop-filter: blur(8px);
+  background: rgba(13, 17, 23, 0.95);
+  /* Removed backdrop-filter for GPU performance */
   z-index: 9999;
   display: flex;
   align-items: center;
@@ -3629,8 +3668,8 @@ section.logs.stack>.phase {
 }
 
 .shortcut-modal::backdrop {
-  background: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.95);
+  /* Removed backdrop-filter for GPU performance */
 }
 
 .shortcut-content {
@@ -3766,8 +3805,7 @@ section.logs.stack>.phase {
   color: var(--muted);
   cursor: pointer;
   transition: all var(--transition-fast);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  /* Removed backdrop-filter for GPU performance */
 }
 
 .log-action-mini:hover {

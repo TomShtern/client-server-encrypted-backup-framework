@@ -77,6 +77,12 @@ class App {
     // Subscribe to state changes
     this.state.subscribe((state) => this.#render(state));
 
+    // GPU Optimization: Pause animations when tab is hidden
+    document.addEventListener('visibilitychange', () => {
+      const state = document.hidden ? 'paused' : 'running';
+      document.documentElement.style.setProperty('--animation-play-state', state);
+    });
+
     this.logs.add('Application initialized', { phase: 'INIT' });
   }
 

@@ -26,6 +26,7 @@
         "dbaeumer.vscode-eslint",
         "trunk.io",
         "charliermarsh.ruff",
-        "ms-vscode.live-server"
+        "ms-vscode.live-server",
+        "graphql.vscode-graphql"
     ]
 }
