@@ -180,13 +180,14 @@ client/*_validation.txt
 third_party/
 supermemory-mcp/
 node_modules/
-# vcpkg - keep directory structure but ignore build artifacts
+# vcpkg - keep directory structure but ignore build artifacts and cache
 vcpkg/buildtrees/
 vcpkg/packages/
 vcpkg/downloads/
 vcpkg/installed/
 vcpkg/.vcpkg-root
 vcpkg_installed/
+vcpkg_cache/
 !vcpkg.json
 !vcpkg/
 !vcpkg/vcpkg.exe
