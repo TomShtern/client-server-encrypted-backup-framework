@@ -361,8 +361,8 @@ html.theme-light body::before {
   opacity: 0.25;
 }
 
- /* Ensure all body content sits above circuit pattern */
- body>* {
+/* Ensure all body content sits above circuit pattern */
+body>* {
   position: relative;
   z-index: 1;
 }
@@ -425,7 +425,8 @@ summary {
 }
 
 header {
-  background: rgba(22, 27, 34, 0.95);
+  /* Solid background for performance (replaced backdrop-filter) */
+  background: rgba(22, 27, 34, 0.98);
   border: 1px solid var(--border);
   border-top: none;
   border-radius: 0 0 var(--radius-lg) var(--radius-lg);
@@ -437,8 +438,6 @@ header {
   top: 0;
   margin-top: 0;
   z-index: 100;
-  /* Replaced backdrop-filter with solid background for performance */
-  background: rgba(22, 27, 34, 0.98);
   transition: all 0.3s ease;
 }
 
@@ -493,6 +492,115 @@ header.scrolled {
   border: 1px solid var(--border);
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   SERVER STATUS PILLS - Professional Header Indicators
+   ═══════════════════════════════════════════════════════════════ */
+.server-status-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 4px 6px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.server-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: var(--fs-12);
+  font-weight: 500;
+  color: var(--fg-secondary);
+  transition: all var(--transition-fast);
+  cursor: default;
+}
+
+.server-status:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.server-status .status-label {
+  color: var(--muted);
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+.server-status .status-text {
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  /* Hide the ● text character from HTML, show only CSS dot */
+  font-size: 0;
+  line-height: 0;
+  overflow: hidden;
+}
+
+.status-dot.online {
+  background: var(--success);
+  box-shadow: 0 0 8px var(--success), 0 0 16px rgba(63, 185, 80, 0.4);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+.status-dot.offline {
+  background: var(--danger);
+  box-shadow: 0 0 4px rgba(248, 81, 73, 0.5);
+}
+
+.status-dot.connecting {
+  background: var(--warning);
+  box-shadow: 0 0 8px var(--warning);
+  animation: pulse-dot 1s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.6;
+    transform: scale(1.2);
+  }
+}
+
+.status-divider {
+  color: var(--border);
+  font-size: var(--fs-10);
+  opacity: 0.5;
+  user-select: none;
+}
+
+/* Light mode server status adjustments */
+html.theme-light .server-status-group {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+html.theme-light .server-status {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+html.theme-light .server-status:hover {
+  background: rgba(255, 255, 255, 0.95);
+}
+
 /* Status bar, connection-details, and status-output defined below in "NEW HEADER STYLES" section */
 
 .badge,
@@ -517,7 +625,7 @@ header.scrolled {
 .badge.connected {
   border-color: rgba(63, 185, 80, 0.5);
   background: linear-gradient(135deg, rgba(63, 185, 80, 0.20) 0%, rgba(63, 185, 80, 0.12) 100%);
-  color: #3fb950;
+  color: #4ade80;
   box-shadow: 0 2px 12px rgba(63, 185, 80, 0.25);
   animation: pulse-connected 3s ease-in-out infinite;
 }
@@ -537,7 +645,7 @@ header.scrolled {
 .badge.connecting {
   border-color: rgba(255, 165, 0, 0.5);
   background: linear-gradient(135deg, rgba(255, 165, 0, 0.20) 0%, rgba(255, 165, 0, 0.12) 100%);
-  color: #ffa500;
+  color: #f59e0b;
   box-shadow: 0 2px 12px rgba(255, 165, 0, 0.25);
   animation: pulse-connecting 1.5s ease-in-out infinite;
 }
@@ -557,7 +665,7 @@ header.scrolled {
 .badge.disconnected {
   border-color: rgba(248, 81, 73, 0.5);
   background: linear-gradient(135deg, rgba(248, 81, 73, 0.20) 0%, rgba(248, 81, 73, 0.12) 100%);
-  color: #f85149;
+  color: #ef4444;
   box-shadow: 0 2px 12px rgba(248, 81, 73, 0.25);
 }
 
@@ -568,7 +676,7 @@ header.scrolled {
 }
 
 .chip.quality-good {
-  color: #58a6ff;
+  color: #60a5fa;
   border-color: rgba(88, 166, 255, 0.3);
   background: rgba(88, 166, 255, 0.08);
 }
@@ -881,8 +989,8 @@ html.theme-light .floating-label .label-text {
   color: var(--text-secondary);
 }
 
-html.theme-light .floating-label input:focus ~ .label-text,
-html.theme-light .floating-label input:not(:placeholder-shown) ~ .label-text {
+html.theme-light .floating-label input:focus~.label-text,
+html.theme-light .floating-label input:not(:placeholder-shown)~.label-text {
   color: var(--accent);
 }
 
@@ -896,12 +1004,10 @@ html.theme-light .status-panel {
 }
 
 html.theme-light .center {
-  background: radial-gradient(
-    ellipse at center,
-    rgba(9, 105, 218, 0.03) 0%,
-    rgba(14, 165, 233, 0.02) 50%,
-    transparent 70%
-  );
+  background: radial-gradient(ellipse at center,
+      rgba(9, 105, 218, 0.03) 0%,
+      rgba(14, 165, 233, 0.02) 50%,
+      transparent 70%);
 }
 
 html.theme-light .kpi .pct {
@@ -925,11 +1031,9 @@ html.theme-light #progressRing circle:first-of-type {
 }
 
 html.theme-light .progress-glow {
-  background: radial-gradient(
-    circle at center,
-    rgba(9, 105, 218, 0.08) 0%,
-    transparent 60%
-  );
+  background: radial-gradient(circle at center,
+      rgba(9, 105, 218, 0.08) 0%,
+      transparent 60%);
 }
 
 html.theme-light .ring-decoration::before,
@@ -1087,8 +1191,8 @@ button.primary:hover:not(:disabled) {
 #primaryActionBtn {
   /* Specify only properties that actually change for performance */
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-              background 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-              opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 #primaryActionBtn.morphing {
@@ -1130,11 +1234,7 @@ button.ghost {
   font-size: var(--fs-14);
 }
 
-button.ghost:hover:not(:disabled) {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%), var(--surface-alt);
-  border-color: var(--border);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-}
+
 
 #themeToggle {
   transition: transform 0.3s ease;
@@ -1216,7 +1316,7 @@ button[disabled]:hover {
   border-radius: var(--radius-sm);
   /* Specify only properties that actually change for performance */
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-              border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: var(--shadow);
   min-height: 52px;
   width: 100%;
@@ -1239,7 +1339,7 @@ button[disabled]:hover {
   font-size: 18px;
   /* Specify only properties that actually change for performance */
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-              background 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 2px 8px rgba(88, 166, 255, 0.1);
 }
 
@@ -1327,7 +1427,8 @@ button[disabled]:hover {
 
 .file-badge.video {
   background: rgba(138, 43, 226, 0.15);
-  color: #8a2be2;
+  color: #7c3aed;
+  /* Higher contrast purple */
 }
 
 .file-badge.audio {
@@ -1337,7 +1438,8 @@ button[disabled]:hover {
 
 .file-badge.archive {
   background: rgba(255, 165, 0, 0.15);
-  color: #ffa500;
+  color: #d97706;
+  /* Darker amber */
 }
 
 .file-badge.code {
@@ -1718,7 +1820,7 @@ svg {
     var(--surface-alt);
   /* Specify only properties that actually change for performance */
   transition: border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-              background 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
   position: relative;
   overflow: hidden;
@@ -2230,6 +2332,7 @@ svg {
       rgba(34, 211, 238, 0.08) 30%,
       transparent 60%);
   animation: wave-float 15s ease-in-out infinite;
+  will-change: transform;
 }
 
 .wave-layer.wave-1 {
@@ -2492,36 +2595,7 @@ svg {
   padding: var(--space-md);
 }
 
-#statsGrid .stat {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  padding: var(--space-md);
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
-  border: 1px solid rgba(255, 255, 255, var(--border-opacity-subtle));
-  border-left: 3px solid transparent;
-  border-radius: var(--radius-lg);
-  transition: all 0.25s var(--ease-smooth);
-  position: relative;
-  overflow: hidden;
-}
 
-/* Color-coded left borders for visual hierarchy */
-#statsGrid .stat:nth-child(1) {
-  border-left-color: var(--primary-400);
-}
-
-#statsGrid .stat:nth-child(2) {
-  border-left-color: var(--accent-400);
-}
-
-#statsGrid .stat:nth-child(3) {
-  border-left-color: var(--success);
-}
-
-#statsGrid .stat:nth-child(4) {
-  border-left-color: var(--warning);
-}
 
 #statsGrid .stat::before {
   content: '';
@@ -2535,9 +2609,11 @@ svg {
 #statsGrid .stat:hover {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
   border-color: rgba(88, 166, 255, 0.25);
-  border-left-width: 4px;
   transform: translateY(var(--lift-default));
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2),
+  /* Use inset box-shadow for accent border to prevent layout shift */
+  box-shadow:
+    inset 4px 0 0 var(--primary-400),
+    0 4px 16px rgba(0, 0, 0, 0.2),
     0 0 20px rgba(88, 166, 255, 0.08);
 }
 
@@ -2989,7 +3065,7 @@ section.logs.stack>.phase {
   left: 1px;
   /* Specify only properties that actually change for performance */
   transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-              background 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    background 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
@@ -3296,563 +3372,113 @@ section.logs.stack>.phase {
 }
 
 .log-level-info {
-    background: linear-gradient(135deg, rgba(88, 166, 255, 0.15) 0%, rgba(88, 166, 255, 0.08) 100%);
-    color: var(--primary-400);
-    border: 1px solid rgba(88, 166, 255, 0.2);
-  }
+  background: linear-gradient(135deg, rgba(88, 166, 255, 0.15) 0%, rgba(88, 166, 255, 0.08) 100%);
+  color: var(--primary-400);
+  border: 1px solid rgba(88, 166, 255, 0.2);
+}
 
-  .log-entry:hover .log-level-info {
-    box-shadow: var(--glow-info-soft, 0 0 8px rgba(88, 166, 255, 0.25));
-  }
+.log-entry:hover .log-level-info {
+  box-shadow: var(--glow-info-soft, 0 0 8px rgba(88, 166, 255, 0.25));
+}
 
-  .log-level-warn {
-    background: linear-gradient(135deg, rgba(210, 153, 34, 0.18) 0%, rgba(210, 153, 34, 0.1) 100%);
-    color: var(--warning);
-    border: 1px solid rgba(210, 153, 34, 0.25);
-  }
+.log-level-warn {
+  background: linear-gradient(135deg, rgba(210, 153, 34, 0.18) 0%, rgba(210, 153, 34, 0.1) 100%);
+  color: var(--warning);
+  border: 1px solid rgba(210, 153, 34, 0.25);
+}
 
-  .log-entry:hover .log-level-warn {
-    box-shadow: var(--glow-warn-soft, 0 0 8px rgba(210, 153, 34, 0.25));
-  }
+.log-entry:hover .log-level-warn {
+  box-shadow: var(--glow-warn-soft, 0 0 8px rgba(210, 153, 34, 0.25));
+}
 
-  .log-level-error {
-    background: linear-gradient(135deg, rgba(248, 81, 73, 0.18) 0%, rgba(248, 81, 73, 0.1) 100%);
-    color: var(--danger);
-    border: 1px solid rgba(248, 81, 73, 0.25);
-  }
+.log-level-error {
+  background: linear-gradient(135deg, rgba(248, 81, 73, 0.18) 0%, rgba(248, 81, 73, 0.1) 100%);
+  color: var(--danger);
+  border: 1px solid rgba(248, 81, 73, 0.25);
+}
 
-  .log-entry:hover .log-level-error {
-    box-shadow: var(--glow-error-soft, 0 0 8px rgba(248, 81, 73, 0.25));
-  }
+.log-entry:hover .log-level-error {
+  box-shadow: var(--glow-error-soft, 0 0 8px rgba(248, 81, 73, 0.25));
+}
 
-  /* Log Message */
-  .log-message {
-    font-size: var(--fs-13);
-    font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
-    color: var(--fg-secondary);
-    flex: 1;
-    min-width: 0;
-    word-break: break-word;
-    line-height: 1.5;
-  }
+/* Log Message */
+.log-message {
+  font-size: var(--fs-13);
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+  color: var(--fg-secondary);
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
+  line-height: 1.5;
+}
 
-  .log-info .log-message {
-    color: var(--fg-secondary);
-  }
+.log-info .log-message {
+  color: var(--fg-secondary);
+}
 
-  .log-warn .log-message {
-    color: rgba(210, 153, 34, 0.9);
-  }
+.log-warn .log-message {
+  color: rgba(210, 153, 34, 0.9);
+}
 
-  .log-error .log-message {
-    color: rgba(248, 81, 73, 0.9);
-  }
+.log-error .log-message {
+  color: rgba(248, 81, 73, 0.9);
+}
 
-  /* ========================================
+/* ========================================
    CONNECTION DETAILS POPUP
    ======================================== */
 
-  .connection-details {
-    display: none;
-    position: absolute;
-    top: 100%;
-    right: 0;
-    margin-top: var(--space-sm);
-    padding: var(--space-md);
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-4);
-    min-width: 240px;
-    z-index: 100;
-  }
+.connection-details {
+  display: none;
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: var(--space-sm);
+  padding: var(--space-md);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-4);
+  min-width: 240px;
+  z-index: 100;
+}
 
-  .status-bar:hover .connection-details,
-  .connection-details:hover {
-    display: block;
-  }
+.status-bar:hover .connection-details,
+.connection-details:hover {
+  display: block;
+}
 
-  .connection-details h4 {
-    margin: 0 0 var(--space-sm) 0;
-    font-size: var(--fs-13);
-    font-weight: 600;
-    color: var(--fg);
-    padding-bottom: var(--space-xs);
-    border-bottom: 1px solid var(--border);
-  }
+.connection-details h4 {
+  margin: 0 0 var(--space-sm) 0;
+  font-size: var(--fs-13);
+  font-weight: 600;
+  color: var(--fg);
+  padding-bottom: var(--space-xs);
+  border-bottom: 1px solid var(--border);
+}
 
-  .connection-metric {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: var(--space-xs) 0;
-    font-size: var(--fs-12);
-  }
+.connection-metric {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-xs) 0;
+  font-size: var(--fs-12);
+}
 
-  .connection-metric-label {
-    color: var(--muted);
-  }
+.connection-metric-label {
+  color: var(--muted);
+}
 
-  .connection-metric-value {
-    color: var(--fg);
-    font-weight: 500;
-    font-variant-numeric: tabular-nums;
-  }
+.connection-metric-value {
+  color: var(--fg);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
 
-  /* ========================================
+/* ========================================
    LOADING STATES
    ======================================== */
 
-  .loading-spinner {
-    display: none;
-    width: 16px;
-    height: 16px;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    border-top-color: white;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-  }
-
-  .loading .loading-spinner {
-    display: block;
-  }
-
-  /* @keyframes spin already defined above */
-
-  /* ========================================
-   STAGGER ANIMATION
-   Uses :where() for zero specificity on common elements
-   ======================================== */
-
-  .stagger-in> :where(div, section, article, aside, span, p, h1, h2, h3, h4, h5, h6, li, button, a, .stat, .card) {
-    opacity: 0;
-    transform: translateY(20px);
-    animation: stagger-fade-in 0.5s ease forwards;
-  }
-
-  .stagger-in> :nth-child(1) {
-    animation-delay: 0.05s;
-  }
-
-  .stagger-in> :nth-child(2) {
-    animation-delay: 0.1s;
-  }
-
-  .stagger-in> :nth-child(3) {
-    animation-delay: 0.15s;
-  }
-
-  @keyframes stagger-fade-in {
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  /* ========================================
-   DRAG & DROP OVERLAY
-   ======================================== */
-  .drag-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(13, 17, 23, 0.9);
-    backdrop-filter: blur(8px);
-    z-index: 9999;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s ease;
-  }
-
-  .drag-overlay.active {
-    opacity: 1;
-    pointer-events: auto;
-  }
-
-  .drag-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: var(--space-md);
-    color: var(--accent);
-    transform: scale(0.9);
-    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-
-  .drag-overlay.active .drag-content {
-    transform: scale(1);
-  }
-
-  .drag-content svg {
-    width: 64px;
-    height: 64px;
-    animation: bounce 1s infinite;
-  }
-
-  .drag-content span {
-    font-size: var(--fs-24);
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-  }
-
-  @keyframes bounce {
-
-    0%,
-    100% {
-      transform: translateY(0);
-    }
-
-    50% {
-      transform: translateY(-10px);
-    }
-  }
-
-  /* ========================================
-   KEYBOARD SHORTCUTS
-   ======================================== */
-  .shortcut-btn {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: var(--surface-alt);
-    border: 1px solid var(--border);
-    color: var(--muted);
-    font-weight: 600;
-    cursor: pointer;
-    z-index: 100;
-    transition: all 0.2s ease;
-    display: grid;
-    place-items: center;
-    padding: 0;
-    min-height: auto;
-  }
-
-  .shortcut-btn:hover {
-    background: var(--surface-hover);
-    color: var(--fg);
-    transform: scale(1.1);
-    box-shadow: var(--shadow-lg);
-  }
-
-  .shortcut-modal {
-    background: transparent;
-    border: none;
-    padding: 0;
-    margin: auto;
-    max-width: 600px;
-    width: 90%;
-  }
-
-  .shortcut-modal::backdrop {
-    background: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(4px);
-  }
-
-  .shortcut-content {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-xl);
-    padding: var(--space-xl);
-    box-shadow: var(--shadow-xl);
-  }
-
-  .shortcut-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--space-lg);
-    padding-bottom: var(--space-md);
-    border-bottom: 1px solid var(--border);
-  }
-
-  .shortcut-header h3 {
-    margin: 0;
-    font-size: var(--fs-18);
-    color: var(--fg);
-  }
-
-  .close-btn {
-    background: transparent;
-    border: 1px solid transparent;
-    color: var(--muted);
-    cursor: pointer;
-    padding: 6px;
-    border-radius: var(--radius-sm);
-    transition: all var(--transition-fast);
-    display: grid;
-    place-items: center;
-    min-width: 28px;
-    min-height: 28px;
-  }
-
-  .close-btn:hover {
-    background: rgba(248, 81, 73, 0.12);
-    color: var(--danger);
-    border-color: rgba(248, 81, 73, 0.25);
-  }
-
-  .close-btn:active {
-    transform: scale(var(--scale-press));
-  }
-
-  .close-btn:focus-visible {
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(248, 81, 73, 0.35);
-    border-color: rgba(248, 81, 73, 0.4);
-  }
-
-  .shortcut-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: var(--space-md);
-  }
-
-  .shortcut-item {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-  }
-
-  .key {
-    background: linear-gradient(180deg,
-        var(--surface-alt) 0%,
-        rgba(13, 17, 23, 0.95) 100%);
-    border: 1px solid rgba(255, 255, 255, var(--border-opacity-default));
-    border-radius: var(--radius-sm);
-    padding: 4px 10px;
-    font-family: 'SF Mono', Consolas, 'Courier New', monospace;
-    font-size: var(--fs-12);
-    font-weight: 500;
-    color: var(--fg);
-    box-shadow:
-      0 2px 0 var(--border),
-      inset 0 1px 0 rgba(255, 255, 255, 0.06);
-    transition: transform var(--transition-fast),
-      box-shadow var(--transition-fast);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 24px;
-    text-align: center;
-  }
-
-  .shortcut-item:hover .key {
-    transform: translateY(-1px);
-    box-shadow:
-      0 3px 0 var(--border),
-      inset 0 1px 0 rgba(255, 255, 255, 0.08),
-      0 0 8px rgba(88, 166, 255, 0.15);
-  }
-
-  .desc {
-    font-size: var(--fs-13);
-    color: var(--muted);
-  }
-
-  /* ========================================
-   LOG INTERACTION BUTTONS
-   ======================================== */
-  .log-entry .log-actions {
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    display: flex;
-    gap: var(--space-xs);
-    opacity: 0;
-    transition: opacity var(--transition-fast);
-  }
-
-  .log-entry:hover .log-actions {
-    opacity: 1;
-  }
-
-  .log-action-mini {
-    width: 26px;
-    height: 26px;
-    padding: 0;
-    display: grid;
-    place-items: center;
-    background: linear-gradient(180deg,
-        rgba(22, 27, 34, 0.95) 0%,
-        rgba(13, 17, 23, 0.9) 100%);
-    border: 1px solid rgba(255, 255, 255, var(--border-opacity-subtle));
-    border-radius: var(--radius-sm);
-    color: var(--muted);
-    cursor: pointer;
-    transition: all var(--transition-fast);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-  }
-
-  .log-action-mini:hover {
-    background: linear-gradient(180deg,
-        rgba(88, 166, 255, 0.18) 0%,
-        rgba(88, 166, 255, 0.1) 100%);
-    color: var(--primary-400);
-    border-color: rgba(88, 166, 255, 0.35);
-    transform: scale(var(--scale-emphasis));
-    box-shadow: 0 2px 8px rgba(88, 166, 255, 0.2);
-  }
-
-  .log-action-mini:active {
-    transform: scale(var(--scale-press));
-    box-shadow: none;
-  }
-
-  .log-action-mini:focus-visible {
-    outline: none;
-    box-shadow: var(--focus-glow-soft);
-    border-color: var(--accent);
-  }
-
-  .log-action-mini svg {
-    width: 14px;
-    height: 14px;
-  }
-
-  /* ========================================
-   PERFORMANCE OPTIMIZATIONS
-   ======================================== */
-
-  /* GPU Hints - ONLY on key animated elements */
-  .progress-fill,
-  #progressArc {
-    will-change: stroke-dashoffset;
-  }
-
-  .wave-layer {
-    will-change: transform;
-  }
-
-  .ring-decoration,
-  .ring-decoration::before,
-  .ring-decoration::after {
-    will-change: transform;
-  }
-
-  /* Pause all heavy animations when app is idle (no active transfer) */
-  html.app-idle .wave-layer,
-  html.app-idle .wave-layer.wave-1,
-  html.app-idle .wave-layer.wave-2 {
-    animation-play-state: paused;
-  }
-
-  html.app-idle .ring-decoration::before,
-  html.app-idle .ring-decoration::after {
-    animation-play-state: paused;
-  }
-
-  html.app-idle .progress-glow {
-    animation-play-state: paused;
-  }
-
-  html.app-idle .center::before {
-    animation-play-state: paused;
-  }
-
-  html.app-idle .cloud-upload-icon {
-    animation-play-state: paused;
-  }
-
-  html.app-idle .file-drop-zone .drop-zone-wave::before {
-    animation-play-state: paused;
-  }
-
-  /* Reduce motion for users who prefer it
- Uses explicit selectors instead of * for performance
- High specificity selectors avoid need for !important */
-  @media (prefers-reduced-motion: reduce) {
-
-    html body .wave-layer,
-    html body .wave-layer.wave-1,
-    html body .wave-layer.wave-2,
-    html body .ring-decoration,
-    html body .ring-decoration::before,
-    html body .ring-decoration::after,
-    html body .progress-glow,
-    html body .center::before,
-    html body .cloud-upload-icon,
-    html body .file-drop-zone .drop-zone-wave::before,
-    html body .progress-fill,
-    html body #progressArc,
-    html body .badge.connected,
-    html body .badge.connecting,
-    html body .kpi .pct,
-    html body .kpi .pct.updating,
-    html body .log-entry,
-    html body .log-entry.log-entry-new,
-    html body .stagger-in> :where(div, section, article, aside, span, p, h1, h2, h3, h4, h5, h6, li, button, a, .stat, .card),
-    html body #statsGrid .stat {
-      animation: none;
-      transition: none;
-    }
-  }
-
-  /* When tab is hidden, pause everything
- Using html.tab-hidden body prefix for high specificity without !important */
-  html.tab-hidden body .wave-layer,
-  html.tab-hidden body .wave-layer.wave-1,
-  html.tab-hidden body .wave-layer.wave-2,
-  html.tab-hidden body .ring-decoration::before,
-  html.tab-hidden body .ring-decoration::after,
-  html.tab-hidden body .progress-glow,
-  html.tab-hidden body .center::before,
-  html.tab-hidden body .cloud-upload-icon,
-  html.tab-hidden body .file-drop-zone .drop-zone-wave::before {
-    animation-play-state: paused;
-  }
-
-  /* ========================================
-   RESPONSIVE REFINEMENTS
-   ======================================== */
-
-  @media (max-width: 1200px) {
-    #statsGrid {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  }
-
-  @media (max-width: 768px) {
-    #statsGrid {
-      grid-template-columns: 1fr;
-    }
-
-    .actions {
-      flex-direction: column;
-      align-items: stretch;
-    }
-
-    .actions button {
-      width: 100%;
-    }
-
-    .logs .toolbar {
-      flex-direction: column;
-      align-items: stretch;
-    }
-
-    .log-search {
-      max-width: none;
-    }
-
-    .filter-group {
-      justify-content: center;
-    }
-
-    .log-actions {
-      justify-content: space-between;
-    }
-  }
-/* ═══════════════════════════════════════════════════════════════
-   LOADING SPINNER - Inline button spinner with activation via .active
-   ═══════════════════════════════════════════════════════════════ */
 .loading-spinner {
   display: none;
   width: 18px;
@@ -3860,14 +3486,452 @@ section.logs.stack>.phase {
   border: 2px solid rgba(255, 255, 255, 0.3);
   border-top-color: currentColor;
   border-radius: 50%;
+  animation: spin 0.8s linear infinite;
   margin-right: 8px;
   flex-shrink: 0;
 }
 
+.loading .loading-spinner,
 .loading-spinner.active {
   display: inline-block;
-  animation: spin 0.8s linear infinite;
 }
+
+/* @keyframes spin already defined above */
+
+/* ========================================
+   STAGGER ANIMATION
+   Uses :where() for zero specificity on common elements
+   ======================================== */
+
+.stagger-in> :where(div, section, article, aside, span, p, h1, h2, h3, h4, h5, h6, li, button, a, .stat, .card) {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: stagger-fade-in 0.5s ease forwards;
+}
+
+.stagger-in> :nth-child(1) {
+  animation-delay: 0.05s;
+}
+
+.stagger-in> :nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.stagger-in> :nth-child(3) {
+  animation-delay: 0.15s;
+}
+
+@keyframes stagger-fade-in {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ========================================
+   DRAG & DROP OVERLAY
+   ======================================== */
+.drag-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(13, 17, 23, 0.9);
+  backdrop-filter: blur(8px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.drag-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.drag-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+  color: var(--accent);
+  transform: scale(0.9);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.drag-overlay.active .drag-content {
+  transform: scale(1);
+}
+
+.drag-content svg {
+  width: 64px;
+  height: 64px;
+  animation: bounce 1s infinite;
+}
+
+.drag-content span {
+  font-size: var(--fs-24);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+@keyframes bounce {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* ========================================
+   KEYBOARD SHORTCUTS
+   ======================================== */
+.shortcut-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-weight: 600;
+  cursor: pointer;
+  z-index: 100;
+  transition: all 0.2s ease;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  min-height: auto;
+}
+
+.shortcut-btn:hover {
+  background: var(--surface-hover);
+  color: var(--fg);
+  transform: scale(1.1);
+  box-shadow: var(--shadow-lg);
+}
+
+.shortcut-modal {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: auto;
+  max-width: 600px;
+  width: 90%;
+}
+
+.shortcut-modal::backdrop {
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(4px);
+}
+
+.shortcut-content {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-xl);
+  box-shadow: var(--shadow-xl);
+}
+
+.shortcut-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-lg);
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid var(--border);
+}
+
+.shortcut-header h3 {
+  margin: 0;
+  font-size: var(--fs-18);
+  color: var(--fg);
+}
+
+.close-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+  display: grid;
+  place-items: center;
+  min-width: 28px;
+  min-height: 28px;
+}
+
+.close-btn:hover {
+  background: rgba(248, 81, 73, 0.12);
+  color: var(--danger);
+  border-color: rgba(248, 81, 73, 0.25);
+}
+
+.close-btn:active {
+  transform: scale(var(--scale-press));
+}
+
+.close-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(248, 81, 73, 0.35);
+  border-color: rgba(248, 81, 73, 0.4);
+}
+
+.shortcut-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-md);
+}
+
+.shortcut-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.key {
+  background: linear-gradient(180deg,
+      var(--surface-alt) 0%,
+      rgba(13, 17, 23, 0.95) 100%);
+  border: 1px solid rgba(255, 255, 255, var(--border-opacity-default));
+  border-radius: var(--radius-sm);
+  padding: 4px 10px;
+  font-family: 'SF Mono', Consolas, 'Courier New', monospace;
+  font-size: var(--fs-12);
+  font-weight: 500;
+  color: var(--fg);
+  box-shadow:
+    0 2px 0 var(--border),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  transition: transform var(--transition-fast),
+    box-shadow var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  text-align: center;
+}
+
+.shortcut-item:hover .key {
+  transform: translateY(-1px);
+  box-shadow:
+    0 3px 0 var(--border),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 8px rgba(88, 166, 255, 0.15);
+}
+
+.desc {
+  font-size: var(--fs-13);
+  color: var(--muted);
+}
+
+/* ========================================
+   LOG INTERACTION BUTTONS
+   ======================================== */
+.log-entry .log-actions {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  gap: var(--space-xs);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.log-entry:hover .log-actions {
+  opacity: 1;
+}
+
+.log-action-mini {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(180deg,
+      rgba(22, 27, 34, 0.95) 0%,
+      rgba(13, 17, 23, 0.9) 100%);
+  border: 1px solid rgba(255, 255, 255, var(--border-opacity-subtle));
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.log-action-mini:hover {
+  background: linear-gradient(180deg,
+      rgba(88, 166, 255, 0.18) 0%,
+      rgba(88, 166, 255, 0.1) 100%);
+  color: var(--primary-400);
+  border-color: rgba(88, 166, 255, 0.35);
+  transform: scale(var(--scale-emphasis));
+  box-shadow: 0 2px 8px rgba(88, 166, 255, 0.2);
+}
+
+.log-action-mini:active {
+  transform: scale(var(--scale-press));
+  box-shadow: none;
+}
+
+.log-action-mini:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-glow-soft);
+  border-color: var(--accent);
+}
+
+.log-action-mini svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ========================================
+   PERFORMANCE OPTIMIZATIONS
+   ======================================== */
+
+/* GPU Hints - ONLY on key animated elements */
+.progress-fill,
+#progressArc {
+  will-change: stroke-dashoffset;
+}
+
+
+
+.ring-decoration,
+.ring-decoration::before,
+.ring-decoration::after {
+  will-change: transform;
+}
+
+/* Pause all heavy animations when app is idle (no active transfer) */
+html.app-idle .wave-layer,
+html.app-idle .wave-layer.wave-1,
+html.app-idle .wave-layer.wave-2 {
+  animation-play-state: paused;
+}
+
+html.app-idle .ring-decoration::before,
+html.app-idle .ring-decoration::after {
+  animation-play-state: paused;
+}
+
+html.app-idle .progress-glow {
+  animation-play-state: paused;
+}
+
+html.app-idle .center::before {
+  animation-play-state: paused;
+}
+
+html.app-idle .cloud-upload-icon {
+  animation-play-state: paused;
+}
+
+html.app-idle .file-drop-zone .drop-zone-wave::before {
+  animation-play-state: paused;
+}
+
+/* Reduce motion for users who prefer it
+ Uses explicit selectors instead of * for performance
+ High specificity selectors avoid need for !important */
+@media (prefers-reduced-motion: reduce) {
+
+  html body .wave-layer,
+  html body .wave-layer.wave-1,
+  html body .wave-layer.wave-2,
+  html body .ring-decoration,
+  html body .ring-decoration::before,
+  html body .ring-decoration::after,
+  html body .progress-glow,
+  html body .center::before,
+  html body .cloud-upload-icon,
+  html body .file-drop-zone .drop-zone-wave::before,
+  html body .progress-fill,
+  html body #progressArc,
+  html body .badge.connected,
+  html body .badge.connecting,
+  html body .kpi .pct,
+  html body .kpi .pct.updating,
+  html body .log-entry,
+  html body .log-entry.log-entry-new,
+  html body .stagger-in> :where(div, section, article, aside, span, p, h1, h2, h3, h4, h5, h6, li, button, a, .stat, .card),
+  html body #statsGrid .stat {
+    animation: none;
+    transition: none;
+  }
+}
+
+/* When tab is hidden, pause everything
+ Using html.tab-hidden body prefix for high specificity without !important */
+html.tab-hidden body .wave-layer,
+html.tab-hidden body .wave-layer.wave-1,
+html.tab-hidden body .wave-layer.wave-2,
+html.tab-hidden body .ring-decoration::before,
+html.tab-hidden body .ring-decoration::after,
+html.tab-hidden body .progress-glow,
+html.tab-hidden body .center::before,
+html.tab-hidden body .cloud-upload-icon,
+html.tab-hidden body .file-drop-zone .drop-zone-wave::before {
+  animation-play-state: paused;
+}
+
+/* ========================================
+   RESPONSIVE REFINEMENTS
+   ======================================== */
+
+@media (max-width: 1200px) {
+  #statsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  #statsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .actions button {
+    width: 100%;
+  }
+
+  .logs .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .log-search {
+    max-width: none;
+  }
+
+  .filter-group {
+    justify-content: center;
+  }
+
+  .log-actions {
+    justify-content: space-between;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   LOADING SPINNER - Inline button spinner with activation via .active
+   ═══════════════════════════════════════════════════════════════ */
+
 
 /* ═══════════════════════════════════════════════════════════════
    CONNECTION STATUS MESSAGE - Visual feedback for connect/disconnect
@@ -3921,8 +3985,17 @@ section.logs.stack>.phase {
 }
 
 @keyframes pulse-icon {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.6; transform: scale(1.1); }
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.6;
+    transform: scale(1.1);
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════

@@ -26,13 +26,28 @@ NO SIMULATION - REAL INTEGRATION ONLY
 
 Note: Other API server files have been archived to eliminate duplicates.
 See API_SERVER_UNIFICATION.md for details.
+
+IMPORT ORDER RATIONALE:
+-----------------------
+The imports in this file follow a specific order that CANNOT be changed:
+1. Standard library imports (os, sys, etc.) - must come first
+2. sys.path manipulation - MUST happen before any first-party imports
+3. Third-party imports (Flask, etc.)
+4. First-party imports (Shared.*, python_server.*)
+
+The `# noqa: E402` comments suppress the "module level import not at top of file"
+warnings because the import order is intentional and required for proper path setup.
 """
 
-# Standard library imports
-print("DEBUG: Starting server...", flush=True)
+# =============================================================================
+# PHASE 1: Standard Library Imports (No Dependencies)
+# =============================================================================
+import atexit
 import contextlib
 import logging
 import os
+import signal
+import socket
 import sys
 import tempfile
 import threading
@@ -41,12 +56,18 @@ from collections.abc import Callable
 from datetime import datetime
 from typing import Any, cast
 
-# CRITICAL: Set up paths and UTF-8 encoding before any other imports
+# =============================================================================
+# PHASE 2: Path Setup (MUST happen before first-party imports)
+# =============================================================================
+# This adds the project root to sys.path so that `Shared` and `python_server`
+# can be imported. This CANNOT be moved to the top of the file.
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-print("DEBUG: sys.path done", flush=True)
 
-# Third-party imports
-from flask import (
+# =============================================================================
+# PHASE 3: Third-Party Imports
+# =============================================================================
+import psutil  # noqa: E402
+from flask import (  # noqa: E402
     Flask,
     Response,
     jsonify,
@@ -55,34 +76,23 @@ from flask import (
     send_from_directory,
     session,
 )
+from flask_cors import CORS  # noqa: E402
+from flask_socketio import SocketIO, emit  # noqa: E402
 
-print("DEBUG: flask imported", flush=True)
-from flask_cors import CORS
+# =============================================================================
+# PHASE 4: First-Party Imports (Require sys.path setup from Phase 2)
+# =============================================================================
+from Shared.path_utils import setup_imports  # noqa: E402
 
-print("DEBUG: flask_cors imported", flush=True)
-from flask_socketio import SocketIO, emit
+# Initialize import paths for the entire project
+# This MUST be called before any other Shared.* imports
+setup_imports()
 
-print("DEBUG: flask_socketio imported", flush=True)
-
-print("DEBUG: Importing Shared explicitly...", flush=True)
-import Shared
-
-print(
-    f"DEBUG: Shared imported explicitly. File: {getattr(Shared, '__file__', 'unknown')}",
-    flush=True,
+from python_server.server.connection_health import (  # noqa: E402
+    get_connection_health_monitor,
 )
-
-# First-party imports (ensure_imports() must be called first)
-from Shared.path_utils import setup_imports
-
-setup_imports()  # This must be called before any other first-party imports
-print("DEBUG: setup_imports done", flush=True)
-
-from python_server.server.connection_health import (
-    get_connection_health_monitor,  # noqa: E402 # Moved from global scope
-)
-from python_server.server.server_singleton import (
-    ensure_single_server_instance,  # noqa: E402
+from python_server.server.server_singleton import (  # noqa: E402
+    ensure_single_server_instance,
 )
 from Shared.config.unified_config import get_config  # noqa: E402
 from Shared.logging.logging_utils import (  # noqa: E402
@@ -91,17 +101,21 @@ from Shared.logging.logging_utils import (  # noqa: E402
     log_performance_metrics,
     setup_dual_logging,
 )
-from Shared.monitoring.performance_monitor import (
-    get_performance_monitor,  # noqa: E402 # Moved from api_perf_job()
+from Shared.monitoring.performance_monitor import (  # noqa: E402
+    get_performance_monitor,
 )
 from Shared.monitoring.unified_monitor import UnifiedFileMonitor  # noqa: E402
 from Shared.observability_middleware import setup_observability_for_flask  # noqa: E402
 from Shared.sentry_config import capture_error, init_sentry  # noqa: E402
 
-# Define PROJECT_ROOT for consistent path resolution
+# =============================================================================
+# PHASE 5: Module-Level Configuration
+# =============================================================================
+
+# Define PROJECT_ROOT for consistent path resolution across the module
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-# Global paths for static file serving
+# Global paths for static file serving (Web UI assets)
 CLIENT_GUI_PATH = os.path.join(PROJECT_ROOT, "api_server", "web_ui")
 PYTHON_SERVER_PATH = os.path.join(PROJECT_ROOT, "python_server")
 
@@ -109,7 +123,6 @@ PYTHON_SERVER_PATH = os.path.join(PROJECT_ROOT, "python_server")
 SENTRY_INITIALIZED = init_sentry("api-server", traces_sample_rate=0.5)
 
 # Configure enhanced dual logging (console + file) with observability
-print("DEBUG: setup_dual_logging start", flush=True)
 logger, api_log_file = setup_dual_logging(
     logger_name=__name__,
     server_type="api-server",
@@ -117,13 +130,13 @@ logger, api_log_file = setup_dual_logging(
     file_level=logging.DEBUG,
     console_format="%(asctime)s - %(levelname)s - %(message)s",
 )
-print("DEBUG: setup_dual_logging done", flush=True)
 
-# Import our real backup executor (needs to be after setup_imports and logging)
+# Import the real backup executor (needs to be after setup_imports and logging)
+# Uses try/except for both relative and absolute import compatibility
 try:
-    from .real_backup_executor import RealBackupExecutor
+    from .real_backup_executor import RealBackupExecutor  # noqa: E402
 except ImportError:
-    from real_backup_executor import RealBackupExecutor
+    from real_backup_executor import RealBackupExecutor  # noqa: E402
 
 # Performance monitoring singleton
 perf_monitor = get_performance_monitor()
@@ -149,13 +162,133 @@ app: Flask = Flask(__name__)
 CORS(app)  # Enable CORS for local development
 
 
-# Force connection close on all HTTP responses to prevent keepalive
-@app.after_request
-def force_connection_close(response: Response) -> Response:
-    """Force HTTP connections to close after each request"""
-    response.headers["Connection"] = "close"
-    response.headers["Keep-Alive"] = "timeout=1, max=1"
-    return response
+# --- Server Lifecycle Management (Self-Healing) ---
+class ServerLifecycleManager:
+    """
+    Manages server startup state to prevent 'Address already in use' errors.
+    Automatically detects and terminates zombie processes holding the API port.
+    """
+
+    @staticmethod
+    def ensure_startup_state(port: int = 9090, force: bool = True) -> None:
+        """
+        Ensure the server can start on the requested port.
+        Aggressively cleans up any process holding the port.
+        """
+        print(f"[LIFECYCLE] Ensuring clean startup state for port {port}...")
+
+        current_pid = os.getpid()
+        killed_count = 0
+
+        # Method 1: Kill by Port
+        killed_count += ServerLifecycleManager._kill_port_holders(port, current_pid)
+
+        # Method 2: Kill by Script Name (secondary cleanup)
+        # We perform this to ensure no "half-dead" instances remain
+        killed_count += ServerLifecycleManager._kill_old_instances(current_pid)
+
+        if killed_count > 0:
+            print(
+                f"[LIFECYCLE] Cleanup complete. Terminated {killed_count} conflicting processes."
+            )
+            # Give OS a moment to release file handles
+            time.sleep(1.0)
+        else:
+            print("[LIFECYCLE] No conflicting processes found. Ready to start.")
+
+    @staticmethod
+    def _kill_port_holders(port: int, current_pid: int) -> int:
+        """Identify and kill any process listening on the target port."""
+        count = 0
+        try:
+            # Don't ask for 'connections' in process_iter, it's slow/error-prone
+            for proc in psutil.process_iter(["pid", "name"]):
+                try:
+                    if proc.pid == current_pid:
+                        continue
+
+                    # Explicitly fetch connections
+                    try:
+                        connections = proc.net_connections(kind="inet")
+                    except (psutil.AccessDenied, psutil.NoSuchProcess):
+                        continue
+
+                    for conn in connections:
+                        if conn.laddr.port == port:
+                            print(
+                                f"[LIFECYCLE] Found process {proc.info['name']} (PID: {proc.pid}) holding port {port}"
+                            )
+                            if ServerLifecycleManager._safe_kill(proc):
+                                count += 1
+                            break  # Process matches, clean up and move to next
+                except (
+                    psutil.NoSuchProcess,
+                    psutil.AccessDenied,
+                    psutil.ZombieProcess,
+                ):
+                    continue
+        except Exception as e:
+            print(f"[LIFECYCLE] Warning: Error scanning ports: {e}")
+
+        return count
+
+    @staticmethod
+    def _kill_old_instances(current_pid: int) -> int:
+        """Identify and kill old instances of this script."""
+        count = 0
+        script_name = "cyberbackup_api_server.py"
+        try:
+            for proc in psutil.process_iter(["pid", "name", "cmdline"]):
+                try:
+                    if proc.pid == current_pid:
+                        continue
+
+                    # Check if it's a python process running our script
+                    if "python" in proc.info["name"].lower():
+                        cmdline = proc.info.get("cmdline") or []
+                        if any(script_name in arg for arg in cmdline):
+                            print(f"[LIFECYCLE] Found old instance (PID: {proc.pid})")
+                            if ServerLifecycleManager._safe_kill(proc):
+                                count += 1
+                except (
+                    psutil.NoSuchProcess,
+                    psutil.AccessDenied,
+                    psutil.ZombieProcess,
+                ):
+                    continue
+        except Exception as e:
+            print(f"[LIFECYCLE] Warning: Error scanning processes: {e}")
+
+        return count
+
+    @staticmethod
+    def _safe_kill(proc: psutil.Process) -> bool:
+        """Gracefully terminate then force kill if needed."""
+        pid = proc.pid
+        try:
+            proc.terminate()
+            # Wait up to 3 seconds for graceful shutdown
+            try:
+                proc.wait(timeout=3)
+                print(f"[LIFECYCLE] Terminated process {pid} gracefully")
+                return True
+            except psutil.TimeoutExpired:
+                # Force kill
+                print(f"[LIFECYCLE] Process {pid} hung, forcing kill...")
+                proc.kill()
+                proc.wait(timeout=1)
+                return True
+        except (psutil.NoSuchProcess, psutil.ZombieProcess):
+            print(f"[LIFECYCLE] Process {pid} already gone")
+            return False
+        except psutil.AccessDenied:
+            print(
+                f"[LIFECYCLE] Error: Access denied to terminate process {pid}. Run as Admin."
+            )
+            return False
+        except Exception as e:
+            print(f"[LIFECYCLE] Error killing process {pid}: {e}")
+            return False
 
 
 # Add per-IP connection limiting middleware
@@ -1464,99 +1597,6 @@ def api_server_connection_health():
 
 # --- Enhanced server startup with WebSocket support ---
 
-if __name__ == "__main__":
-    print("=" * 70)
-    print("* CyberBackup 3.0 API Server - REAL Integration")
-    print("=" * 70)
-    print("* API Server: http://localhost:9090")
-    print("* Client GUI: http://localhost:9090/")
-    print("* Health Check: http://localhost:9090/health")
-    print()
-
-    # Display logging information
-    log_monitor_info = create_log_monitor_info(api_log_file, "API Server")
-    print("* Logging Information:")
-    print(f"* Log File: {log_monitor_info.get('file_path', api_log_file)}")
-    print(
-        f"* Live Monitor (PowerShell): {log_monitor_info.get('powershell_cmd', 'N/A')}"
-    )
-    print("* Console Output: Visible in this window (dual output enabled)")
-    print()
-
-    # Check components
-    print("Component Status:")
-
-    # Check HTML client
-    client_html = os.path.join(CLIENT_GUI_PATH, CLIENT_GUI_HTML_FILE)
-    if os.path.exists(client_html):
-        print(f"[OK] HTML Client: {client_html}")
-    else:
-        print(f"[MISSING] HTML Client: {client_html} NOT FOUND")
-
-    # Check C++ client
-    client_exe = os.path.join(
-        PROJECT_ROOT, "build", "Release", "EncryptedBackupClient.exe"
-    )
-    if os.path.exists(client_exe):
-        print(f"[OK] C++ Client: {client_exe}")
-    else:
-        print(f"[MISSING] C++ Client: {client_exe} NOT FOUND")
-
-    # Check backup server
-    if server_running := check_backup_server_status():
-        print("[OK] Backup Server: Running on port 1256")
-    else:
-        print("[WARNING] Backup Server: Not running on port 1256")
-
-    print()
-
-    print("[ROCKET] Starting Flask API server with WebSocket support...")
-
-    # Initialize and start the UnifiedFileMonitor
-    try:
-        file_monitor.start_monitoring()
-        print(f"[OK] Unified File Monitor: Watching {file_monitor.watched_directory}")
-    except Exception as e:
-        print(f"[WARNING] Unified File Monitor: Failed to initialize - {e}")
-
-    # Ensure only one API server instance runs at a time
-    print("Ensuring single API server instance...")
-    ensure_single_server_instance("APIServer", 9090)
-    print("Singleton lock acquired for API server")
-
-    # Start WebSocket cleanup thread after full initialization
-    print("Starting WebSocket cleanup thread...")
-    start_websocket_cleanup_thread()
-
-    try:
-        print("[WEBSOCKET] Starting Flask-SocketIO server with real-time support...")
-        print("[DEBUG] About to call socketio.run()...")
-        cast(Any, socketio).run(
-            app,
-            host=get_config("api.host", "127.0.0.1"),
-            port=get_config("api.port", 9090),
-            debug=False,
-            allow_unsafe_werkzeug=True,  # Allow threading with SocketIO
-            use_reloader=False,
-        )
-        print("[DEBUG] socketio.run() returned normally")
-    except KeyboardInterrupt:
-        print("\n[INFO] API Server shutdown requested")
-    except Exception as e:
-        print(f"[ERROR] Server error: {e}")
-        import traceback
-
-        traceback.print_exc()
-    finally:
-        print("[DEBUG] Entering finally block...")
-        # Cleanup the unified monitor
-        try:
-            file_monitor.stop_monitoring()
-            print("[INFO] Unified file monitor stopped")
-        except Exception as e:
-            print(f"[WARNING] Error stopping unified file monitor: {e}")
-        print("[DEBUG] API Server process ending...")
-
 
 # --- Performance Monitoring Endpoints (after primary routes) ---
 @app.route("/api/perf/<job_id>")
@@ -1723,3 +1763,161 @@ def api_perf_all():
         return jsonify({"success": True, "jobs": perf_monitor.get_all_summaries()})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
+
+
+if __name__ == "__main__":
+    print("=" * 70)
+    print("* CyberBackup 3.0 API Server - REAL Integration")
+    print("=" * 70)
+    print("* API Server: http://localhost:9090")
+    print("* Client GUI: http://localhost:9090/")
+    print("* Health Check: http://localhost:9090/health")
+    print()
+
+    # Display logging information
+    log_monitor_info = create_log_monitor_info(api_log_file, "API Server")
+    print("* Logging Information:")
+    print(f"* Log File: {log_monitor_info.get('file_path', api_log_file)}")
+    print(
+        f"* Live Monitor (PowerShell): {log_monitor_info.get('powershell_cmd', 'N/A')}"
+    )
+    print("* Console Output: Visible in this window (dual output enabled)")
+    print()
+
+    # Check components
+    print("Component Status:")
+
+    # Check HTML client
+    client_html = os.path.join(CLIENT_GUI_PATH, CLIENT_GUI_HTML_FILE)
+    if os.path.exists(client_html):
+        print(f"[OK] HTML Client: {client_html}")
+    else:
+        print(f"[MISSING] HTML Client: {client_html} NOT FOUND")
+
+    # Check C++ client
+    client_exe = os.path.join(
+        PROJECT_ROOT, "build", "Release", "EncryptedBackupClient.exe"
+    )
+    if os.path.exists(client_exe):
+        print(f"[OK] C++ Client: {client_exe}")
+    else:
+        print(f"[MISSING] C++ Client: {client_exe} NOT FOUND")
+
+    # Check backup server
+    if server_running := check_backup_server_status():
+        print("[OK] Backup Server: Running on port 1256")
+    else:
+        print("[WARNING] Backup Server: Not running on port 1256")
+
+    print()
+
+    print("[ROCKET] Starting Flask API server with WebSocket support...")
+
+    # Initialize and start the UnifiedFileMonitor
+    try:
+        file_monitor.start_monitoring()
+        print(f"[OK] Unified File Monitor: Watching {file_monitor.watched_directory}")
+    except Exception as e:
+        print(f"[WARNING] Unified File Monitor: Failed to initialize - {e}")
+
+    # Ensure only one API server instance runs at a time
+    print("Ensuring single API server instance...")
+    ensure_single_server_instance("APIServer", 9090)
+    print("Singleton lock acquired for API server")
+
+    # Start WebSocket cleanup thread after full initialization
+    print("Starting WebSocket cleanup thread...")
+    start_websocket_cleanup_thread()
+
+    # --- Graceful Shutdown Handler ---
+    # This ensures the socket is properly released even on crash/interrupt
+    shutdown_event = threading.Event()
+
+    def graceful_shutdown(signum=None, frame=None):
+        """Handle shutdown signals gracefully to release sockets."""
+        signal_name = "UNKNOWN"
+        if signum == signal.SIGINT:
+            signal_name = "SIGINT (Ctrl+C)"
+        elif signum == signal.SIGTERM:
+            signal_name = "SIGTERM"
+        print(f"\n[SHUTDOWN] Received {signal_name}, initiating graceful shutdown...")
+        shutdown_event.set()
+
+        # Stop file monitor first
+        try:
+            file_monitor.stop_monitoring()
+            print("[SHUTDOWN] File monitor stopped")
+        except Exception as e:
+            print(f"[WARNING] Error stopping file monitor: {e}")
+
+        # Stop SocketIO (this should trigger Werkzeug to close the socket)
+        try:
+            # Use greenlet-safe shutdown if available
+            if hasattr(socketio, "stop"):
+                socketio.stop()
+                print("[SHUTDOWN] SocketIO stopped")
+        except Exception as e:
+            print(f"[WARNING] Error stopping SocketIO: {e}")
+
+        print("[SHUTDOWN] Graceful shutdown complete")
+        # Force exit after cleanup
+        os._exit(0)
+
+    # Register signal handlers
+    signal.signal(signal.SIGINT, graceful_shutdown)
+    signal.signal(signal.SIGTERM, graceful_shutdown)
+
+    # Register atexit handler as backup
+    atexit.register(
+        lambda: None if shutdown_event.is_set() else file_monitor.stop_monitoring()
+    )
+
+    # --- SO_REUSEADDR Patch ---
+    # Patch the default socket creation to always set SO_REUSEADDR
+    # This allows immediate port reuse after crash/restart
+    original_socket_init = socket.socket.__init__
+
+    def patched_socket_init(
+        self, family=socket.AF_INET, type=socket.SOCK_STREAM, proto=0, fileno=None
+    ):
+        original_socket_init(self, family, type, proto, fileno)
+        if type == socket.SOCK_STREAM:
+            try:
+                self.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            except Exception:
+                pass  # Ignore if already set or not applicable
+
+    socket.socket.__init__ = patched_socket_init
+    print("[OK] SO_REUSEADDR patch applied - port will be immediately reusable")
+
+    # --- Server Configuration ---
+    host = "0.0.0.0"  # Bind to all interfaces for maximum accessibility
+    port = 9090  # Restore original port - SO_REUSEADDR will prevent zombie issues
+
+    # --- SELF-HEALING STARTUP ---
+    # Ensure port 9090 is free before starting
+    ServerLifecycleManager.ensure_startup_state(port=port)
+
+    try:
+        print("[WEBSOCKET] Starting Flask-SocketIO server with real-time support...")
+        print(f" * Serving Flask app 'cyberbackup_api_server' on {host}:{port}")
+        print(" * SO_REUSEADDR: Enabled (port will not become zombie)")
+        print(" * Signal handlers: SIGINT, SIGTERM registered")
+
+        cast(Any, socketio).run(
+            app,
+            host=host,
+            port=port,
+            debug=False,
+            allow_unsafe_werkzeug=True,  # Allow threading with SocketIO
+            use_reloader=False,
+        )
+        print("[DEBUG] socketio.run() returned normally")
+    except KeyboardInterrupt:
+        graceful_shutdown(signal.SIGINT, None)
+    except Exception as e:
+        print(f"[ERROR] Server error: {e}")
+        import traceback
+
+        traceback.print_exc()
+        graceful_shutdown(None, None)

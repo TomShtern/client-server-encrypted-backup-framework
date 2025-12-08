@@ -243,7 +243,7 @@ const formatters = {
   time(date) {
     if (!date) return '--:--:--';
     const d = new Date(date);
-    if (isNaN(d.getTime())) return '--:--:--';
+    if (Number.isNaN(d.getTime())) return '--:--:--';
     return d.toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
   },
 
@@ -257,7 +257,10 @@ const formatters = {
     if (bytes === 0) return '0 B';
     const exponent = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), BYTE_UNITS.length - 1);
     const value = bytes / Math.pow(1024, exponent);
-    const precision = value >= 100 ? 0 : (value >= 10 ? 1 : 2);
+    let precision;
+    if (value >= 100) precision = 0;
+    else if (value >= 10) precision = 1;
+    else precision = 2;
     return `${value.toFixed(precision)} ${BYTE_UNITS[exponent]}`;
   },
 
@@ -467,7 +470,7 @@ function rafThrottle(fn, limit = 16) {
 
   return function throttled(...args) {
     if (!inThrottle) {
-      rafId = requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
         fn.apply(this, args);
         rafId = null;
       });
@@ -900,7 +903,7 @@ const API_CONFIG = {
     }
 
     const { hostname = 'localhost', port, protocol } = location;
-    const currentPort = parseInt(port, 10) || (protocol === 'https:' ? 443 : 80);
+    const currentPort = Number.parseInt(port, 10) || (protocol === 'https:' ? 443 : 80);
 
     // If we're on the API server port (9090), use same origin
     if (currentPort === this.API_PORT) {

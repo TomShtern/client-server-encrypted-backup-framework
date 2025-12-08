@@ -18,6 +18,9 @@ from typing import Any
 LOG_ROTATION_MAX_FILES = 6  # Keep last 6 log files
 LOG_ROTATION_MAX_SIZE_MB = 700  # Maximum total size in MB
 
+# Default log format used across handlers
+DEFAULT_LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
 # Import the safe_print function to prevent console encoding errors
 from Shared.filesystem.utf8_solution import safe_print  # noqa: E402
 
@@ -291,7 +294,7 @@ def cleanup_old_logs(
                 deleted_bytes += f.stat().st_size
                 f.unlink()
                 deleted_count += 1
-            except (OSError, PermissionError):
+            except OSError:
                 pass  # Skip files that can't be deleted
         log_files = log_files[:max_files]
 
@@ -307,7 +310,7 @@ def cleanup_old_logs(
             deleted_bytes += oldest.stat().st_size
             oldest.unlink()
             deleted_count += 1
-        except (OSError, PermissionError):
+        except OSError:
             pass
 
     remaining_count = len(list(log_path.glob("*.log")))
@@ -624,7 +627,7 @@ def configure_root_logger(level: int = logging.INFO):
     """
     logging.basicConfig(
         level=level,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        format=DEFAULT_LOG_FORMAT,
         handlers=[logging.StreamHandler(sys.stdout)],
     )
 
@@ -644,9 +647,7 @@ def quick_console_logger(name: str, level: int = logging.INFO) -> logging.Logger
     logger = logging.getLogger(name)
     if not logger.handlers:  # Only add handler if none exist
         handler = logging.StreamHandler(sys.stdout)
-        formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        )
+        formatter = logging.Formatter(DEFAULT_LOG_FORMAT)
         handler.setFormatter(formatter)
         handler.setLevel(level)
         logger.addHandler(handler)
@@ -671,9 +672,7 @@ def quick_file_logger(
     logger = logging.getLogger(name)
     if not logger.handlers:  # Only add handler if none exist
         handler = logging.FileHandler(filename, mode="a", encoding="utf-8")
-        formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        )
+        formatter = logging.Formatter(DEFAULT_LOG_FORMAT)
         handler.setFormatter(formatter)
         handler.setLevel(level)
         logger.addHandler(handler)

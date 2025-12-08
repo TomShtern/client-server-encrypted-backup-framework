@@ -77,13 +77,13 @@
                     <div class="server-status-group" aria-live="polite">
                         <span id="webServerStatus" class="server-status" title="Web API Server (Port 9090)">
                             <span class="status-label">Web Server:</span>
-                            <span class="status-dot online">●</span>
+                            <span class="status-dot online"></span>
                             <span class="status-text">Online</span>
                         </span>
                         <span class="status-divider">|</span>
                         <span id="backupServerStatus" class="server-status" title="Backup Server (Port 1256)">
                             <span class="status-label">Backup Server:</span>
-                            <span class="status-dot offline">●</span>
+                            <span class="status-dot offline"></span>
                             <span class="status-text">Offline</span>
                         </span>
                     </div>
@@ -234,8 +234,10 @@
                                 <div class="setting-row">
                                     <label for="advPolycene" title="Enable Polyglot Environment">Polyglot Environment
                                         (Polycene)</label>
-                                    <label class="toggle-switch">
+                                    <label class="toggle-switch" aria-label="Toggle Polyglot Environment">
                                         <input type="checkbox" id="advPolycene">
+                                        <span class="toggle-slider"></span>
+                                    </label>
                                 </div>
                             </div>
                             <div id="tab-schedule" class="tab-panel" role="tabpanel" hidden>
@@ -250,7 +252,7 @@
                                 </div>
                                 <div class="setting-row">
                                     <label for="advAutoRetry">Auto Retry</label>
-                                    <label class="toggle-switch">
+                                    <label class="toggle-switch" aria-label="Toggle Auto Retry">
                                         <input type="checkbox" id="advAutoRetry" checked>
                                         <span class="toggle-slider"></span>
                                     </label>
@@ -283,7 +285,7 @@
                                 </div>
                                 <div class="setting-row">
                                     <label for="advVerify">Verify Integrity</label>
-                                    <label class="toggle-switch">
+                                    <label class="toggle-switch" aria-label="Toggle Verify Integrity">
                                         <input type="checkbox" id="advVerify" checked>
                                         <span class="toggle-slider"></span>
                                     </label>
@@ -444,7 +446,7 @@
                     </div>
 
                     <!-- Filter Pills -->
-                    <div class="logs-filter-segment" role="group" aria-label="Log level filter">
+                    <fieldset class="logs-filter-segment" aria-label="Log level filter">
                         <div id="segmentIndicator" class="segment-indicator"></div>
                         <button id="filterAll" class="segment-btn active" type="button" data-level="all"
                             aria-pressed="true">All</button>
@@ -460,7 +462,7 @@
                             aria-pressed="false">
                             <span class="segment-dot error"></span>Error
                         </button>
-                    </div>
+                    </fieldset>
 
                     <!-- Actions -->
                     <div class="logs-actions">

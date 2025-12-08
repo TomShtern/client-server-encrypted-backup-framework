@@ -9,7 +9,7 @@
 class ThemeManager {
   constructor() {
     this.themeToggle = dom.themeToggle;
-    this.prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+    this.prefersDark = globalThis.matchMedia('(prefers-color-scheme: dark)');
     this.currentTheme = localStorage.getItem('theme') || (this.prefersDark.matches ? 'dark' : 'light');
     this.#init();
   }
@@ -75,7 +75,7 @@ class LogStore {
 
     const div = document.createElement('div');
     div.className = `log-entry log-${entry.level}`;
-    div.setAttribute('data-log-entry', '');
+    div.dataset.logEntry = '';
 
     const timeSpan = document.createElement('span');
     timeSpan.className = 'log-time';
@@ -116,20 +116,20 @@ class FileManager {
     this.input?.addEventListener('change', (e) => this.#handleFiles(e.target.files));
 
     if (this.dropZone) {
-      ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+      for (const eventName of ['dragenter', 'dragover', 'dragleave', 'drop']) {
         this.dropZone.addEventListener(eventName, (e) => {
           e.preventDefault();
           e.stopPropagation();
         });
-      });
+      }
 
-      ['dragenter', 'dragover'].forEach(eventName => {
+      for (const eventName of ['dragenter', 'dragover']) {
         this.dropZone.addEventListener(eventName, () => this.dropZone.classList.add('drag-active'));
-      });
+      }
 
-      ['dragleave', 'drop'].forEach(eventName => {
+      for (const eventName of ['dragleave', 'drop']) {
         this.dropZone.addEventListener(eventName, () => this.dropZone.classList.remove('drag-active'));
-      });
+      }
 
       this.dropZone.addEventListener('drop', (e) => this.#handleFiles(e.dataTransfer.files));
       this.dropZone.addEventListener('click', () => this.input?.click());
@@ -204,9 +204,9 @@ class SpeedChart {
   #hexToRgba(hex, alpha) {
     hex = hex.replace('#', '');
     if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
-    const r = parseInt(hex.substring(0, 2), 16);
-    const g = parseInt(hex.substring(2, 4), 16);
-    const b = parseInt(hex.substring(4, 6), 16);
+    const r = Number.parseInt(hex.substring(0, 2), 16);
+    const g = Number.parseInt(hex.substring(2, 4), 16);
+    const b = Number.parseInt(hex.substring(4, 6), 16);
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   }
 
@@ -272,12 +272,14 @@ class SpeedChart {
     this.ctx.lineWidth = 2;
     this.ctx.beginPath();
 
-    this.dataPoints.forEach((speed, index) => {
+    let index = 0;
+    for (const speed of this.dataPoints) {
       const x = padding + (chartWidth / (this.maxDataPoints - 1)) * index;
       const y = padding + chartHeight - (speed / (this.maxSpeed || 1)) * chartHeight;
       if (index === 0) this.ctx.moveTo(x, y);
       else this.ctx.lineTo(x, y);
-    });
+      index++;
+    }
 
     this.ctx.stroke();
     this.ctx.lineTo(width - padding, height - padding);
@@ -286,7 +288,7 @@ class SpeedChart {
 
     const gradient = this.ctx.createLinearGradient(0, padding, 0, height - padding);
     gradient.addColorStop(0, this.#hexToRgba(this.colors.line, 0.2));
-    gradient.addColorStop(1, this.#hexToRgba(this.colors.line, 0.0));
+    gradient.addColorStop(1, this.#hexToRgba(this.colors.line, 0));
     this.ctx.fillStyle = gradient;
     this.ctx.fill();
   }
@@ -341,7 +343,7 @@ class ProfessionalGUIEnhancements {
 
   static initFloatingLabels() {
     const inputs = document.querySelectorAll('.floating-label .interactive');
-    inputs.forEach(input => {
+    for (const input of inputs) {
       if (input.value) input.classList.add('has-value');
       input.addEventListener('input', () => {
         if (input.value) input.classList.add('has-value');
@@ -349,7 +351,7 @@ class ProfessionalGUIEnhancements {
       });
       input.addEventListener('focus', () => input.parentElement.classList.add('focused'));
       input.addEventListener('blur', () => input.parentElement.classList.remove('focused'));
-    });
+    }
   }
 
   static setupConnectionDropdown() {
@@ -380,10 +382,10 @@ class ProfessionalGUIEnhancements {
       searchTimeout = setTimeout(() => {
         const query = searchInput.value.toLowerCase().trim();
         const logEntries = document.querySelectorAll('[data-log-entry]');
-        logEntries.forEach(entry => {
+        for (const entry of logEntries) {
           const text = entry.textContent.toLowerCase();
           entry.style.display = (!query || text.includes(query)) ? '' : 'none';
-        });
+        }
       }, 300);
     });
   }
@@ -414,12 +416,12 @@ class ProfessionalGUIEnhancements {
     if (!overlay || !fileInput) return;
 
     let dragCounter = 0;
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    for (const eventName of ['dragenter', 'dragover', 'dragleave', 'drop']) {
       document.body.addEventListener(eventName, (e) => {
         e.preventDefault();
         e.stopPropagation();
       });
-    });
+    }
 
     document.body.addEventListener('dragenter', () => {
       dragCounter++;
@@ -466,7 +468,7 @@ class ProfessionalGUIEnhancements {
   }
 
   static setupBrowserNotifications() {
-    if (!('Notification' in window)) return;
+    if (!('Notification' in globalThis)) return;
     const requestPermission = () => {
       if (Notification.permission === 'default') Notification.requestPermission();
       document.removeEventListener('click', requestPermission);
@@ -475,7 +477,7 @@ class ProfessionalGUIEnhancements {
   }
 
   static showNotification(title, options) {
-    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    if (!('Notification' in globalThis) || Notification.permission !== 'granted') return;
     try {
       new Notification(title, { icon: 'favicon.svg', ...options });
     } catch (e) { console.warn('Notification failed', e); }

@@ -30,7 +30,7 @@ class App {
     // Fix: FileManager takes 3 args (input, dropZone, callback)
     this.fileManager = new FileManager(dom.fileInput, dom.fileDropZone, (file) => this.#onFileSelected(file));
 
-    // this.enhancements = new ProfessionalGUIEnhancements(); // REMOVED: Static class, no instance needed
+
 
     this.advancedSettings = new AdvancedSettings({
       chunkInput: dom.chunkSizeInput,
@@ -240,11 +240,16 @@ class App {
       if (this.state.snapshot.status === 'completed' || this.state.snapshot.status === 'error') {
         this.state.update({ status: 'idle', progress: 0, bytesTransferred: 0 });
       }
+
+      // Auto-start backup if connected
+      if (this.state.snapshot.connected) {
+        this.#handleStartBackup(file);
+      }
     }
   }
 
-  async #handleStartBackup() {
-    const file = this.fileManager.input?.files?.[0];
+  async #handleStartBackup(fileArg) {
+    const file = fileArg || this.fileManager.input?.files?.[0];
     if (!file) {
       this.toast.show('Please select a file first', 'warn');
       return;
@@ -388,7 +393,7 @@ class App {
       if (dom.progressText) dom.progressText.textContent = formatters.formatPercentage(state.progress);
       if (dom.bytesTransferred) {
         // Use stats elements if available for detailed breakdown
-        if (dom.stats && dom.stats.bytes) {
+        if (dom.stats?.bytes) {
           dom.bytesTransferred.textContent = `${formatters.formatBytes(state.bytesTransferred)} / ${formatters.formatBytes(state.totalBytes)}`;
           dom.stats.bytes.textContent = formatters.formatBytes(state.bytesTransferred);
           dom.stats.size.textContent = formatters.formatBytes(state.totalBytes);
